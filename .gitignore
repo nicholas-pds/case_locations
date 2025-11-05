@@ -1,0 +1,48 @@
+# Python-specific ignores
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+*.whl
+*.dist-info/
+
+# uv-specific ignores
+.uv/
+.uv.lock
+venv/
+.venv/
+
+.env
+src/.env
+
+# Windows-specific ignores
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# VS Code-specific ignores
+.vscode/
+*.code-workspace
+
+# Project-specific folder ignores
+input/
+output/
+
+# File type ignores
+*.csv
+
+# Other common ignores
+*.log
+*.bak
+*.swp
+*~
+.DS_Stores
