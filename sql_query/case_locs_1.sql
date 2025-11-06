@@ -2,14 +2,15 @@
 WITH RankedCases AS
 (
     SELECT
-        ca.CaseNumber,
-        ca.PanNumber,
-        ct.Task,
-        CAST(ct.CompleteDate AS DATE) AS CompleteDate,
-        CAST(ca.ShipDate     AS DATE) AS ShipDate,
+        ca.CaseNumber as [Case Number],
+        ca.PanNumber as [Pan Number],
+        ct.Task as [Last Task Completed],
+        ct.CompleteDate as [Last Scan Time],
+        ct.Department as [Category],
+        CAST(ca.ShipDate     AS DATE) AS [Ship Date],
         ca.LastLocationID,
-        cll.Description AS LocationDescription,
-        ca.Status,
+        cll.Description AS [Last Location],
+        ca.[Status],
         ca.LocalDelivery,
         ROW_NUMBER() OVER (
             PARTITION BY ca.CaseNumber
@@ -26,14 +27,15 @@ WITH RankedCases AS
     WHERE ca.Status = 'In Production'
 )
 SELECT
-    CaseNumber,
-    PanNumber,
-    Task,
-    CompleteDate,
-    ShipDate,
-    LocationDescription,
+    [Case Number],
+    [Pan Number],
+    [Ship Date],
     [Status],
+    [Category],
+    [Last Location],
+    [Last Task Completed],
+    [Last Scan Time],
     LocalDelivery
 FROM RankedCases
 WHERE rn = 1
-ORDER BY CaseNumber;
+ORDER BY [Case Number];
