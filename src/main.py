@@ -61,6 +61,10 @@ def main():
             print(f"🚨 ERROR during date filtering: {e}")
             return
         
+        # Step 1.6: Convert Ship Date back to date only (remove time component)
+        print("\n--- Converting Ship Date to date only ---")
+        data_df[SHIP_DATE_COLUMN] = data_df[SHIP_DATE_COLUMN].dt.date
+        
         # Step 2: Upload to Google Sheets
         print("\n--- Uploading to Google Sheets ---")
         
