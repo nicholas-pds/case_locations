@@ -1,5 +1,7 @@
 # src/main.py
 from pathlib import Path
+from datetime import datetime, timedelta
+import pandas as pd
 from .db_handler import execute_sql_to_dataframe
 from .sheets_handler import SheetsHandler
 
@@ -12,6 +14,7 @@ def main():
     
     # --- Configuration ---
     SHEET_NAME = "Report"  # The tab name in your Google Sheet
+    SHIP_DATE_COLUMN = "Ship Date"  # The column name to filter on
     # ---------------------------------------------------
     
     print(f"Attempting to load SQL file from: {SQL_FILE_PATH}")
@@ -29,9 +32,34 @@ def main():
         return
 
     if not data_df.empty:
-        print("\n--- DataFrame Head ---")
+        print("\n--- DataFrame Head (Before Filter) ---")
         print(data_df.head())
-        print(f"\nTotal rows retrieved: {len(data_df)}")
+        print(f"Total rows retrieved: {len(data_df)}")
+        
+        # Step 1.5: Apply dynamic date range filter
+        print("\n--- Applying Date Range Filter ---")
+        try:
+            # Calculate the cutoff date (4 days ago)
+            cutoff_date = datetime.now() - timedelta(days=4)
+            print(f"Filtering for dates after: {cutoff_date.date()}")
+            
+            # Convert Ship Date column to datetime if not already
+            data_df[SHIP_DATE_COLUMN] = pd.to_datetime(data_df[SHIP_DATE_COLUMN])
+            
+            # Filter: Ship Date > 4 days ago
+            data_df = data_df[data_df[SHIP_DATE_COLUMN] > cutoff_date]
+            
+            print(f"✅ Filter applied. Rows after filter: {len(data_df)}")
+            print("\n--- DataFrame Head (After Filter) ---")
+            print(data_df.head())
+            
+        except KeyError:
+            print(f"🚨 ERROR: Column '{SHIP_DATE_COLUMN}' not found in DataFrame")
+            print(f"Available columns: {list(data_df.columns)}")
+            return
+        except Exception as e:
+            print(f"🚨 ERROR during date filtering: {e}")
+            return
         
         # Step 2: Upload to Google Sheets
         print("\n--- Uploading to Google Sheets ---")
