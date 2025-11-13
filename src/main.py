@@ -15,6 +15,7 @@ def main():
     # --- Configuration ---
     SHEET_NAME = "Report"  # The tab name in your Google Sheet
     SHIP_DATE_COLUMN = "Ship Date"  # The column name to filter on
+    CATEGORY_COLUMN = "Category"    # The column name for category replacement
     # ---------------------------------------------------
     
     print(f"Attempting to load SQL file from: {SQL_FILE_PATH}")
@@ -25,10 +26,10 @@ def main():
     try:
         data_df = execute_sql_to_dataframe(str(SQL_FILE_PATH))
     except FileNotFoundError:
-        print(f"🚨 ERROR: SQL file not found at the expected path: {SQL_FILE_PATH}")
+        print(f"ERROR: SQL file not found at the expected path: {SQL_FILE_PATH}")
         return
     except Exception as e:
-        print(f"🚨 ERROR during database operation: {e}")
+        print(f"ERROR during database operation: {e}")
         return
 
     if not data_df.empty:
@@ -49,21 +50,32 @@ def main():
             # Filter: Ship Date > 4 days ago
             data_df = data_df[data_df[SHIP_DATE_COLUMN] > cutoff_date]
             
-            print(f"✅ Filter applied. Rows after filter: {len(data_df)}")
+            print(f"Filter applied. Rows after filter: {len(data_df)}")
             print("\n--- DataFrame Head (After Filter) ---")
             print(data_df.head())
             
         except KeyError:
-            print(f"🚨 ERROR: Column '{SHIP_DATE_COLUMN}' not found in DataFrame")
+            print(f"ERROR: Column '{SHIP_DATE_COLUMN}' not found in DataFrame")
             print(f"Available columns: {list(data_df.columns)}")
             return
         except Exception as e:
-            print(f"🚨 ERROR during date filtering: {e}")
+            print(f"ERROR during date filtering: {e}")
             return
         
         # Step 1.6: Convert Ship Date back to date only (remove time component)
         print("\n--- Converting Ship Date to date only ---")
         data_df[SHIP_DATE_COLUMN] = data_df[SHIP_DATE_COLUMN].dt.date
+
+        # Step 1.7: In the Category Column find and replace 'Airway' with 'MARPE'
+        print("\n--- Replacing 'Airway' with 'MARPE' in Category Column ---")
+        if CATEGORY_COLUMN in data_df.columns:
+            before_count = (data_df[CATEGORY_COLUMN] == 'Airway').sum()
+            data_df[CATEGORY_COLUMN] = data_df[CATEGORY_COLUMN].replace('Airway', 'MARPE')
+            after_count = (data_df[CATEGORY_COLUMN] == 'MARPE').sum()
+            print(f"Replaced {before_count} instance(s) of 'Airway' → 'MARPE'")
+        else:
+            print(f"WARNING: Column '{CATEGORY_COLUMN}' not found. Skipping replacement.")
+            print(f"Available columns: {list(data_df.columns)}")
         
         # Step 2: Upload to Google Sheets
         print("\n--- Uploading to Google Sheets ---")
@@ -80,12 +92,12 @@ def main():
             )
             
             if success:
-                print("✅ Successfully uploaded data to Google Sheets!")
+                print("Successfully uploaded data to Google Sheets!")
             else:
-                print("⚠️ Upload to Google Sheets failed.")
+                print("Upload to Google Sheets failed.")
                 
         except Exception as e:
-            print(f"🚨 ERROR with Google Sheets operation: {e}")
+            print(f"ERROR with Google Sheets operation: {e}")
         
     else:
         print("Data extraction failed or returned an empty result. Stopping execution.")
