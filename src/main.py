@@ -73,6 +73,11 @@ def main():
             data_df[CATEGORY_COLUMN] = data_df[CATEGORY_COLUMN].replace('Airway', 'MARPE')
             after_count = (data_df[CATEGORY_COLUMN] == 'MARPE').sum()
             print(f"Replaced {before_count} instance(s) of 'Airway' → 'MARPE'")
+            # Step 1.8: Fill missing values in Category Column with 'Other'
+            print("\n--- Filling Missing Values in Category Column ---")
+            count_no_category = data_df[CATEGORY_COLUMN].isna().sum()
+            data_df[CATEGORY_COLUMN] = data_df[CATEGORY_COLUMN].fillna('Other')
+            print(f"Filled {count_no_category} missing category(ies) with 'Other'")
         else:
             print(f"WARNING: Column '{CATEGORY_COLUMN}' not found. Skipping replacement.")
             print(f"Available columns: {list(data_df.columns)}")
