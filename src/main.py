@@ -41,7 +41,7 @@ def main():
         print("\n--- Applying Date Range Filter ---")
         try:
             # Calculate the cutoff date (4 days ago)
-            cutoff_date = datetime.now() - timedelta(days=5)
+            cutoff_date = datetime.now() - timedelta(days=6)
             print(f"Filtering for dates after: {cutoff_date.date()}")
             
             # Convert Ship Date column to datetime if not already
