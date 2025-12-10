@@ -12,7 +12,7 @@ WITH ProductCategories AS
         ON cp.ProductID = pr.ProductID
     WHERE 
         ca.Status = 'In Production'
-        AND pr.Category IS NOT NULL
+        --AND pr.Category IS NOT NULL
         AND pr.Category IN ('Metal', 'Clear', 'Wire Bending', 'Marpe', 'Hybrid', 'E2 Expanders', 'Lab to Lab', 'Airway')
 ),
 /* Case Location – One Row Per CaseNumber (Unique) */
