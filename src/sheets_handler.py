@@ -1,12 +1,13 @@
 import os
-import json  # Added import for JSON handling
+import json
+import re
 import pandas as pd
 from google.oauth2.service_account import Credentials
 import gspread
 from gspread_dataframe import set_with_dataframe
 from dotenv import load_dotenv
 
-# Load environment variables from .env file (assuming they are set externally, e.g., in a runner)
+# Load environment variables from .env file
 load_dotenv()
 
 
@@ -24,13 +25,13 @@ class SheetsHandler:
         read directly from the GOOGLE_SERVICE_ACCOUNT_JSON environment variable.
         """
         try:
-            # 1. Get credentials JSON string from environment variable
+            # Get credentials JSON string from environment variable
             credentials_json_string = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
 
             if not credentials_json_string:
                 raise ValueError("GOOGLE_SERVICE_ACCOUNT_JSON not found in environment variables.")
 
-            # 2. Parse the JSON string into a Python dictionary (credentials info)
+            # Parse the JSON string into a Python dictionary
             try:
                 credentials_info = json.loads(credentials_json_string)
             except json.JSONDecodeError:
@@ -41,7 +42,7 @@ class SheetsHandler:
                 'https://www.googleapis.com/auth/drive'
             ]
 
-            # 3. Authenticate using the dictionary (info) instead of a file
+            # Authenticate using the dictionary
             creds = Credentials.from_service_account_info(
                 credentials_info,
                 scopes=scopes
@@ -51,10 +52,31 @@ class SheetsHandler:
 
         except Exception as e:
             print(f"ERROR authenticating with Google Sheets: {e}")
-            # Re-raise the error so the calling application knows initialization failed
             raise
 
-    def write_dataframe_to_sheet(self, df, sheet_name, clear_sheet=True):
+    def _parse_cell_reference(self, cell_ref):
+        """
+        Parse a cell reference like 'C6' or 'A1' into column and row indices.
+        
+        Args:
+            cell_ref (str): Cell reference (e.g., 'C6', 'A1', 'AA10')
+            
+        Returns:
+            tuple: (col_index, row_index) where both are 1-based integers
+        """
+        match = re.match(r"([A-Za-z]+)(\d+)", cell_ref)
+        if not match:
+            raise ValueError(f"Invalid cell reference format: '{cell_ref}'. Expected format like 'C6' or 'A1'.")
+        
+        col_letters, row_str = match.groups()
+        
+        # Convert column letters to number (A=1, B=2, ..., Z=26, AA=27, etc.)
+        col_index = sum((ord(c.upper()) - 64) * (26 ** i) for i, c in enumerate(reversed(col_letters)))
+        row_index = int(row_str)
+        
+        return col_index, row_index
+
+    def write_dataframe_to_sheet(self, df, sheet_name, clear_sheet=True, start_cell='C6', include_headers=False):
         """
         Write a pandas DataFrame to a specific sheet/tab in a Google Spreadsheet.
         Uses SPREADSHEET_ID from environment variables.
@@ -63,6 +85,8 @@ class SheetsHandler:
             df (pd.DataFrame): The DataFrame to write
             sheet_name (str): The name of the sheet/tab to write to
             clear_sheet (bool): Whether to clear existing content first
+            start_cell (str): Starting cell (e.g., 'C6', 'A1'). Default is 'C6' for backward compatibility
+            include_headers (bool): Whether to include column headers. Default is False for backward compatibility
 
         Returns:
             bool: True if successful, False otherwise
@@ -97,17 +121,21 @@ class SheetsHandler:
                 worksheet.clear()
                 print(f"Cleared existing content in '{sheet_name}'")
 
-            # Write DataFrame to sheet — NO HEADERS, start at C6
+            # Parse the start cell reference
+            col_index, row_index = self._parse_cell_reference(start_cell)
+
+            # Write DataFrame to sheet with specified parameters
             set_with_dataframe(
                 worksheet,
                 df,
                 include_index=False,
-                include_column_header=True,  # no headers
-                row=5,                        # start at row 6
-                col=3                         # start at column C (A=1, B=2, C=3)
+                include_column_header=include_headers,
+                row=row_index,
+                col=col_index
             )
 
-            print(f"Successfully wrote {len(df)} rows to '{sheet_name}' starting at C6")
+            headers_msg = "with headers" if include_headers else "without headers"
+            print(f"Successfully wrote {len(df)} rows to '{sheet_name}' starting at {start_cell} ({headers_msg})")
             return True
 
         except Exception as e:
@@ -175,15 +203,8 @@ class SheetsHandler:
             spreadsheet = self.client.open_by_key(spreadsheet_id)
             worksheet = spreadsheet.worksheet(sheet_name)
 
-            # Parse start_cell (e.g., 'C6' → col=3, row=6)
-            import re
-            match = re.match(r"([A-Za-z]+)(\d+)", start_cell)
-            if not match:
-                raise ValueError("Invalid start_cell format. Expected format like 'C6'.")
-
-            col_letters, row_str = match.groups()
-            col_index = sum((ord(c.upper()) - 64) * (26 ** i) for i, c in enumerate(reversed(col_letters)))
-            row_index = int(row_str)
+            # Parse start_cell
+            col_index, row_index = self._parse_cell_reference(start_cell)
 
             # Update starting from specific cell — NO HEADERS
             set_with_dataframe(
@@ -219,11 +240,11 @@ if __name__ == "__main__":
     test_sheet_name = os.getenv("GOOGLE_SHEET_NAME", "Test_Data_Tab")
 
     try:
-        # Initialize handler (This performs authentication using GOOGLE_SERVICE_ACCOUNT_JSON)
+        # Initialize handler
         handler = SheetsHandler()
 
-        # 1. Write Data Demo (Clears sheet content before writing, starts at C6, no headers)
-        print("\n--- 1. Writing DataFrame (no headers, starting at C6) ---")
+        # 1. Write Data Demo (Default: C6, no headers)
+        print("\n--- 1. Writing DataFrame (default: C6, no headers) ---")
         if os.getenv("GOOGLE_SPREADSHEET_ID"):
             handler.write_dataframe_to_sheet(
                 test_df,
@@ -233,8 +254,21 @@ if __name__ == "__main__":
         else:
             print("Skipping Write Demo: GOOGLE_SPREADSHEET_ID environment variable is not set.")
 
-        # 2. Read Data Demo
-        print("\n--- 2. Reading DataFrame ---")
+        # 2. Write Data Demo (Custom: A1, with headers)
+        print("\n--- 2. Writing DataFrame (custom: A1, with headers) ---")
+        if os.getenv("GOOGLE_SPREADSHEET_ID"):
+            handler.write_dataframe_to_sheet(
+                test_df,
+                test_sheet_name + "_A1",
+                clear_sheet=True,
+                start_cell='A1',
+                include_headers=True
+            )
+        else:
+            print("Skipping Write Demo: GOOGLE_SPREADSHEET_ID environment variable is not set.")
+
+        # 3. Read Data Demo
+        print("\n--- 3. Reading DataFrame ---")
         if os.getenv("GOOGLE_SPREADSHEET_ID"):
             read_df = handler.read_sheet_to_dataframe(test_sheet_name)
             if read_df is not None and not read_df.empty:
@@ -243,22 +277,10 @@ if __name__ == "__main__":
         else:
             print("Skipping Read Demo: GOOGLE_SPREADSHEET_ID environment variable is not set.")
 
-        # 3. Update Data Demo (no headers, starting at C6)
-        print("\n--- 3. Updating DataFrame (no headers, starting at C6) ---")
-        if os.getenv("GOOGLE_SPREADSHEET_ID"):
-            update_df = pd.DataFrame({'A': ['X'], 'B': ['Y'], 'C': ['Z']})
-            handler.update_dataframe_to_sheet(
-                update_df,
-                test_sheet_name,
-                start_cell='C6'  # Will overwrite starting at C6
-            )
-        else:
-            print("Skipping Update Demo: GOOGLE_SPREADSHEET_ID environment variable is not set.")
-
     except ValueError as e:
         print(f"\n--- CRITICAL SETUP ERROR ---")
         print(f"The program halted due to a missing environment variable: {e}")
-        print("Please ensure GOOGLE_SERVICE_ACCOUNT_JSON and GOOGLE_SPREADSHEET_ID are set correctly in your environment.")
+        print("Please ensure GOOGLE_SERVICE_ACCOUNT_JSON and GOOGLE_SPREADSHEET_ID are set correctly.")
     except Exception as e:
         print(f"\n--- GENERAL ERROR ---")
         print(f"An unexpected error occurred during the demonstration: {e}")
