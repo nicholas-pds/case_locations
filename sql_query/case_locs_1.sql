@@ -26,13 +26,13 @@ PrioritizedCategories AS
             PARTITION BY CaseNumber 
             ORDER BY 
                 CASE Category
-                    WHEN 'E2 Expanders'   THEN 1
-                    WHEN 'Lab to Lab'     THEN 2
-                    WHEN 'Marpe'          THEN 3
-                    WHEN 'Metal'          THEN 4
-                    WHEN 'Clear'          THEN 5
-                    WHEN 'Wire Bending'   THEN 6
-                    WHEN 'Hybrid'         THEN 7
+                    WHEN 'Hybrid'         THEN 1
+                    WHEN 'E2 Expanders'   THEN 2
+                    WHEN 'Lab to Lab'     THEN 3
+                    WHEN 'Marpe'          THEN 4
+                    WHEN 'Metal'          THEN 5
+                    WHEN 'Clear'          THEN 6
+                    WHEN 'Wire Bending'   THEN 7
                     WHEN 'Airway'         THEN 8
                     ELSE 99  
                 END
