@@ -105,16 +105,3 @@ $env:GOOGLE_APPLICATION_CREDENTIALS = 'C:\full\path\to\service_account.json'
 - Missing dependencies: install the packages listed in `requirements.txt` or shown in `pyproject.toml`.
 
 ---
-
-## Next steps / enhancements
-
-- Add an example `config.example.json` or `.env.example` to document required environment variables.
-- Add a small CLI wrapper (argparse / click) for selecting queries and destinations.
-
----
-
-If you'd like, I can also:
-- add a minimal `.env.example` and a short `CONTRIBUTING.md`, or
-- open `src/main.py` and extract the configuration keys to document required environment variables explicitly.
-
----
