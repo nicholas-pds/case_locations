@@ -101,6 +101,31 @@ def main():
                 count_no_category = data_df_1[CATEGORY_COLUMN].isna().sum()
                 data_df_1[CATEGORY_COLUMN] = data_df_1[CATEGORY_COLUMN].fillna('Other')
                 print(f"Filled {count_no_category} missing category(ies) with 'Other'")
+
+                # Filter out MARPE rows with specific Last Location values (planning/consultation stages)
+                print("\n--- Filtering MARPE Rows in Planning Stages ---")
+                MARPE_EXCLUDED_LOCATIONS = [
+                    'New Cases',
+                    'New Cases How to Proceed',
+                    'New Cases Waiting For Scans',
+                    'Email Plan Case',
+                    'Email Follow Up',
+                    'Zoom Set Up',
+                    'Zoom Consult',
+                    'Zoom Export Needed',
+                    'Zoom Waiting Approval',
+                    'Airway Zoom Plan',
+                    'Airway Email Approval',
+                    'Airway Planning',
+                    'Airway Email Plan',
+                    'Airway Zoom Approval'
+                ]
+                before_filter_count = len(data_df_1)
+                mask = ~((data_df_1[CATEGORY_COLUMN] == 'MARPE') &
+                         (data_df_1['Last Location'].isin(MARPE_EXCLUDED_LOCATIONS)))
+                data_df_1 = data_df_1[mask]
+                removed_count = before_filter_count - len(data_df_1)
+                print(f"Removed {removed_count} MARPE row(s) in planning stages. Rows remaining: {len(data_df_1)}")
             else:
                 print(f"WARNING: Column '{CATEGORY_COLUMN}' not found. Skipping replacement.")
                 print(f"Available columns: {list(data_df_1.columns)}")
