@@ -13,6 +13,7 @@ def main():
     BASE_DIR = Path(__file__).parent
     SQL_FILE_PATH_1 = BASE_DIR.parent / "sql_query" / "case_locs_1.sql"
     SQL_FILE_PATH_2 = BASE_DIR.parent / "sql_query" / "cases_Prod_and_Invoiced.sql"
+    SQL_FILE_PATH_3 = BASE_DIR.parent / "sql_query" / "case_locs_airway_1.sql"
     
     # --- Configuration ---
     # Query 1 Configuration
@@ -29,6 +30,11 @@ def main():
     DAYS_RANGE_2 = 9  # Previous business day + 7 days = 8 total days
     START_CELL_2 = "A1"  # Write to A1, with headers
     INCLUDE_HEADERS_2 = True
+
+    # Query 3 Configuration
+    SHEET_NAME_3 = "Report 4"
+    START_CELL_3 = "A1"
+    INCLUDE_HEADERS_3 = True
     # ---------------------------------------------------
     
     # Initialize the sheets handler once (reads credentials from .env)
@@ -128,75 +134,131 @@ def main():
     print("=" * 70)
     print(f"Attempting to load SQL file from: {SQL_FILE_PATH_2}")
     
+    query_2_success = False
     try:
         data_df_2 = execute_sql_to_dataframe(str(SQL_FILE_PATH_2))
+        query_2_success = True
     except FileNotFoundError:
         print(f"ERROR: SQL file not found at: {SQL_FILE_PATH_2}")
         data_df_2 = pd.DataFrame()
     except Exception as e:
         print(f"ERROR during database operation: {e}")
         data_df_2 = pd.DataFrame()
-    
-    if not data_df_2.empty:
-        print("\n--- DataFrame Head (Before Filter) ---")
-        print(data_df_2.head())
+
+    if query_2_success:
         print(f"Total rows retrieved: {len(data_df_2)}")
-        
-        # Apply business day date range filter
-        print("\n--- Applying Business Day Date Range Filter ---")
-        try:
-            # Get previous business day (excluding weekends and holidays)
-            prev_biz_day = previous_business_day()
-            start_date = prev_biz_day
-            end_date = prev_biz_day + timedelta(days=DAYS_RANGE_2)
-            
-            print(f"Previous business day: {start_date}")
-            print(f"Date range: {start_date} to {end_date} (inclusive)")
-            
-            # Convert ShipDate column to datetime
-            data_df_2[SHIP_DATE_COLUMN_2] = pd.to_datetime(data_df_2[SHIP_DATE_COLUMN_2])
-            
-            # Filter: start_date <= ShipDate <= end_date
-            data_df_2 = data_df_2[
-                (data_df_2[SHIP_DATE_COLUMN_2].dt.date >= start_date) &
-                (data_df_2[SHIP_DATE_COLUMN_2].dt.date <= end_date)
-            ]
-            
-            print(f"Filter applied. Rows after filter: {len(data_df_2)}")
-            print("\n--- DataFrame Head (After Filter) ---")
+
+        if not data_df_2.empty:
+            print("\n--- DataFrame Head (Before Filter) ---")
             print(data_df_2.head())
-            
-        except KeyError:
-            print(f"ERROR: Column '{SHIP_DATE_COLUMN_2}' not found in DataFrame")
-            print(f"Available columns: {list(data_df_2.columns)}")
-        except Exception as e:
-            print(f"ERROR during date filtering: {e}")
-        else:
-            # Convert ShipDate back to date only
-            print("\n--- Converting ShipDate to date only ---")
-            data_df_2[SHIP_DATE_COLUMN_2] = data_df_2[SHIP_DATE_COLUMN_2].dt.date
-            
-            # Upload to Google Sheets at A1 with headers
-            print(f"\n--- Uploading Query 2 to Google Sheets ('{SHEET_NAME_2}' at {START_CELL_2}, with headers) ---")
+
+            # Apply business day date range filter
+            print("\n--- Applying Business Day Date Range Filter ---")
             try:
-                success = sheets.write_dataframe_to_sheet(
-                    df=data_df_2,
-                    sheet_name=SHEET_NAME_2,
-                    clear_sheet=True,
-                    start_cell=START_CELL_2,
-                    include_headers=INCLUDE_HEADERS_2
-                )
-                
-                if success:
-                    print(f"✓ Successfully uploaded data to '{SHEET_NAME_2}' sheet at {START_CELL_2}!")
-                else:
-                    print(f"✗ Upload to '{SHEET_NAME_2}' sheet failed.")
-                    
+                # Get previous business day (excluding weekends and holidays)
+                prev_biz_day = previous_business_day()
+                start_date = prev_biz_day
+                end_date = prev_biz_day + timedelta(days=DAYS_RANGE_2)
+
+                print(f"Previous business day: {start_date}")
+                print(f"Date range: {start_date} to {end_date} (inclusive)")
+
+                # Convert ShipDate column to datetime
+                data_df_2[SHIP_DATE_COLUMN_2] = pd.to_datetime(data_df_2[SHIP_DATE_COLUMN_2])
+
+                # Filter: start_date <= ShipDate <= end_date
+                data_df_2 = data_df_2[
+                    (data_df_2[SHIP_DATE_COLUMN_2].dt.date >= start_date) &
+                    (data_df_2[SHIP_DATE_COLUMN_2].dt.date <= end_date)
+                ]
+
+                print(f"Filter applied. Rows after filter: {len(data_df_2)}")
+                if not data_df_2.empty:
+                    print("\n--- DataFrame Head (After Filter) ---")
+                    print(data_df_2.head())
+
+                # Convert ShipDate back to date only
+                print("\n--- Converting ShipDate to date only ---")
+                data_df_2[SHIP_DATE_COLUMN_2] = data_df_2[SHIP_DATE_COLUMN_2].dt.date
+
+            except KeyError:
+                print(f"ERROR: Column '{SHIP_DATE_COLUMN_2}' not found in DataFrame")
+                print(f"Available columns: {list(data_df_2.columns)}")
             except Exception as e:
-                print(f"ERROR with Google Sheets operation: {e}")
+                print(f"ERROR during date filtering: {e}")
+        else:
+            print("Query returned 0 rows - will write headers only")
+
+        # Upload to Google Sheets at A1 with headers (even if empty, writes headers)
+        print(f"\n--- Uploading Query 2 to Google Sheets ('{SHEET_NAME_2}' at {START_CELL_2}, with headers) ---")
+        try:
+            success = sheets.write_dataframe_to_sheet(
+                df=data_df_2,
+                sheet_name=SHEET_NAME_2,
+                clear_sheet=True,
+                start_cell=START_CELL_2,
+                include_headers=INCLUDE_HEADERS_2
+            )
+
+            if success:
+                print(f"✓ Successfully uploaded data to '{SHEET_NAME_2}' sheet at {START_CELL_2}!")
+            else:
+                print(f"✗ Upload to '{SHEET_NAME_2}' sheet failed.")
+
+        except Exception as e:
+            print(f"ERROR with Google Sheets operation: {e}")
     else:
-        print("Query 2 data extraction failed or returned empty result.")
-    
+        print("Query 2 failed to execute.")
+
+    # ========================================================================
+    # QUERY 3: case_locs_airway_1.sql → "Report 4" sheet (A1, with headers)
+    # ========================================================================
+    print("\n" + "=" * 70)
+    print("PROCESSING QUERY 3: case_locs_airway_1.sql")
+    print("=" * 70)
+    print(f"Attempting to load SQL file from: {SQL_FILE_PATH_3}")
+
+    query_3_success = False
+    try:
+        data_df_3 = execute_sql_to_dataframe(str(SQL_FILE_PATH_3))
+        query_3_success = True
+    except FileNotFoundError:
+        print(f"ERROR: SQL file not found at: {SQL_FILE_PATH_3}")
+        data_df_3 = pd.DataFrame()
+    except Exception as e:
+        print(f"ERROR during database operation: {e}")
+        data_df_3 = pd.DataFrame()
+
+    if query_3_success:
+        print(f"Total rows retrieved: {len(data_df_3)}")
+
+        if not data_df_3.empty:
+            print("\n--- DataFrame Head ---")
+            print(data_df_3.head())
+        else:
+            print("Query returned 0 rows - will write headers only")
+
+        # Upload to Google Sheets at A1 with headers (even if empty, writes headers)
+        print(f"\n--- Uploading Query 3 to Google Sheets ('{SHEET_NAME_3}' at {START_CELL_3}, with headers) ---")
+        try:
+            success = sheets.write_dataframe_to_sheet(
+                df=data_df_3,
+                sheet_name=SHEET_NAME_3,
+                clear_sheet=True,
+                start_cell=START_CELL_3,
+                include_headers=INCLUDE_HEADERS_3
+            )
+
+            if success:
+                print(f"✓ Successfully uploaded data to '{SHEET_NAME_3}' sheet at {START_CELL_3}!")
+            else:
+                print(f"✗ Upload to '{SHEET_NAME_3}' sheet failed.")
+
+        except Exception as e:
+            print(f"ERROR with Google Sheets operation: {e}")
+    else:
+        print("Query 3 failed to execute.")
+
     print("\n" + "=" * 70)
     print("PROCESSING COMPLETE")
     print("=" * 70)
