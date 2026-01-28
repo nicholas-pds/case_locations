@@ -46,3 +46,6 @@ output/
 *.swp
 *~
 .DS_Stores
+
+# Claude Code
+.claude/
