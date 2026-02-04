@@ -5,6 +5,7 @@ import pandas as pd
 from .db_handler import execute_sql_to_dataframe
 from .sheets_handler import SheetsHandler
 from .holidays import previous_business_day
+from .date_parser import process_dataframe, sort_by_follow_up_date
 
 def main():
     """Main function to orchestrate the daily process."""
@@ -14,6 +15,7 @@ def main():
     SQL_FILE_PATH_1 = BASE_DIR.parent / "sql_query" / "case_locs_1.sql"
     SQL_FILE_PATH_2 = BASE_DIR.parent / "sql_query" / "cases_Prod_and_Invoiced.sql"
     SQL_FILE_PATH_3 = BASE_DIR.parent / "sql_query" / "case_locs_airway_1.sql"
+    SQL_FILE_PATH_4 = BASE_DIR.parent / "sql_query" / "airway_hold_status_1.sql"
     
     # --- Configuration ---
     # Query 1 Configuration
@@ -35,6 +37,11 @@ def main():
     SHEET_NAME_3 = "Report 4"
     START_CELL_3 = "A1"
     INCLUDE_HEADERS_3 = True
+
+    # Query 4 Configuration
+    SHEET_NAME_4 = "Report 5"
+    START_CELL_4 = "A1"
+    INCLUDE_HEADERS_4 = True
     # ---------------------------------------------------
     
     # Initialize the sheets handler once (reads credentials from .env)
@@ -283,6 +290,77 @@ def main():
             print(f"ERROR with Google Sheets operation: {e}")
     else:
         print("Query 3 failed to execute.")
+
+    # ========================================================================
+    # QUERY 4: airway_hold_status_1.sql → "Report 5" sheet (A1, with headers)
+    # ========================================================================
+    print("\n" + "=" * 70)
+    print("PROCESSING QUERY 4: airway_hold_status_1.sql")
+    print("=" * 70)
+    print(f"Attempting to load SQL file from: {SQL_FILE_PATH_4}")
+
+    query_4_success = False
+    try:
+        data_df_4 = execute_sql_to_dataframe(str(SQL_FILE_PATH_4))
+        query_4_success = True
+    except FileNotFoundError:
+        print(f"ERROR: SQL file not found at: {SQL_FILE_PATH_4}")
+        data_df_4 = pd.DataFrame()
+    except Exception as e:
+        print(f"ERROR during database operation: {e}")
+        data_df_4 = pd.DataFrame()
+
+    if query_4_success:
+        print(f"Total rows retrieved: {len(data_df_4)}")
+
+        if not data_df_4.empty:
+            print("\n--- DataFrame Head (Before Processing) ---")
+            print(data_df_4.head())
+
+            # Rename 'TYPE' column to 'FollowUpType'
+            print("\n--- Renaming 'TYPE' column to 'FollowUpType' ---")
+            if 'TYPE' in data_df_4.columns:
+                data_df_4 = data_df_4.rename(columns={'TYPE': 'FollowUpType'})
+                print("Column renamed successfully")
+            else:
+                print("WARNING: 'TYPE' column not found in DataFrame")
+
+            # Add FollowUpDate column by parsing HoldReason
+            print("\n--- Adding 'FollowUpDate' column (parsed from HoldReason) ---")
+            data_df_4 = process_dataframe(data_df_4)
+            fu_date_count = data_df_4['FollowUpDate'].notna().sum()
+            print(f"Parsed {fu_date_count} follow-up date(s) from HoldReason")
+
+            # Sort by FollowUpType and FollowUpDate
+            print("\n--- Sorting by FollowUpType and FollowUpDate ---")
+            data_df_4 = sort_by_follow_up_date(data_df_4)
+            print("Sorted: FollowUpType cases first, ordered by FollowUpDate")
+
+            print("\n--- DataFrame Head (After Processing) ---")
+            print(data_df_4.head())
+        else:
+            print("Query returned 0 rows - will write headers only")
+
+        # Upload to Google Sheets at A1 with headers
+        print(f"\n--- Uploading Query 4 to Google Sheets ('{SHEET_NAME_4}' at {START_CELL_4}, with headers) ---")
+        try:
+            success = sheets.write_dataframe_to_sheet(
+                df=data_df_4,
+                sheet_name=SHEET_NAME_4,
+                clear_sheet=True,
+                start_cell=START_CELL_4,
+                include_headers=INCLUDE_HEADERS_4
+            )
+
+            if success:
+                print(f"✓ Successfully uploaded data to '{SHEET_NAME_4}' sheet at {START_CELL_4}!")
+            else:
+                print(f"✗ Upload to '{SHEET_NAME_4}' sheet failed.")
+
+        except Exception as e:
+            print(f"ERROR with Google Sheets operation: {e}")
+    else:
+        print("Query 4 failed to execute.")
 
     print("\n" + "=" * 70)
     print("PROCESSING COMPLETE")
