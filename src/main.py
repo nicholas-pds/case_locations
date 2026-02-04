@@ -52,7 +52,7 @@ def main():
         return
     
     # ========================================================================
-    # QUERY 1: case_locs_1.sql → "Report" sheet (C6, no headers)
+    # QUERY 1: case_locs_1.sql -> "Report" sheet (C6, no headers)
     # ========================================================================
     print("=" * 70)
     print("PROCESSING QUERY 1: case_locs_1.sql")
@@ -101,7 +101,7 @@ def main():
             if CATEGORY_COLUMN in data_df_1.columns:
                 before_count = (data_df_1[CATEGORY_COLUMN] == 'Airway').sum()
                 data_df_1[CATEGORY_COLUMN] = data_df_1[CATEGORY_COLUMN].replace('Airway', 'MARPE')
-                print(f"Replaced {before_count} instance(s) of 'Airway' → 'MARPE'")
+                print(f"Replaced {before_count} instance(s) of 'Airway' -> 'MARPE'")
                 
                 # Fill missing values in Category Column with 'Other'
                 print("\n--- Filling Missing Values in Category Column ---")
@@ -159,7 +159,7 @@ def main():
         print("Query 1 data extraction failed or returned empty result.")
     
     # ========================================================================
-    # QUERY 2: cases_Prod_and_Invoiced.sql → "Report 3" sheet (A1, with headers)
+    # QUERY 2: cases_Prod_and_Invoiced.sql -> "Report 3" sheet (A1, with headers)
     # ========================================================================
     print("\n" + "=" * 70)
     print("PROCESSING QUERY 2: cases_Prod_and_Invoiced.sql")
@@ -243,7 +243,7 @@ def main():
         print("Query 2 failed to execute.")
 
     # ========================================================================
-    # QUERY 3: case_locs_airway_1.sql → "Report 4" sheet (A1, with headers)
+    # QUERY 3: case_locs_airway_1.sql -> "Report 4" sheet (A1, with headers)
     # ========================================================================
     print("\n" + "=" * 70)
     print("PROCESSING QUERY 3: case_locs_airway_1.sql")
@@ -292,7 +292,7 @@ def main():
         print("Query 3 failed to execute.")
 
     # ========================================================================
-    # QUERY 4: airway_hold_status_1.sql → "Report 5" sheet (A1, with headers)
+    # QUERY 4: airway_hold_status_1.sql -> "Report 5" sheet (A1, with headers)
     # ========================================================================
     print("\n" + "=" * 70)
     print("PROCESSING QUERY 4: airway_hold_status_1.sql")
