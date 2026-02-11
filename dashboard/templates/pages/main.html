@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Case Locations{% endblock %}
+
+{% block content %}
+<div x-data="{ activeFilter: null, selectedLocation: null }">
+
+  <!-- Filter Bar -->
+  <div class="page-header">
+    <div class="filter-bar">
+      <button class="btn btn-rush"
+              :class="{ active: activeFilter === 'rush' }"
+              @click="activeFilter = activeFilter === 'rush' ? null : 'rush'; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })"
+              >
+        Rush
+      </button>
+      <button class="btn btn-overdue"
+              :class="{ active: activeFilter === 'overdue' }"
+              @click="activeFilter = activeFilter === 'overdue' ? null : 'overdue'; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })"
+              >
+        Overdue
+      </button>
+      <button class="btn btn-leaves"
+              :class="{ active: activeFilter === 'leaves_today' }"
+              @click="activeFilter = activeFilter === 'leaves_today' ? null : 'leaves_today'; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })"
+              >
+        Leaves Today
+      </button>
+      <button class="btn btn-view-all"
+              :class="{ active: activeFilter === null }"
+              @click="activeFilter = null; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })"
+              >
+        View All
+      </button>
+    </div>
+  </div>
+
+  <!-- Split Layout -->
+  <div class="split-layout">
+    <!-- Left: Location Grid -->
+    <div class="split-left">
+      <div id="location-grid"
+           hx-get="/partials/location-grid"
+           hx-trigger="sse:data-refreshed, filter-changed"
+           hx-include="[name='filter']"
+           hx-swap="innerHTML">
+        {% include "partials/location_grid.html" %}
+      </div>
+    </div>
+
+    <!-- Right: Data Table -->
+    <div class="split-right">
+      <div class="table-container">
+        <div class="table-header-bar">
+          <input type="search" class="search-input" placeholder="Case #"
+                 name="search"
+                 hx-get="/partials/case-table"
+                 hx-trigger="keyup changed delay:300ms"
+                 hx-target="#case-table-content"
+                 hx-include="[name='filter'],[name='location'],[name='category']">
+          <select name="location" class="filter-select"
+                  hx-get="/partials/case-table"
+                  hx-trigger="change"
+                  hx-target="#case-table-content"
+                  hx-include="[name='search'],[name='filter'],[name='category']">
+            <option value="">All Locations</option>
+            {% for loc in all_locations %}
+            <option value="{{ loc }}">{{ loc }}</option>
+            {% endfor %}
+          </select>
+          <select name="category" class="filter-select"
+                  hx-get="/partials/case-table"
+                  hx-trigger="change"
+                  hx-target="#case-table-content"
+                  hx-include="[name='search'],[name='filter'],[name='location']">
+            <option value="">All Categories</option>
+            {% for cat in all_categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+          <input type="hidden" name="filter" :value="activeFilter || ''">
+        </div>
+
+        <div id="case-table-content"
+             hx-get="/partials/case-table"
+             hx-trigger="sse:data-refreshed, filter-changed"
+             hx-include="[name='filter'],[name='search'],[name='location'],[name='category']"
+             hx-swap="innerHTML">
+          {% include "partials/case_table.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

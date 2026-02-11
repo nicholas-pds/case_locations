@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Workload Preview{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const chartData = {{ chart_data | safe }};
+    initWorkloadChart(chartData);
+  });
+
+  // Refresh chart on SSE
+  document.body.addEventListener('sse:data-refreshed', async function() {
+    const resp = await fetch('/partials/workload-chart-data');
+    const data = await resp.json();
+    updateWorkloadChart(data);
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Workload Preview - Cases Invoiced & In Production</h1>
+</div>
+
+<!-- Stacked Bar Chart -->
+<div class="chart-container">
+  <canvas id="workloadChart"></canvas>
+</div>
+
+<!-- Category Breakdown Table -->
+<div class="card" id="workload-table-container"
+     hx-get="/partials/workload-table"
+     hx-trigger="sse:data-refreshed"
+     hx-swap="innerHTML">
+  {% include "partials/workload_table.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Local Delivery{% endblock %}
+
+{% block content %}
+<div x-data="{ activeFilter: null }">
+  <div class="page-header">
+    <h1 class="page-title">Local Delivery Cases</h1>
+    <div class="filter-bar">
+      <span class="text-secondary fw-600">{{ total_cases }} cases</span>
+      <input type="hidden" name="filter" :value="activeFilter || ''">
+      <button class="btn btn-overdue"
+              :class="{ active: activeFilter === 'overdue' }"
+              @click="activeFilter = activeFilter === 'overdue' ? null : 'overdue'; $nextTick(() => htmx.trigger('#local-delivery-content', 'filter-changed'))">
+        Overdue
+      </button>
+      <button class="btn btn-leaves"
+              :class="{ active: activeFilter === 'leaves_today' }"
+              @click="activeFilter = activeFilter === 'leaves_today' ? null : 'leaves_today'; $nextTick(() => htmx.trigger('#local-delivery-content', 'filter-changed'))">
+        Leaves Today
+      </button>
+      <button class="btn btn-view-all"
+              :class="{ active: activeFilter === null }"
+              @click="activeFilter = null; $nextTick(() => htmx.trigger('#local-delivery-content', 'filter-changed'))">
+        View All
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <div id="local-delivery-content"
+         hx-get="/partials/local-delivery-table"
+         hx-trigger="sse:data-refreshed, filter-changed"
+         hx-include="[name='filter']"
+         hx-swap="innerHTML">
+      {% include "partials/local_delivery_table.html" %}
+    </div>
+  </div>
+</div>
+{% endblock %}

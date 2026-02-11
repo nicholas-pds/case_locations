@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Dashboard{% endblock %} - Partners Dental</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  {% block extra_css %}{% endblock %}
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+</head>
+<body hx-ext="sse" sse-connect="/sse/stream">
+  <nav class="nav">
+    <a href="/" class="nav-brand">Partners Dental</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link {% if active_page == 'main' %}active{% endif %}">Case Locations</a>
+      <a href="/workload" class="nav-link {% if active_page == 'workload' %}active{% endif %}">Workload</a>
+      <div class="nav-dropdown">
+        <a href="/airway" class="nav-link {% if active_page in ['airway', 'airway-hold'] %}active{% endif %}">Airway &#9662;</a>
+        <div class="nav-dropdown-menu">
+          <a href="/airway" class="nav-link">Workflow</a>
+          <a href="/airway-hold" class="nav-link">Hold Status</a>
+        </div>
+      </div>
+      <a href="/local-delivery" class="nav-link {% if active_page == 'local-delivery' %}active{% endif %}">Local Delivery</a>
+      <a href="/overdue-noscan" class="nav-link {% if active_page == 'overdue-noscan' %}active{% endif %}">Overdue</a>
+    </div>
+    <div class="nav-meta">
+      <div class="nav-badge"
+           hx-get="/partials/metadata"
+           hx-trigger="sse:data-refreshed"
+           hx-swap="innerHTML">
+        <span class="refresh-dot" id="refresh-dot"></span>
+        {% if metadata and metadata.last_refresh %}
+          <span>{{ metadata.last_refresh | fmt_datetime }}</span>
+        {% else %}
+          <span>Loading...</span>
+        {% endif %}
+      </div>
+      <a href="/logout" class="nav-link" style="font-size:12px;">Logout</a>
+    </div>
+  </nav>
+
+  {% if metadata and metadata.is_paused %}
+  <div class="banner banner-warning">
+    Data refresh paused - outside business hours (6 AM - 6 PM).
+    {% if metadata.last_refresh %}Showing data from {{ metadata.last_refresh | fmt_time }}.{% endif %}
+  </div>
+  {% endif %}
+
+  {% if metadata and metadata.refresh_error %}
+  <div class="banner banner-error">
+    Unable to connect to database. {{ metadata.refresh_error }}
+    {% if metadata.last_refresh %}Showing data from {{ metadata.last_refresh | fmt_time }}.{% endif %}
+  </div>
+  {% endif %}
+
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block extra_js %}{% endblock %}
+
+  <script>
+    // Pulse the refresh dot on SSE data-refreshed event
+    document.body.addEventListener('sse:data-refreshed', function() {
+      const dot = document.getElementById('refresh-dot');
+      if (dot) {
+        dot.classList.remove('pulse');
+        void dot.offsetWidth; // trigger reflow
+        dot.classList.add('pulse');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{% for group_name, stage_list in stages.items() %}
+<div class="stage-section">
+  <div class="stage-section-title">{{ group_name }}</div>
+  <div class="stage-grid">
+    {% for stage in stage_list %}
+    <div class="stage-card"
+         hx-get="/partials/airway-table?location={{ stage.name | urlencode }}"
+         hx-target="#airway-table-content"
+         hx-swap="innerHTML">
+      <div class="stage-name">{{ stage.name }}</div>
+      <div class="stage-count">{{ stage.total }}</div>
+      {% if stage.by_date %}
+      <ul class="stage-dates">
+        {% for date_str, count in stage.by_date.items() %}
+        <li>{{ date_str }} ({{ count }})</li>
+        {% endfor %}
+        {% if stage.extra_dates > 0 %}
+        <li class="extra">... and {{ stage.extra_dates }} more</li>
+        {% endif %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}

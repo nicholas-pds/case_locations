@@ -1,0 +1,39 @@
+<div class="table-scroll" style="max-height: calc(100vh - 220px);">
+  <table>
+    <thead>
+      <tr>
+        <th>Case #</th>
+        <th>Pan #</th>
+        <th>Category</th>
+        <th>Last Scan Time</th>
+        <th>Last Task</th>
+        <th>Last Location</th>
+        <th>Ship Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for case in cases %}
+      <tr class="{% if case.get('IsRush') %}rush-row{% endif %} {% if case.get('IsOverdue') %}overdue-row{% endif %}">
+        <td class="mono">{{ case.get('Case Number', '') }}</td>
+        <td class="mono">{{ case.get('Pan Number', '') }}</td>
+        <td>{{ case.get('Category', '') }}</td>
+        <td>{{ case.get('Last Scan Time', '') | fmt_time }}</td>
+        <td>{{ case.get('Last Task Completed', '') }}</td>
+        <td>{{ case.get('Last Location', '') }}</td>
+        <td>{{ case.get('Ship Date', '') | fmt_date }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not cases %}
+  <div class="empty-state">
+    <p>No cases match the current filters</p>
+    <small>Try adjusting your filters or click View All</small>
+  </div>
+  {% endif %}
+</div>
+
+<div class="table-footer">
+  <span>{{ cases | length }} of {{ total_cases }} cases</span>
+</div>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Airway Hold Status{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="/static/css/airway.css">{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Airway Hold Status Report</h1>
+</div>
+
+<div class="filter-bar mb-24">
+  <button class="btn btn-reset"
+          hx-get="/partials/airway-hold-table"
+          hx-target="#airway-hold-content"
+          hx-swap="innerHTML">
+    Reset Filters
+  </button>
+  <select name="hold_status" class="filter-select"
+          hx-get="/partials/airway-hold-table"
+          hx-trigger="change"
+          hx-target="#airway-hold-content">
+    <option value="">All Hold Statuses</option>
+    {% for hs in hold_statuses %}
+    <option value="{{ hs }}">{{ hs }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<div class="table-container">
+  <div id="airway-hold-content"
+       hx-get="/partials/airway-hold-table"
+       hx-trigger="sse:data-refreshed"
+       hx-include="[name='hold_status']"
+       hx-swap="innerHTML">
+    {% include "partials/airway_hold_table.html" %}
+  </div>
+</div>
+{% endblock %}

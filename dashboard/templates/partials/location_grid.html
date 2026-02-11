@@ -1,0 +1,49 @@
+<div class="location-grid">
+{% for loc in locations %}
+  {% set status_color = '#27AE60' if loc.total < 15 else '#F39C12' if loc.total < 50 else '#E74C3C' %}
+  {% set cats = loc.categories %}
+  {% set total = loc.total if loc.total > 0 else 1 %}
+
+  {# Build conic-gradient segments #}
+  {% set ns = namespace(segments=[], angle=0) %}
+  {% for cat_name, count in cats.items() %}
+    {% set color = category_colors.get(cat_name, '#B0BEC5') %}
+    {% set pct = (count / total * 360) %}
+    {% set ns.segments = ns.segments + [color ~ ' ' ~ ns.angle ~ 'deg ' ~ (ns.angle + pct) ~ 'deg'] %}
+    {% set ns.angle = ns.angle + pct %}
+  {% endfor %}
+  {% if not cats %}
+    {% set ns.segments = ['#D5D8DC 0deg 360deg'] %}
+  {% endif %}
+
+  <div class="location-card"
+       hx-get="/partials/case-table?location={{ loc.name | urlencode }}"
+       hx-target="#case-table-content"
+       hx-swap="innerHTML">
+    <div class="donut" style="background: conic-gradient({{ ns.segments | join(', ') }}); box-shadow: 0 0 0 3px {{ status_color }}; border-radius: 50%;">
+      <div class="donut-center">{{ loc.total }}</div>
+    </div>
+    <div class="location-name" title="{{ loc.name }}">{{ loc.name }}</div>
+    <div class="cat-dots">
+      {% for cat_name, count in cats.items() %}
+        {% if loop.index <= 4 %}
+        <span class="cat-dot">
+          <span class="cat-dot-color" style="background:{{ category_colors.get(cat_name, '#B0BEC5') }}"></span>
+          {{ count }}
+        </span>
+        {% endif %}
+      {% endfor %}
+      {% if cats | length > 4 %}
+        <span class="cat-dot text-muted">+{{ cats | length - 4 }}</span>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+
+{% if not locations %}
+<div class="empty-state">
+  <p>No cases match the current filters</p>
+  <small>Try adjusting your filters or click View All</small>
+</div>
+{% endif %}
+</div>

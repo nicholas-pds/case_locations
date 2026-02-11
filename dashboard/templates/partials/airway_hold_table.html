@@ -1,0 +1,46 @@
+<div class="table-scroll" style="max-height: calc(100vh - 220px);">
+  <table class="airway-table">
+    <thead>
+      <tr>
+        <th>Case #</th>
+        <th>Pan #</th>
+        <th>Doctor</th>
+        <th>Patient</th>
+        <th>Create Date</th>
+        <th>Ship Date</th>
+        <th>Hold Date</th>
+        <th>Hold Status</th>
+        <th>Hold Reason</th>
+        <th>Type</th>
+        <th>Follow-Up Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for case in cases %}
+      <tr>
+        <td class="mono">{{ case.get('CaseNumber', '') }}</td>
+        <td class="mono">{{ case.get('PanNumber', '') }}</td>
+        <td>{{ case.get('DoctorName', '') }}</td>
+        <td>{{ case.get('PatientName', '') }}</td>
+        <td>{{ case.get('CreateDate', '') | fmt_date }}</td>
+        <td>{{ case.get('ShipDate', '') | fmt_date }}</td>
+        <td>{{ case.get('HoldDate', '') | fmt_date }}</td>
+        <td>{{ case.get('HoldStatus', '') }}</td>
+        <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ case.get('HoldReason', '') }}">{{ case.get('HoldReason', '') }}</td>
+        <td>{{ case.get('FollowUpType', '') }}</td>
+        <td>{{ case.get('FollowUpDate', '') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not cases %}
+  <div class="empty-state">
+    <p>No airway hold cases found</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="table-footer">
+  <span>{{ cases | length }} cases</span>
+</div>

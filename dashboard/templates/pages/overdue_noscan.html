@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Overdue - No Scan 4 Hours{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Overdue Cases - No Scan Last 4 Hours</h1>
+  <span class="text-secondary fw-600">{{ total_cases }} cases</span>
+</div>
+
+<div class="two-col">
+  <div class="table-container">
+    <div id="overdue-content"
+         hx-get="/partials/overdue-table"
+         hx-trigger="sse:data-refreshed"
+         hx-swap="innerHTML">
+      {% include "partials/overdue_table.html" %}
+    </div>
+  </div>
+
+  <div class="filter-panel">
+    <h3>Active Filters</h3>
+    <ul>
+      <li>Only overdue cases</li>
+      <li>Status = In Production</li>
+      <li>No task scan in the last 4 hours</li>
+      <li>Not in QC location</li>
+      <li>Exclude Airway Design & Planning</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

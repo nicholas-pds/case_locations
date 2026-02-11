@@ -1,0 +1,37 @@
+<div class="table-scroll">
+  <table class="pivot-table">
+    <thead>
+      <tr>
+        <th>Category</th>
+        {% for d in pivot_data.dates %}
+        <th>{{ d }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for cat in pivot_data.categories %}
+      <tr>
+        <td>{{ cat }}</td>
+        {% for val in pivot_data.data.get(cat, []) %}
+        <td>{% if val > 0 %}{{ val }}{% else %}-{% endif %}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+
+      {% if pivot_data.categories %}
+      <tr class="total-row">
+        <td>TOTAL</td>
+        {% for i in range(pivot_data.dates | length) %}
+        <td>{{ pivot_data.totals.get(i, 0) }}</td>
+        {% endfor %}
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  {% if not pivot_data.categories %}
+  <div class="empty-state">
+    <p>No workload data available</p>
+  </div>
+  {% endif %}
+</div>

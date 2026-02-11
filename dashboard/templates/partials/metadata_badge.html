@@ -1,0 +1,6 @@
+<span class="refresh-dot pulse" id="refresh-dot"></span>
+{% if metadata and metadata.last_refresh %}
+  <span>{{ metadata.last_refresh | fmt_datetime }}</span>
+{% else %}
+  <span>Loading...</span>
+{% endif %}
