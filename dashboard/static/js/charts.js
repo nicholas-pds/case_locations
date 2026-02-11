@@ -1,6 +1,11 @@
 // Workload stacked bar chart
 let workloadChart = null;
 
+// Register datalabels plugin globally (if available)
+if (typeof ChartDataLabels !== 'undefined') {
+  Chart.register(ChartDataLabels);
+}
+
 function initWorkloadChart(data) {
   const ctx = document.getElementById('workloadChart');
   if (!ctx) return;
@@ -42,6 +47,22 @@ function initWorkloadChart(data) {
           bodyFont: { family: 'Inter', size: 12 },
           padding: 12,
           cornerRadius: 6,
+        },
+        datalabels: {
+          color: '#FFFFFF',
+          font: {
+            family: 'Inter',
+            size: 12,
+            weight: '700',
+          },
+          anchor: 'center',
+          align: 'center',
+          display: function(context) {
+            return context.dataset.data[context.dataIndex] > 0;
+          },
+          formatter: function(value) {
+            return value;
+          },
         }
       },
       scales: {

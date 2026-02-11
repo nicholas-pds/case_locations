@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from dashboard.data.cache import cache
-from dashboard.data.transforms import filter_local_delivery, add_filter_columns
+from dashboard.data.transforms import filter_local_delivery_today, add_filter_columns
 
 router = APIRouter()
 
@@ -12,7 +12,7 @@ async def local_delivery_page(request: Request):
     metadata = await cache.get_metadata()
 
     if df is not None and not df.empty:
-        df = filter_local_delivery(df)
+        df = filter_local_delivery_today(df)
         if not df.empty and 'IsRush' not in df.columns:
             df = add_filter_columns(df)
         total_cases = len(df)

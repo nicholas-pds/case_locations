@@ -1,6 +1,33 @@
 # src/holidays.py
+import csv
+import logging
 from datetime import datetime, date, timedelta
+from pathlib import Path
 from typing import Set
+
+logger = logging.getLogger(__name__)
+
+# Path to the company holidays CSV file (project root)
+_CSV_PATH = Path(__file__).parent.parent / "company_holidays.csv"
+
+
+def _load_holidays_from_csv() -> Set[date]:
+    """Load holidays from the CSV file. Returns empty set if file not found."""
+    holidays = set()
+    if not _CSV_PATH.exists():
+        return holidays
+    try:
+        with open(_CSV_PATH, newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                try:
+                    holidays.add(date.fromisoformat(row['date'].strip()))
+                except (ValueError, KeyError):
+                    continue
+    except Exception as e:
+        logger.warning(f"Failed to read holidays CSV: {e}")
+        return set()
+    return holidays
 
 
 def get_company_holidays(year: int) -> Set[date]:
@@ -58,12 +85,16 @@ def get_company_holidays(year: int) -> Set[date]:
 
 def get_all_company_holidays(start_year: int = 2025, end_year: int = None) -> Set[date]:
     """
-    Combines holidays from multiple years into one set.
-    Safe for checking dates across year boundaries.
+    Returns company holidays. Loads from company_holidays.csv if available,
+    otherwise falls back to the computed/hardcoded calendar.
     """
-    if end_year is None:
-        end_year = date.today().year + 2  # future-proof
+    csv_holidays = _load_holidays_from_csv()
+    if csv_holidays:
+        return csv_holidays
 
+    # Fallback: computed holidays
+    if end_year is None:
+        end_year = date.today().year + 2
     all_holidays: Set[date] = set()
     for y in range(start_year, end_year + 1):
         all_holidays.update(get_company_holidays(y))

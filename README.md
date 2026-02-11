@@ -186,13 +186,53 @@ The dashboard will automatically pause data queries outside of 6 AM - 6 PM.
 | Filter | What it Shows |
 |--------|---------------|
 | **Rush** | Cases where Pan Number starts with "R" and is less than 4 characters |
-| **Leaves Today** | Cases with Ship Date = previous business day |
-| **Overdue** | Cases with Ship Date before previous business day |
+| **Leaves Today** | Cases with Ship Date = today |
+| **Overdue** | Cases with Ship Date = previous business day, plus rush cases shipping today |
 | **View All** | All cases (clears filters) |
+
+### Company Holidays
+
+Holidays are defined in `company_holidays.csv` at the project root. The file controls which days are skipped when calculating the previous business day (used by the Overdue and Leaves Today filters).
+
+To add a holiday, open the CSV and add a new row:
+```csv
+2027-01-01,New Year's Day
+```
+
+The format is `YYYY-MM-DD,Holiday Name`. The dashboard will automatically pick up changes on the next data refresh (every 60 seconds).
+
+### Network Access (Accessing from Other Computers)
+
+The dashboard server binds to `0.0.0.0` (all network interfaces) by default. However, **Windows Firewall** blocks incoming connections. You must create a firewall rule to allow other computers on the network to access the dashboard.
+
+**Option 1: PowerShell (Run as Administrator)**
+
+```powershell
+New-NetFirewallRule -DisplayName "Partners Dashboard (TCP 8050)" -Direction Inbound -Protocol TCP -LocalPort 8050 -Action Allow
+```
+
+**Option 2: Windows Firewall GUI**
+
+1. Open **Windows Defender Firewall with Advanced Security** (search "wf.msc" in Start)
+2. Click **Inbound Rules** in the left panel
+3. Click **New Rule...** in the right panel
+4. Choose **Port** -> Next
+5. Choose **TCP**, enter **8050** in "Specific local ports" -> Next
+6. Choose **Allow the connection** -> Next
+7. Check all profiles (Domain, Private, Public) -> Next
+8. Name it **Partners Dashboard (TCP 8050)** -> Finish
+
+After creating the rule, other machines on the network can access `http://<server-IP>:8050`.
+
+To find the server's IP address, run in PowerShell:
+```powershell
+ipconfig
+```
+Look for the **IPv4 Address** under your active network adapter (e.g., `192.168.10.x`).
 
 ### Troubleshooting
 
-- **"Can't connect" / page won't load:** Check that the server is running. Check Windows Firewall allows port 8050.
+- **"Can't connect" / page won't load:** Check that the server is running. Check Windows Firewall allows port 8050 (see Network Access above).
 - **"Data not updating":** Check SQL Server is accessible at 192.168.10.5. Look at the server terminal for error messages.
 - **"Incorrect password":** Password is set in `.env` file as `DASHBOARD_PASSWORD`.
 - **Change the port:** Edit `DASHBOARD_PORT` in `.env` and restart the server.

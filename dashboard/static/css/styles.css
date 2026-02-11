@@ -308,16 +308,17 @@ body {
 
 .cat-dots {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
 }
 .cat-dot {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   font-size: 10px;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 .cat-dot-color {
   width: 8px;

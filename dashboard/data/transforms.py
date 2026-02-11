@@ -24,8 +24,19 @@ def is_rush(pan_number) -> bool:
     return pan.upper().startswith('R') and len(pan) < 4
 
 
-def is_leaves_today(ship_date, prev_biz_day: date = None) -> bool:
-    """Leaves Today = ShipDate equals the previous business day."""
+def is_leaves_today(ship_date, today: date = None) -> bool:
+    """Leaves Today = ShipDate equals today."""
+    if pd.isna(ship_date):
+        return False
+    if today is None:
+        today = date.today()
+    if hasattr(ship_date, 'date'):
+        ship_date = ship_date.date()
+    return ship_date == today
+
+
+def is_overdue(ship_date, prev_biz_day: date = None) -> bool:
+    """Overdue = ShipDate equals the previous business day."""
     if pd.isna(ship_date):
         return False
     if prev_biz_day is None:
@@ -35,26 +46,22 @@ def is_leaves_today(ship_date, prev_biz_day: date = None) -> bool:
     return ship_date == prev_biz_day
 
 
-def is_overdue(ship_date, prev_biz_day: date = None) -> bool:
-    """Overdue = ShipDate is before the previous business day."""
-    if pd.isna(ship_date):
-        return False
-    if prev_biz_day is None:
-        prev_biz_day = previous_business_day()
-    if hasattr(ship_date, 'date'):
-        ship_date = ship_date.date()
-    return ship_date < prev_biz_day
-
-
 def add_filter_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Add Rush, LeavesToday, Overdue boolean columns to the DataFrame."""
+    """Add Rush, LeavesToday, Overdue boolean columns to the DataFrame.
+
+    Overdue includes rush cases with ShipDate == today (same-day urgent).
+    """
     if df.empty:
         return df
     df = df.copy()
     prev_biz_day = previous_business_day()
+    today = date.today()
     df['IsRush'] = df['Pan Number'].apply(is_rush)
-    df['LeavesToday'] = df['Ship Date'].apply(lambda x: is_leaves_today(x, prev_biz_day))
+    df['LeavesToday'] = df['Ship Date'].apply(lambda x: is_leaves_today(x, today))
     df['IsOverdue'] = df['Ship Date'].apply(lambda x: is_overdue(x, prev_biz_day))
+    # Rush cases with ShipDate == today are also considered overdue
+    rush_today = df['IsRush'] & df['LeavesToday']
+    df['IsOverdue'] = df['IsOverdue'] | rush_today
     return df
 
 
@@ -118,15 +125,9 @@ def aggregate_by_location(df: pd.DataFrame) -> list[dict]:
             'categories': cats,
         }
 
-    # Order by display order, then add any extras
-    seen = set()
+    # Only include locations in the display order
     for loc in LOCATION_DISPLAY_ORDER:
         if loc in location_data:
-            result.append(location_data[loc])
-            seen.add(loc)
-
-    for loc in sorted(location_data.keys()):
-        if loc not in seen:
             result.append(location_data[loc])
 
     return result
@@ -169,6 +170,22 @@ def filter_local_delivery(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty or 'LocalDelivery' not in df.columns:
         return df
     return df[df['LocalDelivery'] == True].copy()
+
+
+def filter_local_delivery_today(df: pd.DataFrame) -> pd.DataFrame:
+    """Filter to local delivery cases shipping today only."""
+    df = filter_local_delivery(df)
+    if df.empty or 'Ship Date' not in df.columns:
+        return df
+    today = date.today()
+    df = df.copy()
+    def match_today(ship_date):
+        if pd.isna(ship_date):
+            return False
+        if hasattr(ship_date, 'date'):
+            ship_date = ship_date.date()
+        return ship_date == today
+    return df[df['Ship Date'].apply(match_today)]
 
 
 def filter_overdue_no_scan(df: pd.DataFrame) -> pd.DataFrame:

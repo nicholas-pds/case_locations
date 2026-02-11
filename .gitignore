@@ -39,6 +39,7 @@ output/
 
 # File type ignores
 *.csv
+!company_holidays.csv
 
 # Other common ignores
 *.log

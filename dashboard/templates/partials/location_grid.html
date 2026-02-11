@@ -29,7 +29,7 @@
         {% if loop.index <= 4 %}
         <span class="cat-dot">
           <span class="cat-dot-color" style="background:{{ category_colors.get(cat_name, '#B0BEC5') }}"></span>
-          {{ count }}
+          {{ cat_name }} {{ count }}
         </span>
         {% endif %}
       {% endfor %}

@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from dashboard.data.cache import cache
 from dashboard.data.transforms import (
     aggregate_by_location, filter_cases, add_filter_columns,
-    filter_local_delivery, filter_overdue_no_scan,
+    filter_local_delivery, filter_local_delivery_today, filter_overdue_no_scan,
     build_workload_chart_data, build_workload_pivot_table,
     aggregate_airway_stages,
 )
@@ -149,16 +149,12 @@ async def airway_hold_table(request: Request, hold_status: str = None):
 
 
 @router.get("/local-delivery-table", response_class=HTMLResponse)
-async def local_delivery_table(request: Request, filter: str = None):
+async def local_delivery_table(request: Request):
     df = await cache.get("case_locations")
     if df is not None and not df.empty:
-        df = filter_local_delivery(df)
+        df = filter_local_delivery_today(df)
         if not df.empty and 'IsRush' not in df.columns:
             df = add_filter_columns(df)
-        if filter == 'overdue':
-            df = df[df['IsOverdue']] if 'IsOverdue' in df.columns else df
-        elif filter == 'leaves_today':
-            df = df[df['LeavesToday']] if 'LeavesToday' in df.columns else df
         cases = df.to_dict('records')
         total_cases = len(cases)
     else:
