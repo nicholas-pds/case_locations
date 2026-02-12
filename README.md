@@ -131,6 +131,8 @@ Unlike the batch script (which runs every 15 minutes and writes to Google Sheets
 
 ### How to Start the Dashboard
 
+#### Windows
+
 **Option 1: Double-click the batch file**
 
 Double-click `run_dashboard.bat` in the project folder.
@@ -142,9 +144,28 @@ cd C:\Users\Partners\Desktop\repos\case_locations
 uv run python -m dashboard.run
 ```
 
+#### macOS
+
+**Prerequisites:**
+
+Install [Homebrew](https://brew.sh) if you don't have it, then install the required system dependency:
+
+```bash
+brew install unixodbc
+```
+
+**Start the dashboard:**
+
+```bash
+cd /path/to/case_locations
+uv run python -m dashboard.run
+```
+
+#### Access
+
 Once started, open a browser and go to:
 - **On the same machine:** `http://localhost:8050`
-- **From another computer on the network:** `http://<VM-IP-address>:8050`
+- **From another computer on the network:** `http://<IP-address>:8050`
 
 You'll see a login page. The password is configured in the `.env` file (`DASHBOARD_PASSWORD`).
 
