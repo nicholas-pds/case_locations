@@ -27,6 +27,7 @@
     <div class="cat-dots">
       {% for cat_name, count in cats.items() %}
         <span class="cat-dot"
+              onclick="event.stopPropagation()"
               hx-get="/partials/case-table?location={{ loc.name | urlencode }}&category={{ cat_name | urlencode }}"
               hx-target="#case-table-content"
               hx-swap="innerHTML">
