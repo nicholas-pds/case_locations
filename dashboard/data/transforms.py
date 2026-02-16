@@ -152,7 +152,8 @@ def aggregate_airway_stages(df: pd.DataFrame) -> dict:
                 for d, count in stage_df[date_col].value_counts().sort_index().items():
                     if pd.notna(d):
                         date_str = d.strftime(_DATE_FMT) if hasattr(d, 'strftime') else str(d)
-                        by_date[date_str] = int(count)
+                        iso_str = d.strftime('%Y-%m-%d') if hasattr(d, 'strftime') else str(d)
+                        by_date[date_str] = {'count': int(count), 'iso': iso_str}
             stages.append({
                 'name': loc,
                 'total': total,
@@ -361,9 +362,14 @@ def build_sales_history(df: pd.DataFrame, num_days: int = 5) -> list[dict]:
     if df.empty:
         return []
 
+    # Only use 'S' (sales/production) rows — 'I' (invoice) duplicates counts
+    df = df[df['Type'] == 'S']
+    if df.empty:
+        return []
+
     holidays = get_all_company_holidays()
 
-    # Aggregate per date across all LabNames and Types
+    # Aggregate per date across all LabNames
     daily = df.groupby('SalesDate').agg(
         invoice_count=('NumberOfInvoices', 'sum'),
         subtotal=('SubTotal', 'sum'),

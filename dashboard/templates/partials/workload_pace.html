@@ -2,14 +2,14 @@
   <h3 class="pace-title">Daily Completion Pace</h3>
   {% for day in pace_data %}
   <div class="pace-row">
-    <div class="pace-label">{{ day.label }}</div>
+    <div class="pace-header">
+      <span class="pace-label">{{ day.label }}</span>
+      <span class="pace-pct-badge pace-pct-badge-{{ day.status }}">{{ day.pct|int }}%</span>
+    </div>
     <div class="pace-bar-container">
       <div class="pace-bar pace-bar-{{ day.status }}" style="width: {{ day.pct }}%"></div>
     </div>
-    <div class="pace-stat">
-      <span class="pace-count">{{ day.invoiced }} / {{ day.total }}</span>
-      <span class="pace-pct">({{ day.pct }}%)</span>
-    </div>
+    <div class="pace-detail">{{ day.invoiced }} invoiced of {{ day.total }} total</div>
   </div>
   {% endfor %}
 

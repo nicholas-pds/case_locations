@@ -144,11 +144,18 @@ async def airway_grid(request: Request):
 
 
 @router.get("/airway-table", response_class=HTMLResponse)
-async def airway_table(request: Request, location: str = None):
+async def airway_table(request: Request, location: str = None, ship_date: str = None):
     df = await cache.get("airway_workflow")
     if df is not None and not df.empty:
         if location:
             df = df[df['LastLocation'] == location]
+        if ship_date:
+            from datetime import datetime as dt
+            try:
+                target = dt.strptime(ship_date, "%Y-%m-%d").date()
+                df = df[df['ShipDate'] == target]
+            except ValueError:
+                pass
         cases = df.to_dict('records')[:100]
     else:
         cases = []

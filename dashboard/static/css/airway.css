@@ -1,4 +1,4 @@
-/* === Airway Theme (Pink/Magenta) - TV-Optimized === */
+/* === Airway Theme (Pink/Magenta) === */
 :root {
   --airway-primary: #E91E63;
   --airway-light: #FCE4EC;
@@ -6,27 +6,7 @@
   --airway-text: #880E4F;
 }
 
-/* === TV Dashboard Layout === */
-.airway-dashboard {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 80px);
-}
-
-.airway-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-shrink: 0;
-}
-
-.airway-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
+/* === Total Cases Badge === */
 .airway-total {
   display: flex;
   align-items: baseline;
@@ -36,135 +16,105 @@
   border-radius: 8px;
   border-left: 4px solid var(--airway-primary);
 }
-
 .airway-total-count {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--airway-dark);
 }
-
 .airway-total-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--airway-text);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* === 3-Column Grid === */
-.airway-columns {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  flex: 1;
-  min-height: 0;
+/* === Stage Section Groups === */
+.stage-section {
+  margin-bottom: 24px;
 }
-
-.airway-column {
-  background: var(--bg-card);
-  border-radius: 10px;
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.airway-column-header {
-  font-size: 13px;
-  font-weight: 700;
+.stage-section-title {
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: var(--text-on-dark);
-  background: var(--airway-primary);
-  padding: 14px 20px;
-  text-align: center;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding-left: 4px;
 }
 
-.airway-column-body {
-  flex: 1;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
+/* === Stage Cards Grid === */
+.stage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
+  margin-bottom: 16px;
 }
 
-/* === Stage Rows === */
-.airway-stage-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
+.stage-card {
   background: var(--airway-light);
   border-radius: 8px;
+  padding: 14px 16px;
   border-left: 4px solid var(--airway-primary);
   transition: all 0.2s;
 }
-
-.airway-stage-row:hover {
-  box-shadow: 0 2px 8px rgba(233, 30, 99, 0.15);
+.stage-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
 }
 
-.airway-stage-info {
-  flex: 1;
-  min-width: 0;
+.stage-card-header {
+  cursor: pointer;
 }
-
-.airway-stage-name {
-  font-size: 15px;
+.stage-name {
+  font-size: 12px;
   font-weight: 600;
   color: var(--airway-text);
   margin-bottom: 4px;
 }
-
-.airway-stage-count {
-  font-size: 36px;
+.stage-count {
+  font-size: 28px;
   font-weight: 700;
   color: var(--airway-dark);
-  line-height: 1;
-  flex-shrink: 0;
-  margin-left: 16px;
+  line-height: 1.1;
+  margin-bottom: 8px;
 }
 
-.airway-stage-dates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
+/* === Clickable Date Rows === */
+.stage-dates {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
-
-.airway-date-chip {
+.stage-dates li {
   font-size: 11px;
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.7);
-  padding: 2px 6px;
+  padding: 4px 6px;
   border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
 }
-
-.airway-date-extra {
+.stage-dates li:hover {
+  background: rgba(233, 30, 99, 0.1);
+  color: var(--airway-dark);
+}
+.stage-date-count {
+  font-weight: 600;
+}
+.stage-dates .extra {
   font-style: italic;
   color: var(--text-muted);
+  cursor: default;
 }
-
-/* === Column Footer === */
-.airway-column-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  border-top: 2px solid var(--airway-light);
-  background: #FAFAFA;
-}
-
-.airway-section-label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.stage-dates .extra:hover {
+  background: transparent;
   color: var(--text-muted);
 }
 
-.airway-section-total {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--airway-dark);
+/* === Airway Table Headers === */
+.airway-table thead th {
+  background: var(--airway-primary);
+}
+.airway-table thead th:hover {
+  background: var(--airway-dark);
 }

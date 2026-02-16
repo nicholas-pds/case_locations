@@ -105,17 +105,17 @@
 </div>
 
 <!-- Top metric cards -->
-<div class="summary-cards mb-24">
-  <div class="summary-card" style="border-left-color: #F39C12;">
+<div class="summary-cards">
+  <div class="summary-card summary-card-submitted">
     <div class="summary-label">Cases Submitted</div>
     <div class="summary-value">{{ submitted_count }}</div>
   </div>
   <div class="summary-card summary-card-production">
-    <div class="summary-label">In Production (Upcoming)</div>
+    <div class="summary-label">In Production</div>
     <div class="summary-value">{{ total_in_production }}</div>
   </div>
   <div class="summary-card summary-card-invoiced">
-    <div class="summary-label">Invoiced (Upcoming)</div>
+    <div class="summary-label">Invoiced</div>
     <div class="summary-value">{{ total_invoiced }}</div>
   </div>
 </div>
@@ -124,11 +124,11 @@
 <!-- Sales Charts - Side by Side -->
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
   <div class="chart-container" style="margin-bottom: 0;">
-    <h3 style="font-size:14px; font-weight:600; margin-bottom:12px;">Previous 5 Business Days - Invoice Count</h3>
+    <h3 class="chart-section-title">Previous 5 Business Days &mdash; Case Count</h3>
     <canvas id="salesCountChart" style="max-height:300px;"></canvas>
   </div>
   <div class="chart-container" style="margin-bottom: 0;">
-    <h3 style="font-size:14px; font-weight:600; margin-bottom:12px;">Previous 5 Business Days - Revenue</h3>
+    <h3 class="chart-section-title">Previous 5 Business Days &mdash; Revenue</h3>
     <canvas id="salesRevenueChart" style="max-height:300px;"></canvas>
   </div>
 </div>
