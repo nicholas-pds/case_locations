@@ -356,14 +356,14 @@ def build_workload_pivot_table(df: pd.DataFrame) -> dict:
 def build_sales_history(df: pd.DataFrame, num_days: int = 5) -> list[dict]:
     """Build last N business days of sales from daily_sales data.
 
-    Aggregates both 'I' (invoice) and 'S' (sales) rows per day.
-    Returns invoice count and subtotal per business day.
+    Uses Type 'I' (invoice) rows for accurate revenue and case counts.
+    Sums NumberOfInvoices and SubTotal across all LabNames per day.
     """
     if df.empty:
         return []
 
-    # Only use 'S' (sales/production) rows — 'I' (invoice) duplicates counts
-    df = df[df['Type'] == 'S']
+    # Use 'I' (invoice) rows for revenue and case counts
+    df = df[df['Type'] == 'I']
     if df.empty:
         return []
 
