@@ -146,57 +146,6 @@
       });
     }
 
-    // Pace Horizontal Bar Chart
-    const paceData = {{ pace_data | tojson }};
-    const paceCtx = document.getElementById('paceBarChart');
-    if (paceCtx && paceData.length) {
-      new Chart(paceCtx, {
-        type: 'bar',
-        data: {
-          labels: paceData.map(d => d.label),
-          datasets: [{
-            data: paceData.map(d => d.pct),
-            backgroundColor: paceData.map(d => d.status === 'ahead' ? '#27AE60' : '#E74C3C'),
-            borderRadius: 4,
-            barPercentage: 0.7,
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            datalabels: {
-              color: '#FFFFFF',
-              font: { family: 'Inter', size: 12, weight: '700' },
-              anchor: 'center',
-              align: 'center',
-              display: function(context) {
-                return context.dataset.data[context.dataIndex] > 0;
-              },
-              formatter: function(value) {
-                return Math.round(value) + '%';
-              }
-            }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              max: 100,
-              grid: { color: '#F0F0F0' },
-              ticks: {
-                font: { family: 'Inter', size: 11 },
-                callback: function(value) { return value + '%'; }
-              }
-            },
-            y: {
-              display: false,
-            }
-          }
-        }
-      });
-    }
   });
 </script>
 {% endblock %}
@@ -222,48 +171,41 @@
   </div>
 </div>
 
-<!-- Two-column layout -->
-<div class="daily-layout">
-  <!-- LEFT COLUMN: Charts stacked -->
-  <div>
-    {% if sales_history %}
-    <div class="chart-container">
-      <h3 class="chart-section-title">Previous 5 Business Days &mdash; Revenue</h3>
-      <canvas id="salesRevenueChart" style="max-height:250px;"></canvas>
-    </div>
-
-    <div class="chart-container" style="margin-bottom: 0;">
-      <h3 class="chart-section-title">Previous 5 Business Days &mdash; Case Count</h3>
-      <canvas id="salesCountChart" style="max-height:250px;"></canvas>
-    </div>
-    {% else %}
-    <div class="chart-container">
-      <div class="empty-state">
-        <p>No sales history data available</p>
-      </div>
-    </div>
-    {% endif %}
+<!-- Row 1: Revenue + Pace Tiles -->
+<div class="daily-row">
+  {% if sales_history %}
+  <div class="chart-container" style="margin-bottom: 0;">
+    <h3 class="chart-section-title">Previous 5 Business Days &mdash; Revenue</h3>
+    <canvas id="salesRevenueChart" style="max-height:250px;"></canvas>
   </div>
+  {% else %}
+  <div class="chart-container" style="margin-bottom: 0;">
+    <div class="empty-state"><p>No sales history data available</p></div>
+  </div>
+  {% endif %}
 
-  <!-- RIGHT COLUMN: Pace tiles + horizontal bar chart -->
-  <div>
-    <div class="pace-chart-split">
-      <!-- Pace tiles stacked vertically -->
-      <div class="pace-stack">
-        {% include "partials/workload_pace.html" %}
-      </div>
+  <div class="chart-container pace-compact" style="margin-bottom: 0;">
+    <h3 class="chart-section-title">Invoicing Pace</h3>
+    {% include "partials/workload_pace.html" %}
+  </div>
+</div>
 
-      <!-- Horizontal bar chart aligned with tiles -->
-      <div class="chart-container" style="margin-bottom: 0; display: flex; align-items: stretch;">
-        <canvas id="paceBarChart"></canvas>
-      </div>
-    </div>
+<!-- Row 2: Past Case Count + Future Total Cases -->
+<div class="daily-row">
+  {% if sales_history %}
+  <div class="chart-container" style="margin-bottom: 0;">
+    <h3 class="chart-section-title">Previous 5 Business Days &mdash; Case Count</h3>
+    <canvas id="salesCountChart" style="max-height:250px;"></canvas>
+  </div>
+  {% else %}
+  <div class="chart-container" style="margin-bottom: 0;">
+    <div class="empty-state"><p>No case count data available</p></div>
+  </div>
+  {% endif %}
 
-    <!-- Total Cases by Day (stacked: invoiced + in production) -->
-    <div class="chart-container" style="margin-top: 24px;">
-      <h3 class="chart-section-title">Total Cases by Day &mdash; Invoiced + In Production</h3>
-      <canvas id="totalCasesChart" style="max-height:280px;"></canvas>
-    </div>
+  <div class="chart-container" style="margin-bottom: 0;">
+    <h3 class="chart-section-title">Next 5 Business Days &mdash; Invoiced + In Production</h3>
+    <canvas id="totalCasesChart" style="max-height:250px;"></canvas>
   </div>
 </div>
 {% endblock %}

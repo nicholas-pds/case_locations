@@ -660,20 +660,37 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 }
 
 /* === Daily Summary Layout === */
-.daily-layout {
+.daily-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
+  margin-bottom: 24px;
 }
-.pace-chart-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: start;
+
+/* Compact pace tiles for side-by-side with revenue chart */
+.pace-compact .pace-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
 }
-.pace-stack .pace-grid {
-  grid-template-columns: 1fr;
+.pace-compact .pace-card {
+  padding: 12px 10px;
+  border-radius: 10px;
+}
+.pace-compact .pace-day {
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+.pace-compact .pace-fraction {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.pace-compact .pace-bar-container {
+  height: 6px;
+  margin-bottom: 4px;
+}
+.pace-compact .pace-pct {
+  font-size: 11px;
 }
 
 /* === Pace Visualization — Card Grid === */
