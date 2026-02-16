@@ -96,6 +96,56 @@
       });
     }
 
+    // Total Cases by Day (stacked bar)
+    const workloadData = {{ workload_chart_json | safe }};
+    const totalCtx = document.getElementById('totalCasesChart');
+    if (totalCtx && workloadData.labels && workloadData.labels.length) {
+      new Chart(totalCtx, {
+        type: 'bar',
+        data: {
+          labels: workloadData.labels,
+          datasets: [
+            {
+              label: 'Invoiced',
+              data: workloadData.invoiced,
+              backgroundColor: '#27AE60',
+              borderRadius: 4,
+            },
+            {
+              label: 'In Production',
+              data: workloadData.in_production,
+              backgroundColor: '#2196F3',
+              borderRadius: 4,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: { font: { family: 'Inter', size: 11 }, usePointStyle: true, pointStyle: 'rect' }
+            },
+            datalabels: {
+              color: '#FFFFFF',
+              font: { family: 'Inter', size: 11, weight: '700' },
+              anchor: 'center',
+              align: 'center',
+              display: function(context) {
+                return context.dataset.data[context.dataIndex] > 0;
+              },
+            }
+          },
+          scales: {
+            x: { stacked: true, grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+            y: { stacked: true, beginAtZero: true, grid: { color: '#F0F0F0' }, ticks: { font: { family: 'Inter', size: 11 } } }
+          }
+        }
+      });
+    }
+
     // Pace Horizontal Bar Chart
     const paceData = {{ pace_data | tojson }};
     const paceCtx = document.getElementById('paceBarChart');
@@ -174,14 +224,8 @@
 
 <!-- Two-column layout -->
 <div class="daily-layout">
-  <!-- LEFT COLUMN: Yesterday's Revenue + Charts stacked -->
+  <!-- LEFT COLUMN: Charts stacked -->
   <div>
-    <!-- Yesterday's Revenue Highlight -->
-    <div class="yesterday-revenue">
-      <div class="summary-label">Yesterday's Revenue</div>
-      <div class="summary-value">${{ "{:,.0f}".format(yesterday_revenue) }}</div>
-    </div>
-
     {% if sales_history %}
     <div class="chart-container">
       <h3 class="chart-section-title">Previous 5 Business Days &mdash; Revenue</h3>
@@ -213,6 +257,12 @@
       <div class="chart-container" style="margin-bottom: 0; display: flex; align-items: stretch;">
         <canvas id="paceBarChart"></canvas>
       </div>
+    </div>
+
+    <!-- Total Cases by Day (stacked: invoiced + in production) -->
+    <div class="chart-container" style="margin-top: 24px;">
+      <h3 class="chart-section-title">Total Cases by Day &mdash; Invoiced + In Production</h3>
+      <canvas id="totalCasesChart" style="max-height:280px;"></canvas>
     </div>
   </div>
 </div>

@@ -127,3 +127,17 @@ def fetch_daily_sales() -> pd.DataFrame:
     df['SalesDate'] = pd.to_datetime(df['SalesDate'])
     df['SalesDate'] = df['SalesDate'].dt.date
     return df.reset_index(drop=True)
+
+
+def fetch_customers() -> pd.DataFrame:
+    """Fetch all active customers joined with sales summary data."""
+    df = execute_sql_to_dataframe(str(SQL_DIR / "AM_customers_all.sql"))
+    if df.empty:
+        return df
+    for col in ['DateOfFirstCase', 'DateOfLastCase']:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
+    for col in ['MTDSales', 'LMSales', 'YTDSales', 'LySales', 'LTDSales']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    return df.reset_index(drop=True)

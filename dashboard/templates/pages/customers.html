@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+
+{% block content %}
+<div x-data="customerTable()" x-init="init()">
+  <div class="page-header" style="display: flex; align-items: center; justify-content: space-between;">
+    <h1 class="page-title">Customers</h1>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span class="customer-count" x-text="filteredCount + ' of ' + customers.length + ' customers'"></span>
+      <button class="export-btn" @click="exportCsv()">Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="customer-tabs">
+    <button class="customer-tab" :class="{ active: tab === 'all' }" @click="tab = 'all'">All</button>
+    <button class="customer-tab" :class="{ active: tab === 'active' }" @click="tab = 'active'">Active</button>
+    <button class="customer-tab" :class="{ active: tab === 'prospects' }" @click="tab = 'prospects'">Prospects</button>
+  </div>
+
+  <!-- Search + Filters -->
+  <div class="customer-filters">
+    <input type="text" class="search-input" placeholder="Search all columns..." x-model="search" style="flex: 1; max-width: 300px;">
+    {% for col in filter_columns %}
+    <select class="filter-select" x-model="filters.{{ col }}">
+      <option value="">{{ column_labels.get(col, col) }}</option>
+      {% for val in filter_options.get(col, []) %}
+      <option value="{{ val }}">{{ val }}</option>
+      {% endfor %}
+    </select>
+    {% endfor %}
+    <button class="clear-filters-btn" @click="clearFilters()" x-show="hasActiveFilters()">Clear</button>
+  </div>
+
+  <!-- Table -->
+  <div class="customer-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          {% for col in display_columns %}
+          <th @click="sortBy('{{ col }}')" style="cursor: pointer; user-select: none; white-space: nowrap;">
+            {{ column_labels.get(col, col) }}
+            <span x-show="sortCol === '{{ col }}'" x-text="sortDir === 'asc' ? ' ▲' : ' ▼'" style="font-size: 10px;"></span>
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="row in pagedRows()" :key="row.CustomerID">
+          <tr>
+            {% for col in display_columns %}
+            {% if col in sales_columns %}
+            <td style="text-align: right; white-space: nowrap;" x-text="formatCurrency(row.{{ col }})"></td>
+            {% elif col in ['Active', 'Prospect'] %}
+            <td style="text-align: center;" x-text="row.{{ col }} == 1 ? 'Yes' : 'No'"></td>
+            {% else %}
+            <td x-text="row.{{ col }} || ''" style="white-space: nowrap;"></td>
+            {% endif %}
+            {% endfor %}
+          </tr>
+        </template>
+        <tr x-show="filteredRows().length === 0">
+          <td colspan="{{ display_columns|length }}" style="text-align: center; padding: 24px; color: #888;">No customers match your filters</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="table-footer" x-show="totalPages() > 1">
+    <button class="page-btn" @click="page = 1" :disabled="page === 1">First</button>
+    <button class="page-btn" @click="page = Math.max(1, page - 1)" :disabled="page === 1">Prev</button>
+    <span style="font-size: 13px; color: #666;" x-text="'Page ' + page + ' of ' + totalPages()"></span>
+    <button class="page-btn" @click="page = Math.min(totalPages(), page + 1)" :disabled="page === totalPages()">Next</button>
+    <button class="page-btn" @click="page = totalPages()" :disabled="page === totalPages()">Last</button>
+  </div>
+</div>
+
+<script>
+function customerTable() {
+  return {
+    customers: [],
+    tab: 'all',
+    search: '',
+    filters: { {% for col in filter_columns %}'{{ col }}': ''{% if not loop.last %}, {% endif %}{% endfor %} },
+    sortCol: 'PracticeName',
+    sortDir: 'asc',
+    page: 1,
+    perPage: 100,
+    filteredCount: 0,
+
+    init() {
+      this.customers = {{ customers | tojson }};
+      // Watch filters/tab/search to reset page
+      this.$watch('tab', () => this.page = 1);
+      this.$watch('search', () => this.page = 1);
+      this.$watch('filters', () => this.page = 1, { deep: true });
+    },
+
+    filteredRows() {
+      let rows = this.customers;
+
+      // Tab filter
+      if (this.tab === 'active') {
+        rows = rows.filter(r => r.Active == 1);
+      } else if (this.tab === 'prospects') {
+        rows = rows.filter(r => r.Prospect == 1);
+      }
+
+      // Column filters
+      {% for col in filter_columns %}
+      if (this.filters.{{ col }}) {
+        rows = rows.filter(r => String(r.{{ col }} || '') === this.filters.{{ col }});
+      }
+      {% endfor %}
+
+      // Text search
+      if (this.search.trim()) {
+        const q = this.search.trim().toLowerCase();
+        rows = rows.filter(r => {
+          return Object.values(r).some(v => String(v || '').toLowerCase().includes(q));
+        });
+      }
+
+      // Sort
+      const col = this.sortCol;
+      const dir = this.sortDir === 'asc' ? 1 : -1;
+      const salesCols = {{ sales_columns | tojson }};
+      rows = [...rows].sort((a, b) => {
+        let va = a[col], vb = b[col];
+        if (va == null) va = '';
+        if (vb == null) vb = '';
+        if (salesCols.includes(col)) {
+          return (Number(va) - Number(vb)) * dir;
+        }
+        return String(va).localeCompare(String(vb), undefined, { numeric: true }) * dir;
+      });
+
+      this.filteredCount = rows.length;
+      return rows;
+    },
+
+    pagedRows() {
+      const rows = this.filteredRows();
+      const start = (this.page - 1) * this.perPage;
+      return rows.slice(start, start + this.perPage);
+    },
+
+    totalPages() {
+      return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
+    },
+
+    sortBy(col) {
+      if (this.sortCol === col) {
+        this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.sortCol = col;
+        this.sortDir = 'asc';
+      }
+    },
+
+    formatCurrency(val) {
+      const n = Number(val) || 0;
+      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    },
+
+    hasActiveFilters() {
+      return this.search.trim() !== '' || Object.values(this.filters).some(v => v !== '');
+    },
+
+    clearFilters() {
+      this.search = '';
+      {% for col in filter_columns %}
+      this.filters.{{ col }} = '';
+      {% endfor %}
+    },
+
+    exportCsv() {
+      const params = new URLSearchParams();
+      params.set('tab', this.tab);
+      {% for col in filter_columns %}
+      if (this.filters.{{ col }}) params.set('{{ col }}', this.filters.{{ col }});
+      {% endfor %}
+      window.location.href = '/customers/export?' + params.toString();
+    }
+  };
+}
+</script>
+{% endblock %}

@@ -666,15 +666,6 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
   gap: 24px;
   align-items: start;
 }
-.yesterday-revenue {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-  padding: 24px 28px;
-  border-left: 4px solid #27AE60;
-  text-align: center;
-  margin-bottom: 24px;
-}
 .pace-chart-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -777,3 +768,82 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 .htmx-indicator { display: none; }
 .htmx-request .htmx-indicator { display: inline-block; }
 .htmx-request.htmx-indicator { display: inline-block; }
+
+/* === Customers Page === */
+.customer-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #F0F0F0;
+  padding-bottom: 0;
+}
+.customer-tab {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.customer-tab:hover { color: #333; }
+.customer-tab.active {
+  color: var(--red);
+  border-bottom-color: var(--red);
+  font-weight: 600;
+}
+.customer-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.customer-count {
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+}
+.customer-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  background: #FFFFFF;
+}
+.customer-table-wrap table {
+  min-width: 1400px;
+}
+.customer-table-wrap th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.export-btn {
+  padding: 8px 16px;
+  background: #27AE60;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.export-btn:hover { background: #219A52; }
+.clear-filters-btn {
+  padding: 6px 12px;
+  background: #F0F0F0;
+  color: #666;
+  border: 1px solid #DDD;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.clear-filters-btn:hover { background: #E0E0E0; color: #333; }

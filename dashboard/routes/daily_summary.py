@@ -32,9 +32,6 @@ async def daily_summary_page(request: Request):
     stages = aggregate_airway_stages(airway_df) if airway_df is not None else {}
     airway_planning_count = sum(s['total'] for group in stages.values() for s in group)
 
-    # Yesterday's revenue (most recent entry in sales history)
-    yesterday_revenue = sales_history[-1]['subtotal'] if sales_history else 0
-
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/daily_summary.html", {
         "request": request,
@@ -45,6 +42,6 @@ async def daily_summary_page(request: Request):
         "sales_history_json": json.dumps(sales_history),
         "total_in_production": total_in_production,
         "airway_planning_count": airway_planning_count,
-        "yesterday_revenue": yesterday_revenue,
         "pace_data": pace_data,
+        "workload_chart_json": json.dumps(chart_data),
     })
