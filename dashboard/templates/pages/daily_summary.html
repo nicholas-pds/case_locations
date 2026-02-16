@@ -12,43 +12,6 @@
   document.addEventListener('DOMContentLoaded', function() {
     const salesData = {{ sales_history_json | safe }};
 
-    // Invoice Count Chart
-    const countCtx = document.getElementById('salesCountChart');
-    if (countCtx && salesData.length) {
-      new Chart(countCtx, {
-        type: 'bar',
-        data: {
-          labels: salesData.map(d => d.label),
-          datasets: [{
-            label: 'Invoice Count',
-            data: salesData.map(d => d.count),
-            backgroundColor: '#2196F3',
-            borderRadius: 4,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            datalabels: {
-              color: '#FFFFFF',
-              font: { family: 'Inter', size: 13, weight: '700' },
-              anchor: 'center',
-              align: 'center',
-              display: function(context) {
-                return context.dataset.data[context.dataIndex] > 0;
-              },
-            }
-          },
-          scales: {
-            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
-            y: { beginAtZero: true, grid: { color: '#F0F0F0' }, ticks: { font: { family: 'Inter', size: 11 } } }
-          }
-        }
-      });
-    }
-
     // Revenue Chart
     const revenueCtx = document.getElementById('salesRevenueChart');
     if (revenueCtx && salesData.length) {
@@ -95,6 +58,95 @@
         }
       });
     }
+
+    // Case Count Chart
+    const countCtx = document.getElementById('salesCountChart');
+    if (countCtx && salesData.length) {
+      new Chart(countCtx, {
+        type: 'bar',
+        data: {
+          labels: salesData.map(d => d.label),
+          datasets: [{
+            label: 'Invoice Count',
+            data: salesData.map(d => d.count),
+            backgroundColor: '#2196F3',
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#FFFFFF',
+              font: { family: 'Inter', size: 13, weight: '700' },
+              anchor: 'center',
+              align: 'center',
+              display: function(context) {
+                return context.dataset.data[context.dataIndex] > 0;
+              },
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+            y: { beginAtZero: true, grid: { color: '#F0F0F0' }, ticks: { font: { family: 'Inter', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // Pace Horizontal Bar Chart
+    const paceData = {{ pace_data | tojson }};
+    const paceCtx = document.getElementById('paceBarChart');
+    if (paceCtx && paceData.length) {
+      new Chart(paceCtx, {
+        type: 'bar',
+        data: {
+          labels: paceData.map(d => d.label),
+          datasets: [{
+            data: paceData.map(d => d.pct),
+            backgroundColor: paceData.map(d => d.status === 'ahead' ? '#27AE60' : '#E74C3C'),
+            borderRadius: 4,
+            barPercentage: 0.7,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#FFFFFF',
+              font: { family: 'Inter', size: 12, weight: '700' },
+              anchor: 'center',
+              align: 'center',
+              display: function(context) {
+                return context.dataset.data[context.dataIndex] > 0;
+              },
+              formatter: function(value) {
+                return Math.round(value) + '%';
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              max: 100,
+              grid: { color: '#F0F0F0' },
+              ticks: {
+                font: { family: 'Inter', size: 11 },
+                callback: function(value) { return value + '%'; }
+              }
+            },
+            y: {
+              display: false,
+            }
+          }
+        }
+      });
+    }
   });
 </script>
 {% endblock %}
@@ -114,34 +166,54 @@
     <div class="summary-label">In Production</div>
     <div class="summary-value">{{ total_in_production }}</div>
   </div>
-  <div class="summary-card summary-card-invoiced">
-    <div class="summary-label">Invoiced</div>
-    <div class="summary-value">{{ total_invoiced }}</div>
+  <div class="summary-card summary-card-airway">
+    <div class="summary-label">Airway Planning</div>
+    <div class="summary-value">{{ airway_planning_count }}</div>
   </div>
 </div>
 
-{% if sales_history %}
-<!-- Sales Charts - Side by Side -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
-  <div class="chart-container" style="margin-bottom: 0;">
-    <h3 class="chart-section-title">Previous 5 Business Days &mdash; Case Count</h3>
-    <canvas id="salesCountChart" style="max-height:300px;"></canvas>
-  </div>
-  <div class="chart-container" style="margin-bottom: 0;">
-    <h3 class="chart-section-title">Previous 5 Business Days &mdash; Revenue</h3>
-    <canvas id="salesRevenueChart" style="max-height:300px;"></canvas>
-  </div>
-</div>
+<!-- Two-column layout -->
+<div class="daily-layout">
+  <!-- LEFT COLUMN: Yesterday's Revenue + Charts stacked -->
+  <div>
+    <!-- Yesterday's Revenue Highlight -->
+    <div class="yesterday-revenue">
+      <div class="summary-label">Yesterday's Revenue</div>
+      <div class="summary-value">${{ "{:,.0f}".format(yesterday_revenue) }}</div>
+    </div>
 
-<!-- Workload Pace Tiles -->
-<div class="mb-16">
-  {% include "partials/workload_pace.html" %}
-</div>
-{% else %}
-<div class="chart-container">
-  <div class="empty-state">
-    <p>No sales history data available</p>
+    {% if sales_history %}
+    <div class="chart-container">
+      <h3 class="chart-section-title">Previous 5 Business Days &mdash; Revenue</h3>
+      <canvas id="salesRevenueChart" style="max-height:250px;"></canvas>
+    </div>
+
+    <div class="chart-container" style="margin-bottom: 0;">
+      <h3 class="chart-section-title">Previous 5 Business Days &mdash; Case Count</h3>
+      <canvas id="salesCountChart" style="max-height:250px;"></canvas>
+    </div>
+    {% else %}
+    <div class="chart-container">
+      <div class="empty-state">
+        <p>No sales history data available</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT COLUMN: Pace tiles + horizontal bar chart -->
+  <div>
+    <div class="pace-chart-split">
+      <!-- Pace tiles stacked vertically -->
+      <div class="pace-stack">
+        {% include "partials/workload_pace.html" %}
+      </div>
+
+      <!-- Horizontal bar chart aligned with tiles -->
+      <div class="chart-container" style="margin-bottom: 0; display: flex; align-items: stretch;">
+        <canvas id="paceBarChart"></canvas>
+      </div>
+    </div>
   </div>
 </div>
-{% endif %}
 {% endblock %}

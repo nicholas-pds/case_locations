@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from dashboard.data.cache import cache
-from dashboard.data.transforms import build_workload_chart_data, build_workload_pace_data, build_sales_history
+from dashboard.data.transforms import build_workload_chart_data, build_workload_pace_data, build_sales_history, aggregate_airway_stages
 import json
 
 router = APIRouter()
@@ -25,8 +25,15 @@ async def daily_summary_page(request: Request):
         'labels': [], 'invoiced': [], 'in_production': []
     }
     total_in_production = sum(chart_data['in_production'])
-    total_invoiced = sum(chart_data['invoiced'])
     pace_data = build_workload_pace_data(status_df) if status_df is not None else []
+
+    # Airway planning count (same as airway workflow page badge)
+    airway_df = await cache.get("airway_workflow")
+    stages = aggregate_airway_stages(airway_df) if airway_df is not None else {}
+    airway_planning_count = sum(s['total'] for group in stages.values() for s in group)
+
+    # Yesterday's revenue (most recent entry in sales history)
+    yesterday_revenue = sales_history[-1]['subtotal'] if sales_history else 0
 
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/daily_summary.html", {
@@ -37,6 +44,7 @@ async def daily_summary_page(request: Request):
         "sales_history": sales_history,
         "sales_history_json": json.dumps(sales_history),
         "total_in_production": total_in_production,
-        "total_invoiced": total_invoiced,
+        "airway_planning_count": airway_planning_count,
+        "yesterday_revenue": yesterday_revenue,
         "pace_data": pace_data,
     })

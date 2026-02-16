@@ -633,6 +633,7 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 .summary-card-submitted { border-left-color: #F39C12; }
 .summary-card-production { border-left-color: #E74C3C; }
 .summary-card-invoiced { border-left-color: #2196F3; }
+.summary-card-airway { border-left-color: #E91E63; }
 .summary-label {
   font-size: 11px;
   font-weight: 600;
@@ -656,6 +657,32 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 2px solid #F0F0F0;
+}
+
+/* === Daily Summary Layout === */
+.daily-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.yesterday-revenue {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  padding: 24px 28px;
+  border-left: 4px solid #27AE60;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.pace-chart-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.pace-stack .pace-grid {
+  grid-template-columns: 1fr;
 }
 
 /* === Pace Visualization — Card Grid === */
