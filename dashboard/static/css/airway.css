@@ -60,30 +60,30 @@
 
 /* === Stage Section Groups === */
 .stage-section {
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 .stage-section-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--text-muted);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   padding-left: 4px;
 }
 
 /* === Stage Cards Grid === */
 .stage-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .stage-card {
   background: var(--airway-light);
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-left: 4px solid var(--airway-primary);
   transition: all 0.2s;
 }
@@ -102,11 +102,11 @@
   margin-bottom: 4px;
 }
 .stage-count {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--airway-dark);
   line-height: 1.1;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 /* === Clickable Date Rows === */
