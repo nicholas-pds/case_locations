@@ -659,24 +659,10 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 }
 
 /* === Pace Visualization — Card Grid === */
-.pace-container {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-  padding: 24px;
-}
-.pace-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 20px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #F0F0F0;
-}
 .pace-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(var(--pace-cols, 6), 1fr);
+  gap: 8px;
 }
 .pace-card {
   background: #FFFFFF;

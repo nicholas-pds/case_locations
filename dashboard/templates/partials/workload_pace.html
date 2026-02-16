@@ -1,19 +1,16 @@
-<div class="pace-container">
-  <h3 class="pace-title">Daily Completion Pace</h3>
-  <div class="pace-grid">
-    {% for day in pace_data %}
-    <div class="pace-card pace-card-{{ day.status }}">
-      <div class="pace-day">{{ day.label }}</div>
-      <div class="pace-fraction">{{ day.invoiced }}<span class="pace-separator"> / </span>{{ day.total }}</div>
-      <div class="pace-bar-container">
-        <div class="pace-bar pace-bar-{{ day.status }}" style="width: {{ day.pct }}%"></div>
-      </div>
-      <div class="pace-pct pace-pct-{{ day.status }}">{{ day.pct|int }}%</div>
+<div class="pace-grid">
+  {% for day in pace_data %}
+  <div class="pace-card pace-card-{{ day.status }}">
+    <div class="pace-day">{{ day.label }}</div>
+    <div class="pace-fraction">{{ day.invoiced }}<span class="pace-separator"> / </span>{{ day.total }}</div>
+    <div class="pace-bar-container">
+      <div class="pace-bar pace-bar-{{ day.status }}" style="width: {{ day.pct }}%"></div>
     </div>
-    {% endfor %}
+    <div class="pace-pct pace-pct-{{ day.status }}">{{ day.pct|int }}%</div>
   </div>
-
-  {% if not pace_data %}
-  <div class="empty-state"><p>No pace data available</p></div>
-  {% endif %}
+  {% endfor %}
 </div>
+
+{% if not pace_data %}
+<div class="empty-state"><p>No pace data available</p></div>
+{% endif %}

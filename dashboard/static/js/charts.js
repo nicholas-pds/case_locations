@@ -10,6 +10,10 @@ function initWorkloadChart(data) {
   const ctx = document.getElementById('workloadChart');
   if (!ctx) return;
 
+  // Set pace grid columns to match chart day count
+  const paceGrid = document.querySelector('.pace-grid');
+  if (paceGrid) paceGrid.style.setProperty('--pace-cols', data.labels.length);
+
   workloadChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -89,4 +93,8 @@ function updateWorkloadChart(data) {
   workloadChart.data.datasets[0].data = data.in_production;
   workloadChart.data.datasets[1].data = data.invoiced;
   workloadChart.update('none'); // no animation on update
+
+  // Update pace grid columns on refresh
+  const paceGrid = document.querySelector('.pace-grid');
+  if (paceGrid) paceGrid.style.setProperty('--pace-cols', data.labels.length);
 }
