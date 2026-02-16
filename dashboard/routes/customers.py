@@ -78,6 +78,11 @@ async def customers_page(request: Request):
         filter_options = _get_filter_options(df)
         # Convert to list of dicts for template
         customers = df.to_dict('records')
+        # Convert date objects to strings for JSON serialization
+        for row in customers:
+            for key in ('DateOfFirstCase', 'DateOfLastCase'):
+                if key in row and row[key] is not None:
+                    row[key] = str(row[key])
 
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/customers.html", {
