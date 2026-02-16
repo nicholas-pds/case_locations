@@ -62,10 +62,10 @@ LOCATION_ALIASES = {
 LOCATION_DISPLAY_ORDER = [
     'Design Cart', '3D Design', '3D Manufacturing', 'Oven',
     'Metal Shelf', 'Metal Finish', 'Tumbler',
-    'Banding', 'Metal Bending', 'Welding', 'Metal Polish',
+    'Banding', 'Metal Bending', 'Welding', 'Metal Polishing',
     'Marpe', 'Wire Shelf', 'Wire Bending',
     'Acrylic', 'Wire Finishing/Polishing', 'Essix Shelf',
-    'QC', 'Shipping Hold Table', 'Clinical Director', 'Intake Hold Table',
+    'QC', 'Production Floor Desk', 'Shipping Hold Table', 'Clinical Director', 'Intake Hold Table',
 ]
 
 # Category colors for CSS classes

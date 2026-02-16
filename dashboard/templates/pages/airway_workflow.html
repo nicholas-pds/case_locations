@@ -12,42 +12,47 @@
     </div>
   </div>
 
-  <!-- Stage Cards Grid -->
-  <div id="airway-stages"
-       hx-get="/partials/airway-grid"
-       hx-trigger="sse:data-refreshed"
-       hx-swap="innerHTML">
-    {% include "partials/airway_grid.html" %}
-  </div>
+  <div class="airway-layout">
+    <!-- LEFT: Stage Cards + Filters -->
+    <div class="airway-layout-left">
+      <div id="airway-stages"
+           hx-get="/partials/airway-grid"
+           hx-trigger="sse:data-refreshed"
+           hx-swap="innerHTML">
+        {% include "partials/airway_grid.html" %}
+      </div>
 
-  <!-- Filters -->
-  <div class="filter-bar mb-24">
-    <button class="btn btn-reset"
-            @click="selectedStage = null"
-            hx-get="/partials/airway-table"
-            hx-target="#airway-table-content"
-            hx-swap="innerHTML">
-      Reset Filters
-    </button>
-    <select name="location" class="filter-select"
-            hx-get="/partials/airway-table"
-            hx-trigger="change"
-            hx-target="#airway-table-content">
-      <option value="">All Locations</option>
-      {% for loc in all_locations %}
-      <option value="{{ loc }}">{{ loc }}</option>
-      {% endfor %}
-    </select>
-  </div>
+      <div class="filter-bar mb-24">
+        <button class="btn btn-reset"
+                @click="selectedStage = null"
+                hx-get="/partials/airway-table"
+                hx-target="#airway-table-content"
+                hx-swap="innerHTML">
+          Reset Filters
+        </button>
+        <select name="location" class="filter-select"
+                hx-get="/partials/airway-table"
+                hx-trigger="change"
+                hx-target="#airway-table-content">
+          <option value="">All Locations</option>
+          {% for loc in all_locations %}
+          <option value="{{ loc }}">{{ loc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
 
-  <!-- Data Table -->
-  <div class="table-container">
-    <div id="airway-table-content"
-         hx-get="/partials/airway-table"
-         hx-trigger="sse:data-refreshed"
-         hx-include="[name='location']"
-         hx-swap="innerHTML">
-      {% include "partials/airway_table.html" %}
+    <!-- RIGHT: Data Table -->
+    <div class="airway-layout-right">
+      <div class="table-container">
+        <div id="airway-table-content"
+             hx-get="/partials/airway-table"
+             hx-trigger="sse:data-refreshed"
+             hx-include="[name='location']"
+             hx-swap="innerHTML">
+          {% include "partials/airway_table.html" %}
+        </div>
+      </div>
     </div>
   </div>
 </div>

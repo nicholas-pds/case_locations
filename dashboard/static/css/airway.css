@@ -29,6 +29,35 @@
   letter-spacing: 0.5px;
 }
 
+/* === Side-by-Side Layout === */
+.airway-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.airway-layout-left {
+  min-width: 0;
+}
+.airway-layout-right {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 104px);
+  display: flex;
+  flex-direction: column;
+}
+.airway-layout-right .table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 104px);
+}
+.airway-layout-right .table-scroll {
+  max-height: none !important;
+  flex: 1;
+  overflow-y: auto;
+}
+
 /* === Stage Section Groups === */
 .stage-section {
   margin-bottom: 24px;
@@ -92,11 +121,12 @@
   padding: 4px 6px;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 .stage-dates li:hover {
-  background: rgba(233, 30, 99, 0.1);
+  background: rgba(233, 30, 99, 0.18);
   color: var(--airway-dark);
+  font-weight: 600;
 }
 .stage-date-count {
   font-weight: 600;

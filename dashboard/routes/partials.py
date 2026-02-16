@@ -109,15 +109,25 @@ async def workload_table(request: Request):
 
 @router.get("/workload-summary", response_class=HTMLResponse)
 async def workload_summary(request: Request):
+    from dashboard.routes.workload import DESIGN_LOCATIONS, MANUFACTURING_LOCATIONS, PRODUCTION_FLOOR_LOCATIONS, _count_by_locations
+
     df = await cache.get("workload_status")
     chart_data = build_workload_chart_data(df) if df is not None else {
         'labels': [], 'invoiced': [], 'in_production': []
     }
+
+    submitted_df = await cache.get("submitted_cases")
+    case_df = await cache.get("case_locations")
+
     templates = request.app.state.templates
     return templates.TemplateResponse("partials/workload_summary.html", {
         "request": request,
         "total_in_production": sum(chart_data['in_production']),
         "total_invoiced": sum(chart_data['invoiced']),
+        "submitted_count": len(submitted_df) if submitted_df is not None and not submitted_df.empty else 0,
+        "design_count": _count_by_locations(case_df, DESIGN_LOCATIONS),
+        "manufacturing_count": _count_by_locations(case_df, MANUFACTURING_LOCATIONS),
+        "production_floor_count": _count_by_locations(case_df, PRODUCTION_FLOOR_LOCATIONS),
     })
 
 
