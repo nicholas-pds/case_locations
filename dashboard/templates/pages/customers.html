@@ -102,9 +102,9 @@ function customerTable() {
 
       // Tab filter
       if (this.tab === 'active') {
-        rows = rows.filter(r => r.Active == 1);
+        rows = rows.filter(r => r.Active == 1 && r.Prospect == 0);
       } else if (this.tab === 'prospects') {
-        rows = rows.filter(r => r.Prospect == 1);
+        rows = rows.filter(r => r.Prospect == 1 && r.Active == 0);
       }
 
       // Column filters

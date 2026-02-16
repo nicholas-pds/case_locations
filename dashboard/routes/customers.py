@@ -57,10 +57,10 @@ def _get_filter_options(df):
 
 def _apply_tab_filter(df, tab):
     """Filter DataFrame by tab selection."""
-    if tab == 'active' and 'Active' in df.columns:
-        return df[df['Active'] == 1]
-    elif tab == 'prospects' and 'Prospect' in df.columns:
-        return df[df['Prospect'] == 1]
+    if tab == 'active' and 'Active' in df.columns and 'Prospect' in df.columns:
+        return df[(df['Active'] == 1) & (df['Prospect'] == 0)]
+    elif tab == 'prospects' and 'Prospect' in df.columns and 'Active' in df.columns:
+        return df[(df['Prospect'] == 1) & (df['Active'] == 0)]
     return df
 
 
@@ -74,6 +74,8 @@ async def customers_page(request: Request):
     total_count = 0
 
     if df is not None and not df.empty:
+        # Filter out rows with blank/null CustomerID
+        df = df[df['CustomerID'].notna() & (df['CustomerID'] != '')]
         total_count = len(df)
         filter_options = _get_filter_options(df)
         # Convert to list of dicts for template
@@ -115,6 +117,9 @@ async def customers_export(
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=customers.csv"},
         )
+
+    # Filter out blank CustomerID rows
+    df = df[df['CustomerID'].notna() & (df['CustomerID'] != '')]
 
     # Apply tab filter
     df = _apply_tab_filter(df, tab)
