@@ -623,6 +623,7 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
   box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
   padding: 24px 28px;
   border-left: 4px solid transparent;
+  text-align: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .summary-card:hover {
@@ -657,7 +658,7 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
   border-bottom: 2px solid #F0F0F0;
 }
 
-/* === Pace Visualization === */
+/* === Pace Visualization — Card Grid === */
 .pace-container {
   background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
   border-radius: 14px;
@@ -672,45 +673,50 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
   padding-bottom: 8px;
   border-bottom: 2px solid #F0F0F0;
 }
-.pace-row {
-  padding: 14px 0;
-  border-bottom: 1px solid #F5F5F5;
+.pace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
 }
-.pace-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+.pace-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 20px 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  border-top: 3px solid transparent;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.pace-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+.pace-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
 }
-.pace-label {
-  font-size: 14px;
+.pace-card-ahead { border-top-color: #27AE60; }
+.pace-card-behind { border-top-color: #E74C3C; }
+.pace-day {
+  font-size: 11px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.pace-fraction {
+  font-size: 24px;
+  font-weight: 800;
   color: var(--text-primary);
+  margin-bottom: 12px;
 }
-.pace-pct-badge {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: #FFFFFF;
-  flex-shrink: 0;
+.pace-separator {
+  color: var(--text-muted);
+  font-weight: 400;
 }
-.pace-pct-badge-ahead { background: linear-gradient(135deg, #27AE60, #2ECC71); }
-.pace-pct-badge-behind { background: linear-gradient(135deg, #E74C3C, #E57373); }
 .pace-bar-container {
   height: 10px;
   background: #F0F0F0;
   border-radius: 5px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .pace-bar {
   height: 100%;
@@ -720,11 +726,12 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 }
 .pace-bar-ahead { background: linear-gradient(90deg, #27AE60, #2ECC71); }
 .pace-bar-behind { background: linear-gradient(90deg, #E74C3C, #E57373); }
-.pace-detail {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
+.pace-pct {
+  font-size: 13px;
+  font-weight: 600;
 }
+.pace-pct-ahead { color: #27AE60; }
+.pace-pct-behind { color: #E74C3C; }
 
 /* === Date Navigation === */
 .date-nav {
