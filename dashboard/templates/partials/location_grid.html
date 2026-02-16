@@ -26,7 +26,10 @@
     <div class="location-name" title="{{ loc.name }}">{{ loc.name }}</div>
     <div class="cat-dots">
       {% for cat_name, count in cats.items() %}
-        <span class="cat-dot">
+        <span class="cat-dot"
+              hx-get="/partials/case-table?location={{ loc.name | urlencode }}&category={{ cat_name | urlencode }}"
+              hx-target="#case-table-content"
+              hx-swap="innerHTML">
           <span class="cat-dot-color" style="background:{{ category_colors.get(cat_name, '#B0BEC5') }}"></span>
           {{ cat_name }} {{ count }}
         </span>

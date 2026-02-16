@@ -321,6 +321,13 @@ body {
   font-size: 10px;
   color: var(--text-secondary);
   white-space: nowrap;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.cat-dot:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 .cat-dot-color {
   width: 8px;
