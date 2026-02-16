@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from dashboard.data.cache import cache
-from dashboard.data.transforms import build_workload_chart_data, build_sales_history
+from dashboard.data.transforms import build_workload_chart_data, build_workload_pace_data, build_sales_history
 import json
 
 router = APIRouter()
@@ -26,6 +26,7 @@ async def daily_summary_page(request: Request):
     }
     total_in_production = sum(chart_data['in_production'])
     total_invoiced = sum(chart_data['invoiced'])
+    pace_data = build_workload_pace_data(status_df) if status_df is not None else []
 
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/daily_summary.html", {
@@ -37,4 +38,5 @@ async def daily_summary_page(request: Request):
         "sales_history_json": json.dumps(sales_history),
         "total_in_production": total_in_production,
         "total_invoiced": total_invoiced,
+        "pace_data": pace_data,
     })
