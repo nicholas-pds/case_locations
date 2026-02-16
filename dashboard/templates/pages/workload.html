@@ -25,9 +25,25 @@
   <h1 class="page-title">Workload Preview - Cases Invoiced & In Production</h1>
 </div>
 
+<!-- Summary Cards -->
+<div class="summary-cards" id="workload-summary"
+     hx-get="/partials/workload-summary"
+     hx-trigger="sse:data-refreshed"
+     hx-swap="innerHTML">
+  {% include "partials/workload_summary.html" %}
+</div>
+
 <!-- Stacked Bar Chart -->
 <div class="chart-container">
   <canvas id="workloadChart"></canvas>
+</div>
+
+<!-- Daily Pace -->
+<div class="card mb-24" id="workload-pace"
+     hx-get="/partials/workload-pace"
+     hx-trigger="sse:data-refreshed"
+     hx-swap="innerHTML">
+  {% include "partials/workload_pace.html" %}
 </div>
 
 <!-- Category Breakdown Table -->

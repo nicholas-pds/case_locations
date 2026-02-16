@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Daily Summary{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+  if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const salesData = {{ sales_history_json | safe }};
+
+    // Invoice Count Chart
+    const countCtx = document.getElementById('salesCountChart');
+    if (countCtx && salesData.length) {
+      new Chart(countCtx, {
+        type: 'bar',
+        data: {
+          labels: salesData.map(d => d.label),
+          datasets: [{
+            label: 'Invoice Count',
+            data: salesData.map(d => d.count),
+            backgroundColor: '#2196F3',
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#FFFFFF',
+              font: { family: 'Inter', size: 13, weight: '700' },
+              anchor: 'center',
+              align: 'center',
+              display: function(context) {
+                return context.dataset.data[context.dataIndex] > 0;
+              },
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+            y: { beginAtZero: true, grid: { color: '#F0F0F0' }, ticks: { font: { family: 'Inter', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // Revenue Chart
+    const revenueCtx = document.getElementById('salesRevenueChart');
+    if (revenueCtx && salesData.length) {
+      new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+          labels: salesData.map(d => d.label),
+          datasets: [{
+            label: 'Revenue',
+            data: salesData.map(d => d.subtotal),
+            backgroundColor: '#27AE60',
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#FFFFFF',
+              font: { family: 'Inter', size: 12, weight: '700' },
+              anchor: 'center',
+              align: 'center',
+              display: function(context) {
+                return context.dataset.data[context.dataIndex] > 0;
+              },
+              formatter: function(value) {
+                return '$' + value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F0F0F0' },
+              ticks: {
+                font: { family: 'Inter', size: 11 },
+                callback: function(value) { return '$' + value.toLocaleString(); }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Daily Summary</h1>
+</div>
+
+<!-- Top metric cards -->
+<div class="summary-cards mb-24">
+  <div class="summary-card" style="border-left-color: #F39C12;">
+    <div class="summary-label">Cases Submitted</div>
+    <div class="summary-value">{{ submitted_count }}</div>
+  </div>
+  <div class="summary-card summary-card-production">
+    <div class="summary-label">In Production (Upcoming)</div>
+    <div class="summary-value">{{ total_in_production }}</div>
+  </div>
+  <div class="summary-card summary-card-invoiced">
+    <div class="summary-label">Invoiced (Upcoming)</div>
+    <div class="summary-value">{{ total_invoiced }}</div>
+  </div>
+</div>
+
+{% if sales_history %}
+<!-- Sales Charts - Side by Side -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+  <div class="chart-container" style="margin-bottom: 0;">
+    <h3 style="font-size:14px; font-weight:600; margin-bottom:12px;">Previous 5 Business Days - Invoice Count</h3>
+    <canvas id="salesCountChart" style="max-height:300px;"></canvas>
+  </div>
+  <div class="chart-container" style="margin-bottom: 0;">
+    <h3 style="font-size:14px; font-weight:600; margin-bottom:12px;">Previous 5 Business Days - Revenue</h3>
+    <canvas id="salesRevenueChart" style="max-height:300px;"></canvas>
+  </div>
+</div>
+{% else %}
+<div class="chart-container">
+  <div class="empty-state">
+    <p>No sales history data available</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

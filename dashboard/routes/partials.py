@@ -2,10 +2,12 @@
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import HTMLResponse
 from dashboard.data.cache import cache
+from datetime import date
 from dashboard.data.transforms import (
     aggregate_by_location, filter_cases, add_filter_columns,
-    filter_local_delivery, filter_local_delivery_today, filter_overdue_no_scan,
-    build_workload_chart_data, build_workload_pivot_table,
+    filter_local_delivery, filter_local_delivery_today, filter_local_delivery_by_date,
+    filter_overdue_no_scan,
+    build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data,
     aggregate_airway_stages,
 )
 from dashboard.config import CATEGORY_COLORS
@@ -105,6 +107,31 @@ async def workload_table(request: Request):
     })
 
 
+@router.get("/workload-summary", response_class=HTMLResponse)
+async def workload_summary(request: Request):
+    df = await cache.get("workload_status")
+    chart_data = build_workload_chart_data(df) if df is not None else {
+        'labels': [], 'invoiced': [], 'in_production': []
+    }
+    templates = request.app.state.templates
+    return templates.TemplateResponse("partials/workload_summary.html", {
+        "request": request,
+        "total_in_production": sum(chart_data['in_production']),
+        "total_invoiced": sum(chart_data['invoiced']),
+    })
+
+
+@router.get("/workload-pace", response_class=HTMLResponse)
+async def workload_pace(request: Request):
+    df = await cache.get("workload_status")
+    pace_data = build_workload_pace_data(df) if df is not None else []
+    templates = request.app.state.templates
+    return templates.TemplateResponse("partials/workload_pace.html", {
+        "request": request,
+        "pace_data": pace_data,
+    })
+
+
 @router.get("/airway-grid", response_class=HTMLResponse)
 async def airway_grid(request: Request):
     df = await cache.get("airway_workflow")
@@ -149,10 +176,20 @@ async def airway_hold_table(request: Request, hold_status: str = None):
 
 
 @router.get("/local-delivery-table", response_class=HTMLResponse)
-async def local_delivery_table(request: Request):
+async def local_delivery_table(request: Request, date_str: str = None):
     df = await cache.get("case_locations")
     if df is not None and not df.empty:
-        df = filter_local_delivery_today(df)
+        if date_str:
+            try:
+                target_date = date.fromisoformat(date_str)
+            except ValueError:
+                target_date = None
+        else:
+            target_date = None
+        if target_date:
+            df = filter_local_delivery_by_date(df, target_date)
+        else:
+            df = filter_local_delivery_today(df)
         if not df.empty and 'IsRush' not in df.columns:
             df = add_filter_columns(df)
         cases = df.to_dict('records')

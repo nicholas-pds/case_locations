@@ -3,48 +3,21 @@
 {% block extra_css %}<link rel="stylesheet" href="/static/css/airway.css">{% endblock %}
 
 {% block content %}
-<div x-data="{ selectedStage: null }">
-  <div class="page-header">
-    <h1 class="page-title">Airway Locations Workflow</h1>
+<div class="airway-dashboard">
+  <div class="airway-header">
+    <h1 class="airway-title">Airway Locations Workflow</h1>
+    <div class="airway-total">
+      <span class="airway-total-count">{{ total_cases }}</span>
+      <span class="airway-total-label">Total Cases</span>
+    </div>
   </div>
 
-  <!-- Stage Cards Grid -->
-  <div id="airway-stages"
+  <!-- 3-Column TV Layout -->
+  <div class="airway-columns" id="airway-stages"
        hx-get="/partials/airway-grid"
        hx-trigger="sse:data-refreshed"
        hx-swap="innerHTML">
     {% include "partials/airway_grid.html" %}
-  </div>
-
-  <!-- Filters -->
-  <div class="filter-bar mb-24">
-    <button class="btn btn-reset"
-            @click="selectedStage = null"
-            hx-get="/partials/airway-table"
-            hx-target="#airway-table-content"
-            hx-swap="innerHTML">
-      Reset Filters
-    </button>
-    <select name="location" class="filter-select"
-            hx-get="/partials/airway-table"
-            hx-trigger="change"
-            hx-target="#airway-table-content">
-      <option value="">All Locations</option>
-      {% for loc in all_locations %}
-      <option value="{{ loc }}">{{ loc }}</option>
-      {% endfor %}
-    </select>
-  </div>
-
-  <!-- Data Table -->
-  <div class="table-container">
-    <div id="airway-table-content"
-         hx-get="/partials/airway-table"
-         hx-trigger="sse:data-refreshed"
-         hx-include="[name='location']"
-         hx-swap="innerHTML">
-      {% include "partials/airway_table.html" %}
-    </div>
   </div>
 </div>
 {% endblock %}

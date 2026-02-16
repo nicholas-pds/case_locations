@@ -1,0 +1,19 @@
+<div class="pace-container">
+  <h3 class="pace-title">Daily Completion Pace</h3>
+  {% for day in pace_data %}
+  <div class="pace-row">
+    <div class="pace-label">{{ day.label }}</div>
+    <div class="pace-bar-container">
+      <div class="pace-bar pace-bar-{{ day.status }}" style="width: {{ day.pct }}%"></div>
+    </div>
+    <div class="pace-stat">
+      <span class="pace-count">{{ day.invoiced }} / {{ day.total }}</span>
+      <span class="pace-pct">({{ day.pct }}%)</span>
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if not pace_data %}
+  <div class="empty-state"><p>No pace data available</p></div>
+  {% endif %}
+</div>

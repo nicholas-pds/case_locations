@@ -26,16 +26,11 @@
     <div class="location-name" title="{{ loc.name }}">{{ loc.name }}</div>
     <div class="cat-dots">
       {% for cat_name, count in cats.items() %}
-        {% if loop.index <= 4 %}
         <span class="cat-dot">
           <span class="cat-dot-color" style="background:{{ category_colors.get(cat_name, '#B0BEC5') }}"></span>
           {{ cat_name }} {{ count }}
         </span>
-        {% endif %}
       {% endfor %}
-      {% if cats | length > 4 %}
-        <span class="cat-dot text-muted">+{{ cats | length - 4 }}</span>
-      {% endif %}
     </div>
   </div>
 {% endfor %}

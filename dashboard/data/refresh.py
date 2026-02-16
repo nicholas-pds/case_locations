@@ -9,6 +9,8 @@ from .queries import (
     fetch_workload_pivot,
     fetch_airway_workflow,
     fetch_airway_hold_status,
+    fetch_submitted_cases,
+    fetch_daily_sales,
 )
 from .transforms import add_filter_columns
 from dashboard.config import REFRESH_INTERVAL_SECONDS, BUSINESS_HOURS_START, BUSINESS_HOURS_END
@@ -52,6 +54,8 @@ async def refresh_all_queries():
         loop.run_in_executor(None, fetch_workload_pivot),
         loop.run_in_executor(None, fetch_airway_workflow),
         loop.run_in_executor(None, fetch_airway_hold_status),
+        loop.run_in_executor(None, fetch_submitted_cases),
+        loop.run_in_executor(None, fetch_daily_sales),
         return_exceptions=True,
     )
 
@@ -61,6 +65,8 @@ async def refresh_all_queries():
         "workload_pivot",
         "airway_workflow",
         "airway_hold_status",
+        "submitted_cases",
+        "daily_sales",
     ]
 
     for name, result in zip(names, results):

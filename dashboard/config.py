@@ -46,14 +46,26 @@ MARPE_EXCLUDED_LOCATIONS = [
     'Airway Zoom Approval',
 ]
 
+# Map raw DB location names to display names
+LOCATION_ALIASES = {
+    'Marpe Finish': 'Marpe',
+    'Marpe Assembly': 'Marpe',
+    'Marpe Weld': 'Marpe',
+    'Marpe PreWeld': 'Marpe',
+    'Marpe Dlyte': 'Marpe',
+    'Wire E&P': 'Wire Finishing/Polishing',
+    'Shipping Hold Tray': 'Shipping Hold Table',
+    'Intake Hold Tray': 'Intake Hold Table',
+}
+
 # Location display order for the main page grid
 LOCATION_DISPLAY_ORDER = [
     'Design Cart', '3D Design', '3D Manufacturing', 'Oven',
     'Metal Shelf', 'Metal Finish', 'Tumbler',
     'Banding', 'Metal Bending', 'Welding', 'Metal Polish',
     'Marpe', 'Wire Shelf', 'Wire Bending',
-    'Acrylic', 'Wire E&P', 'Essix Shelf',
-    'QC', 'Shipping Hold Tray', 'Clinical Director', 'Intake Hold Tray',
+    'Acrylic', 'Wire Finishing/Polishing', 'Essix Shelf',
+    'QC', 'Shipping Hold Table', 'Clinical Director', 'Intake Hold Table',
 ]
 
 # Category colors for CSS classes

@@ -13,7 +13,7 @@ from src.holidays import previous_business_day
 from src.date_parser import process_dataframe, sort_by_follow_up_date
 from dashboard.config import (
     SQL_DIR, DAYS_LOOKBACK, WORKLOAD_DAYS_RANGE,
-    MARPE_EXCLUDED_LOCATIONS,
+    MARPE_EXCLUDED_LOCATIONS, LOCATION_ALIASES,
 )
 
 
@@ -40,6 +40,10 @@ def fetch_case_locations() -> pd.DataFrame:
             (df['Last Location'].isin(MARPE_EXCLUDED_LOCATIONS))
         )
         df = df[mask]
+
+    # Apply location aliases (e.g. Marpe sub-locations -> Marpe)
+    if 'Last Location' in df.columns:
+        df['Last Location'] = df['Last Location'].replace(LOCATION_ALIASES)
 
     return df.reset_index(drop=True)
 
@@ -101,4 +105,25 @@ def fetch_airway_hold_status() -> pd.DataFrame:
     df = process_dataframe(df)
     df = sort_by_follow_up_date(df)
 
+    return df.reset_index(drop=True)
+
+
+def fetch_submitted_cases() -> pd.DataFrame:
+    """Fetch cases with 'Submitted' status."""
+    df = execute_sql_to_dataframe(str(SQL_DIR / "cases_submitted.sql"))
+    if df.empty:
+        return df
+    if 'Ship Date' in df.columns:
+        df['Ship Date'] = pd.to_datetime(df['Ship Date'], errors='coerce')
+        df['Ship Date'] = df['Ship Date'].dt.date
+    return df.reset_index(drop=True)
+
+
+def fetch_daily_sales() -> pd.DataFrame:
+    """Fetch daily sales data (invoice + production) for the past ~2 weeks."""
+    df = execute_sql_to_dataframe(str(SQL_DIR / "daily_sales.sql"))
+    if df.empty:
+        return df
+    df['SalesDate'] = pd.to_datetime(df['SalesDate'])
+    df['SalesDate'] = df['SalesDate'].dt.date
     return df.reset_index(drop=True)

@@ -1,26 +1,33 @@
 {% for group_name, stage_list in stages.items() %}
-<div class="stage-section">
-  <div class="stage-section-title">{{ group_name }}</div>
-  <div class="stage-grid">
+<div class="airway-column">
+  <div class="airway-column-header">{{ group_name }}</div>
+  <div class="airway-column-body">
     {% for stage in stage_list %}
-    <div class="stage-card"
-         hx-get="/partials/airway-table?location={{ stage.name | urlencode }}"
-         hx-target="#airway-table-content"
-         hx-swap="innerHTML">
-      <div class="stage-name">{{ stage.name }}</div>
-      <div class="stage-count">{{ stage.total }}</div>
-      {% if stage.by_date %}
-      <ul class="stage-dates">
-        {% for date_str, count in stage.by_date.items() %}
-        <li>{{ date_str }} ({{ count }})</li>
-        {% endfor %}
-        {% if stage.extra_dates > 0 %}
-        <li class="extra">... and {{ stage.extra_dates }} more</li>
+    <div class="airway-stage-row">
+      <div class="airway-stage-info">
+        <div class="airway-stage-name">{{ stage.name }}</div>
+        {% if stage.by_date %}
+        <div class="airway-stage-dates">
+          {% for date_str, count in stage.by_date.items() %}
+            <span class="airway-date-chip">{{ date_str }}: {{ count }}</span>
+          {% endfor %}
+          {% if stage.extra_dates > 0 %}
+            <span class="airway-date-chip airway-date-extra">+{{ stage.extra_dates }} more</span>
+          {% endif %}
+        </div>
         {% endif %}
-      </ul>
-      {% endif %}
+      </div>
+      <div class="airway-stage-count">{{ stage.total }}</div>
     </div>
     {% endfor %}
+  </div>
+  <div class="airway-column-footer">
+    {% set ns = namespace(section_total=0) %}
+    {% for stage in stage_list %}
+      {% set ns.section_total = ns.section_total + stage.total %}
+    {% endfor %}
+    <span class="airway-section-label">Section Total</span>
+    <span class="airway-section-total">{{ ns.section_total }}</span>
   </div>
 </div>
 {% endfor %}

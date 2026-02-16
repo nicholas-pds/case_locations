@@ -1,7 +1,6 @@
 """Business logic transforms: rush, overdue, leaves-today, aggregations."""
 import os
 from datetime import datetime, date, timedelta
-from collections import OrderedDict
 import pandas as pd
 
 # Windows uses %#m instead of %-m for non-zero-padded month/day
@@ -12,7 +11,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.holidays import previous_business_day
+from src.holidays import previous_business_day, get_all_company_holidays
 from dashboard.config import MARPE_EXCLUDED_LOCATIONS, LOCATION_DISPLAY_ORDER, AIRWAY_STAGE_GROUPS
 
 
@@ -188,6 +187,23 @@ def filter_local_delivery_today(df: pd.DataFrame) -> pd.DataFrame:
     return df[df['Ship Date'].apply(match_today)]
 
 
+def filter_local_delivery_by_date(df: pd.DataFrame, target_date: date = None) -> pd.DataFrame:
+    """Filter to local delivery cases shipping on a specific date."""
+    df = filter_local_delivery(df)
+    if df.empty or 'Ship Date' not in df.columns:
+        return df
+    if target_date is None:
+        target_date = date.today()
+    df = df.copy()
+    def match_date(ship_date):
+        if pd.isna(ship_date):
+            return False
+        if hasattr(ship_date, 'date'):
+            ship_date = ship_date.date()
+        return ship_date == target_date
+    return df[df['Ship Date'].apply(match_date)]
+
+
 def filter_overdue_no_scan(df: pd.DataFrame) -> pd.DataFrame:
     """Filter overdue cases with no scan in last 4 hours.
 
@@ -259,6 +275,38 @@ def build_workload_chart_data(df: pd.DataFrame) -> dict:
     }
 
 
+def build_workload_pace_data(df: pd.DataFrame) -> list[dict]:
+    """Build per-day pace data: invoiced as percentage of total."""
+    if df.empty:
+        return []
+
+    labels = sorted(df['ShipDate'].unique())
+    pace = []
+
+    for d in labels:
+        day_data = df[df['ShipDate'] == d]
+        inv = int(day_data[day_data['TypeCount'] == 'Invoiced']['Count'].sum())
+        prod = int(day_data[day_data['TypeCount'] == 'In Production']['Count'].sum())
+        total = inv + prod
+        pct = round((inv / total * 100), 1) if total > 0 else 0
+
+        if hasattr(d, 'strftime'):
+            label = d.strftime('%a %b %d')
+        else:
+            label = str(d)
+
+        pace.append({
+            'label': label,
+            'invoiced': inv,
+            'in_production': prod,
+            'total': total,
+            'pct': pct,
+            'status': 'ahead' if inv >= prod else 'behind',
+        })
+
+    return pace
+
+
 def build_workload_pivot_table(df: pd.DataFrame) -> dict:
     """Build pivot table data for workload category breakdown."""
     if df.empty:
@@ -302,3 +350,38 @@ def build_workload_pivot_table(df: pd.DataFrame) -> dict:
         'data': data,
         'totals': totals,
     }
+
+
+def build_sales_history(df: pd.DataFrame, num_days: int = 5) -> list[dict]:
+    """Build last N business days of sales from daily_sales data.
+
+    Aggregates both 'I' (invoice) and 'S' (sales) rows per day.
+    Returns invoice count and subtotal per business day.
+    """
+    if df.empty:
+        return []
+
+    holidays = get_all_company_holidays()
+
+    # Aggregate per date across all LabNames and Types
+    daily = df.groupby('SalesDate').agg(
+        invoice_count=('NumberOfInvoices', 'sum'),
+        subtotal=('SubTotal', 'sum'),
+    ).reset_index()
+
+    # Filter to business days only
+    daily = daily[
+        daily['SalesDate'].apply(lambda d: d.weekday() < 5 and d not in holidays)
+    ].sort_values('SalesDate', ascending=False)
+
+    result = []
+    for _, row in daily.head(num_days).iterrows():
+        d = row['SalesDate']
+        label = d.strftime('%a %b %d') if hasattr(d, 'strftime') else str(d)
+        result.append({
+            'label': label,
+            'count': int(row['invoice_count']),
+            'subtotal': round(float(row['subtotal']), 2),
+        })
+
+    return list(reversed(result))  # chronological order

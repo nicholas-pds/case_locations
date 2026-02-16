@@ -311,6 +311,8 @@ body {
   flex-direction: column;
   gap: 2px;
   align-items: center;
+  max-height: 120px;
+  overflow-y: auto;
 }
 .cat-dot {
   display: inline-flex;
@@ -600,6 +602,109 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 .flex { display: flex; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
+
+/* === Summary Cards === */
+.summary-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.summary-card {
+  flex: 1;
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  border-left: 4px solid transparent;
+}
+.summary-card-production { border-left-color: #E74C3C; }
+.summary-card-invoiced { border-left-color: #2196F3; }
+.summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.summary-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* === Pace Visualization === */
+.pace-container {
+  padding: 20px;
+}
+.pace-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.pace-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.pace-label {
+  width: 100px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.pace-bar-container {
+  flex: 1;
+  height: 20px;
+  background: #F0F0F0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.pace-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+.pace-bar-ahead { background: #27AE60; }
+.pace-bar-behind { background: #E74C3C; }
+.pace-stat {
+  width: 110px;
+  font-size: 12px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.pace-count { font-weight: 600; }
+.pace-pct { color: var(--text-muted); }
+
+/* === Date Navigation === */
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.date-nav-btn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  transition: all 0.2s;
+}
+.date-nav-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.date-nav-current {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
 
 /* === HTMX loading indicator === */
 .htmx-indicator { display: none; }

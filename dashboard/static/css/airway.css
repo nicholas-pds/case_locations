@@ -1,4 +1,4 @@
-/* === Airway Theme (Pink/Magenta) === */
+/* === Airway Theme (Pink/Magenta) - TV-Optimized === */
 :root {
   --airway-primary: #E91E63;
   --airway-light: #FCE4EC;
@@ -6,80 +6,165 @@
   --airway-text: #880E4F;
 }
 
-/* Stage cards */
-.stage-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+/* === TV Dashboard Layout === */
+.airway-dashboard {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px);
 }
 
-.stage-section-title {
-  font-size: 11px;
+.airway-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.airway-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.airway-total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: var(--airway-light);
+  padding: 8px 20px;
+  border-radius: 8px;
+  border-left: 4px solid var(--airway-primary);
+}
+
+.airway-total-count {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--airway-dark);
+}
+
+.airway-total-label {
+  font-size: 13px;
   font-weight: 600;
+  color: var(--airway-text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* === 3-Column Grid === */
+.airway-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+.airway-column {
+  background: var(--bg-card);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.airway-column-header {
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  padding-left: 4px;
+  color: var(--text-on-dark);
+  background: var(--airway-primary);
+  padding: 14px 20px;
+  text-align: center;
 }
 
-.stage-card {
+.airway-column-body {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* === Stage Rows === */
+.airway-stage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
   background: var(--airway-light);
   border-radius: 8px;
-  padding: 14px 16px;
   border-left: 4px solid var(--airway-primary);
-  cursor: pointer;
   transition: all 0.2s;
 }
-.stage-card:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translateY(-1px);
-}
-.stage-card.selected {
-  border-left-width: 4px;
-  border-color: var(--airway-dark);
-  box-shadow: 0 0 0 2px var(--airway-primary);
+
+.airway-stage-row:hover {
+  box-shadow: 0 2px 8px rgba(233, 30, 99, 0.15);
 }
 
-.stage-name {
-  font-size: 12px;
+.airway-stage-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.airway-stage-name {
+  font-size: 15px;
   font-weight: 600;
   color: var(--airway-text);
   margin-bottom: 4px;
 }
 
-.stage-count {
-  font-size: 28px;
+.airway-stage-count {
+  font-size: 36px;
   font-weight: 700;
   color: var(--airway-dark);
-  line-height: 1.1;
-  margin-bottom: 8px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-left: 16px;
 }
 
-.stage-dates {
-  list-style: none;
-  padding: 0;
+.airway-stage-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
 }
-.stage-dates li {
+
+.airway-date-chip {
   font-size: 11px;
   color: var(--text-secondary);
-  padding: 1px 0;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
-.stage-dates .extra {
+
+.airway-date-extra {
   font-style: italic;
   color: var(--text-muted);
 }
 
-/* Airway table headers */
-.airway-table thead th {
-  background: var(--airway-primary);
-}
-.airway-table thead th:hover {
-  background: var(--airway-dark);
+/* === Column Footer === */
+.airway-column-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 2px solid var(--airway-light);
+  background: #FAFAFA;
 }
 
-/* Airway section group container */
-.stage-section {
-  margin-bottom: 24px;
+.airway-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.airway-section-total {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--airway-dark);
 }

@@ -12,19 +12,18 @@ async def airway_workflow_page(request: Request):
     metadata = await cache.get_metadata()
 
     stages = aggregate_airway_stages(df) if df is not None else {}
-    cases = df.to_dict('records')[:100] if df is not None and not df.empty else []
 
-    # Get unique values for filters
-    all_locations = []
-    if df is not None and not df.empty and 'LastLocation' in df.columns:
-        all_locations = sorted(df['LastLocation'].dropna().unique().tolist())
+    # Compute total across all stages
+    total_cases = 0
+    for group_stages in stages.values():
+        for stage in group_stages:
+            total_cases += stage['total']
 
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/airway_workflow.html", {
         "request": request,
         "stages": stages,
-        "cases": cases,
-        "all_locations": all_locations,
+        "total_cases": total_cases,
         "metadata": metadata,
         "active_page": "airway",
     })

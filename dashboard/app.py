@@ -106,6 +106,7 @@ def create_app() -> FastAPI:
     from dashboard.routes.airway_hold import router as airway_hold_router
     from dashboard.routes.local_delivery import router as local_delivery_router
     from dashboard.routes.overdue_noscan import router as overdue_noscan_router
+    from dashboard.routes.daily_summary import router as daily_summary_router
     from dashboard.routes.partials import router as partials_router
     from dashboard.routes.sse import router as sse_router
     from dashboard.routes.login import router as login_router
@@ -117,6 +118,7 @@ def create_app() -> FastAPI:
     app.include_router(airway_hold_router)
     app.include_router(local_delivery_router)
     app.include_router(overdue_noscan_router)
+    app.include_router(daily_summary_router)
     app.include_router(partials_router)
     app.include_router(sse_router)
 

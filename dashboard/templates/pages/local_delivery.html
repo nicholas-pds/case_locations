@@ -5,14 +5,22 @@
 <div>
   <div class="page-header">
     <h1 class="page-title">Local Delivery Cases</h1>
-    <div class="filter-bar">
-      <span class="text-secondary fw-600">{{ total_cases }} cases shipping today</span>
+    <div class="date-nav">
+      <a href="/local-delivery?date_str={{ prev_date }}" class="date-nav-btn">&larr; {{ prev_date_label }}</a>
+      <span class="date-nav-current">
+        {{ selected_label }}{% if not is_today %} ({{ selected_date_display }}){% endif %}
+      </span>
+      <a href="/local-delivery?date_str={{ next_date }}" class="date-nav-btn">{{ next_date_label }} &rarr;</a>
     </div>
+  </div>
+
+  <div class="filter-bar mb-16">
+    <span class="text-secondary fw-600">{{ total_cases }} cases shipping {{ selected_label | lower }}{% if not is_today %} ({{ selected_date_display }}){% endif %}</span>
   </div>
 
   <div class="table-container">
     <div id="local-delivery-content"
-         hx-get="/partials/local-delivery-table"
+         hx-get="/partials/local-delivery-table?date_str={{ selected_date }}"
          hx-trigger="sse:data-refreshed"
          hx-swap="innerHTML">
       {% include "partials/local_delivery_table.html" %}
