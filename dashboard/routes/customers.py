@@ -8,11 +8,12 @@ router = APIRouter()
 
 # Columns to display in the table (user-friendly order)
 DISPLAY_COLUMNS = [
-    'PracticeName', 'FullName', 'AccountManager', 'Type', 'Specialty',
-    'City', 'State', 'OfficePhone', 'Email',
+    'CustomerID', 'PracticeName', 'FullName', 'AccountManager', 'Type', 'Specialty',
+    'City', 'State',
     'MTDSales', 'LMSales', 'YTDSales', 'LySales', 'LTDSales',
     'DateOfFirstCase', 'DateOfLastCase',
     'Active', 'Prospect', 'ReferredBy',
+    'OfficePhone', 'Email',
 ]
 
 # Columns available for dropdown filters
@@ -23,6 +24,7 @@ SALES_COLUMNS = ['MTDSales', 'LMSales', 'YTDSales', 'LySales', 'LTDSales']
 
 # Human-readable column labels
 COLUMN_LABELS = {
+    'CustomerID': 'ID',
     'PracticeName': 'Practice Name',
     'FullName': 'Contact',
     'AccountManager': 'Account Manager',

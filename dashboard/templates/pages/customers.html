@@ -11,6 +11,30 @@
     </div>
   </div>
 
+  <!-- Metric Tiles -->
+  <div class="summary-cards">
+    <div class="summary-card summary-card-submitted">
+      <div class="summary-label">Active Customers</div>
+      <div class="summary-value" x-text="metrics.active"></div>
+    </div>
+    <div class="summary-card summary-card-production">
+      <div class="summary-label">Prospects</div>
+      <div class="summary-value" x-text="metrics.prospects"></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">New This Month</div>
+      <div class="summary-value" x-text="metrics.newThisMonth"></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">New YTD</div>
+      <div class="summary-value" x-text="metrics.newYTD"></div>
+    </div>
+    <div class="summary-card" style="border-left-color: #27AE60;">
+      <div class="summary-label">New Customer Sales YTD</div>
+      <div class="summary-value" x-text="metrics.newSalesYTD"></div>
+    </div>
+  </div>
+
   <!-- Tabs -->
   <div class="customer-tabs">
     <button class="customer-tab" :class="{ active: tab === 'all' }" @click="tab = 'all'">All</button>
@@ -97,15 +121,9 @@ function customerTable() {
       this.$watch('filters', () => this.page = 1, { deep: true });
     },
 
-    filteredRows() {
+    baseFilteredRows() {
+      // Apply column filters + search (shared by metrics and table)
       let rows = this.customers;
-
-      // Tab filter
-      if (this.tab === 'active') {
-        rows = rows.filter(r => r.Active == 1 && r.Prospect == 0);
-      } else if (this.tab === 'prospects') {
-        rows = rows.filter(r => r.Prospect == 1 && r.Active == 0);
-      }
 
       // Column filters
       {% for col in filter_columns %}
@@ -120,6 +138,45 @@ function customerTable() {
         rows = rows.filter(r => {
           return Object.values(r).some(v => String(v || '').toLowerCase().includes(q));
         });
+      }
+
+      return rows;
+    },
+
+    get metrics() {
+      const rows = this.baseFilteredRows();
+      const now = new Date();
+      const thisMonth = now.getMonth();
+      const thisYear = now.getFullYear();
+
+      const isThisMonth = (d) => {
+        if (!d) return false;
+        const dt = new Date(d);
+        return dt.getMonth() === thisMonth && dt.getFullYear() === thisYear;
+      };
+      const isThisYear = (d) => {
+        if (!d) return false;
+        return new Date(d).getFullYear() === thisYear;
+      };
+
+      const newYTDRows = rows.filter(r => isThisYear(r.DateOfFirstCase));
+      return {
+        active: rows.filter(r => r.Active == 1 && r.Prospect == 0).length,
+        prospects: rows.filter(r => r.Prospect == 1 && r.Active == 0).length,
+        newThisMonth: rows.filter(r => isThisMonth(r.DateOfFirstCase)).length,
+        newYTD: newYTDRows.length,
+        newSalesYTD: this.formatCurrency(newYTDRows.reduce((sum, r) => sum + (Number(r.YTDSales) || 0), 0)),
+      };
+    },
+
+    filteredRows() {
+      // Apply tab filter on top of base filters
+      let rows = this.baseFilteredRows();
+
+      if (this.tab === 'active') {
+        rows = rows.filter(r => r.Active == 1 && r.Prospect == 0);
+      } else if (this.tab === 'prospects') {
+        rows = rows.filter(r => r.Prospect == 1 && r.Active == 0);
       }
 
       // Sort
