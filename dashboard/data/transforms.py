@@ -23,6 +23,28 @@ def is_rush(pan_number) -> bool:
     return pan.upper().startswith('R') and len(pan) < 4
 
 
+def adjust_rush_ship_dates(df: pd.DataFrame, ship_col: str = 'ShipDate') -> pd.DataFrame:
+    """Adjust ShipDate for rush pans to the previous business day (holiday-aware)."""
+    if df.empty or ship_col not in df.columns:
+        return df
+    df = df.copy()
+    pan_col = 'PanNumber' if 'PanNumber' in df.columns else 'Pan Number'
+    if pan_col not in df.columns:
+        return df
+
+    holidays = get_all_company_holidays()
+    mask = df[pan_col].apply(is_rush)
+
+    for idx in df[mask].index:
+        ship = df.at[idx, ship_col]
+        if pd.notna(ship):
+            if hasattr(ship, 'date'):
+                ship = ship.date()
+            df.at[idx, ship_col] = previous_business_day(ship, holidays)
+
+    return df
+
+
 def is_leaves_today(ship_date, today: date = None) -> bool:
     """Leaves Today = ShipDate equals today."""
     if pd.isna(ship_date):

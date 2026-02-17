@@ -15,10 +15,13 @@ from dashboard.config import (
     SQL_DIR, DAYS_LOOKBACK, WORKLOAD_DAYS_RANGE,
     MARPE_EXCLUDED_LOCATIONS, LOCATION_ALIASES,
 )
+from dashboard.data.transforms import adjust_rush_ship_dates
 
 
 def fetch_case_locations() -> pd.DataFrame:
-    """Execute case_locs_1.sql and apply transforms (Query 1)."""
+    """Execute case_locs_1.sql and apply transforms (Query 1).
+    NOTE: This is the ONLY fetch that does NOT adjust rush ShipDates.
+    The case locations table displays actual unadjusted dates."""
     df = execute_sql_to_dataframe(str(SQL_DIR / "case_locs_1.sql"))
     if df.empty:
         return df
@@ -49,48 +52,65 @@ def fetch_case_locations() -> pd.DataFrame:
 
 
 def fetch_workload_status() -> pd.DataFrame:
-    """Execute cases_Prod_and_Invoiced.sql (Query 2)."""
+    """Execute cases_Prod_and_Invoiced.sql (Query 2).
+    Returns per-row data, adjusts rush ShipDates, then aggregates."""
     df = execute_sql_to_dataframe(str(SQL_DIR / "cases_Prod_and_Invoiced.sql"))
     if df.empty:
         return df
 
+    df['ShipDate'] = pd.to_datetime(df['ShipDate']).dt.date
+
+    # Adjust rush pan ShipDates to previous business day (holiday-aware)
+    df = adjust_rush_ship_dates(df, 'ShipDate')
+
+    # Filter date range
     prev_biz_day = previous_business_day()
     start_date = prev_biz_day
     end_date = prev_biz_day + timedelta(days=WORKLOAD_DAYS_RANGE)
+    df = df[(df['ShipDate'] >= start_date) & (df['ShipDate'] <= end_date)]
 
-    df['ShipDate'] = pd.to_datetime(df['ShipDate'])
-    df = df[
-        (df['ShipDate'].dt.date >= start_date) &
-        (df['ShipDate'].dt.date <= end_date)
-    ]
-    df['ShipDate'] = df['ShipDate'].dt.date
+    # Aggregate: group by TypeCount + ShipDate, count rows
+    df = df.groupby(['TypeCount', 'ShipDate']).size().reset_index(name='Count')
 
     return df.reset_index(drop=True)
 
 
 def fetch_workload_pivot() -> pd.DataFrame:
-    """Execute workload_pivot.sql for category breakdown."""
+    """Execute workload_pivot.sql for category breakdown.
+    Returns per-row data, adjusts rush ShipDates, then aggregates."""
     df = execute_sql_to_dataframe(str(SQL_DIR / "workload_pivot.sql"))
     if df.empty:
         return df
 
+    df['ShipDate'] = pd.to_datetime(df['ShipDate']).dt.date
+
+    # Adjust rush pan ShipDates to previous business day (holiday-aware)
+    df = adjust_rush_ship_dates(df, 'ShipDate')
+
+    # Filter date range
     prev_biz_day = previous_business_day()
     start_date = prev_biz_day
     end_date = prev_biz_day + timedelta(days=WORKLOAD_DAYS_RANGE)
+    df = df[(df['ShipDate'] >= start_date) & (df['ShipDate'] <= end_date)]
 
-    df['ShipDate'] = pd.to_datetime(df['ShipDate'])
-    df = df[
-        (df['ShipDate'].dt.date >= start_date) &
-        (df['ShipDate'].dt.date <= end_date)
-    ]
-    df['ShipDate'] = df['ShipDate'].dt.date
+    # Aggregate: group by Category + ShipDate, count cases
+    df = df.groupby(['Category', 'ShipDate']).size().reset_index(name='CaseCount')
 
     return df.reset_index(drop=True)
 
 
 def fetch_airway_workflow() -> pd.DataFrame:
     """Execute case_locs_airway_1.sql (Query 3)."""
-    return execute_sql_to_dataframe(str(SQL_DIR / "case_locs_airway_1.sql"))
+    df = execute_sql_to_dataframe(str(SQL_DIR / "case_locs_airway_1.sql"))
+    if df.empty:
+        return df
+
+    df['ShipDate'] = pd.to_datetime(df['ShipDate'], errors='coerce').dt.date
+
+    # Adjust rush pan ShipDates to previous business day (holiday-aware)
+    df = adjust_rush_ship_dates(df, 'ShipDate')
+
+    return df.reset_index(drop=True)
 
 
 def fetch_airway_hold_status() -> pd.DataFrame:
@@ -101,6 +121,11 @@ def fetch_airway_hold_status() -> pd.DataFrame:
 
     if 'TYPE' in df.columns:
         df = df.rename(columns={'TYPE': 'FollowUpType'})
+
+    # Adjust rush pan ShipDates if columns exist
+    if 'ShipDate' in df.columns:
+        df['ShipDate'] = pd.to_datetime(df['ShipDate'], errors='coerce').dt.date
+        df = adjust_rush_ship_dates(df, 'ShipDate')
 
     df = process_dataframe(df)
     df = sort_by_follow_up_date(df)
@@ -116,6 +141,8 @@ def fetch_submitted_cases() -> pd.DataFrame:
     if 'Ship Date' in df.columns:
         df['Ship Date'] = pd.to_datetime(df['Ship Date'], errors='coerce')
         df['Ship Date'] = df['Ship Date'].dt.date
+        # Adjust rush pan ShipDates to previous business day (holiday-aware)
+        df = adjust_rush_ship_dates(df, 'Ship Date')
     return df.reset_index(drop=True)
 
 

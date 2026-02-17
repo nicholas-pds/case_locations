@@ -1,12 +1,13 @@
 WITH CasesWithRankedCategories AS
 (
-    SELECT 
+    SELECT
         ca.CaseNumber,
+        ca.PanNumber,
         CAST(ca.ShipDate AS DATE) AS ShipDate,
         pr.Category,
         ROW_NUMBER() OVER (
             PARTITION BY ca.CaseNumber, CAST(ca.ShipDate AS DATE)
-            ORDER BY 
+            ORDER BY
                 CASE pr.Category
                     WHEN 'E2 Expanders'   THEN 1
                     WHEN 'Lab to Lab'     THEN 2
@@ -25,46 +26,46 @@ WITH CasesWithRankedCategories AS
     INNER JOIN dbo.Products AS pr ON cp.ProductID = pr.ProductID
     WHERE ca.Status = 'In Production'
       AND ca.ShipDate IS NOT NULL
-      -- Remove the restrictive IN clause so we can catch NULLs and unknown categories
-      -- AND pr.Category IN (...)   <-- removed on purpose
 )
 , FinalAssignment AS
 (
-    SELECT 
+    SELECT
         ShipDate,
         CaseNumber,
+        PanNumber,
         ISNULL(
-            NULLIF(Category, ''), 
+            NULLIF(Category, ''),
             'Other'
-        ) AS FinalCategory
+        ) AS Category
     FROM CasesWithRankedCategories
     WHERE rn = 1
 
     UNION ALL
 
     -- Add cases that have NO products at all OR no products with any category
-    SELECT 
+    SELECT
         CAST(ca.ShipDate AS DATE) AS ShipDate,
         ca.CaseNumber,
-        'Other' AS FinalCategory
+        ca.PanNumber,
+        'Other' AS Category
     FROM dbo.Cases AS ca
     WHERE ca.Status = 'In Production'
       AND ca.ShipDate IS NOT NULL
       AND NOT EXISTS (
-          SELECT 1 
-          FROM dbo.CaseProducts cp 
+          SELECT 1
+          FROM dbo.CaseProducts cp
           INNER JOIN dbo.Products pr ON cp.ProductID = pr.ProductID
           WHERE cp.CaseID = ca.CaseID
       )
 )
 SELECT
-    FinalCategory AS Category,
+    Category,
     ShipDate,
-    COUNT(*) AS CaseCount
+    PanNumber,
+    CaseNumber
 FROM FinalAssignment
-GROUP BY FinalCategory, ShipDate
-ORDER BY ShipDate DESC, 
-         CASE FinalCategory 
+ORDER BY ShipDate DESC,
+         CASE Category
              WHEN 'E2 Expanders' THEN 1
              WHEN 'Lab to Lab'   THEN 2
              WHEN 'Marpe'        THEN 3
@@ -75,4 +76,4 @@ ORDER BY ShipDate DESC,
              WHEN 'Airway'       THEN 8
              WHEN 'Other'       THEN 99
          END,
-         FinalCategory;
+         Category;

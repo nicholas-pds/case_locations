@@ -6,13 +6,6 @@
 
   <!-- Filter Bar -->
   <div class="page-header">
-    <div class="total-badge"
-         hx-get="/partials/total-cases-badge"
-         hx-trigger="sse:data-refreshed"
-         hx-swap="innerHTML">
-      <span class="total-badge-count">{{ total_cases }}</span>
-      <span class="total-badge-label">Total Cases</span>
-    </div>
     <div class="filter-bar">
       <button class="btn btn-rush"
               :class="{ active: activeFilter === 'rush' }"
@@ -24,7 +17,7 @@
               :class="{ active: activeFilter === 'overdue' }"
               @click="activeFilter = activeFilter === 'overdue' ? null : 'overdue'; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })"
               >
-        No Scan Cases
+        Overdue
       </button>
       <button class="btn btn-leaves"
               :class="{ active: activeFilter === 'leaves_today' }"
@@ -38,6 +31,13 @@
               >
         View All
       </button>
+    </div>
+    <div class="total-badge"
+         hx-get="/partials/total-cases-badge"
+         hx-trigger="sse:data-refreshed"
+         hx-swap="innerHTML">
+      <span class="total-badge-count">{{ total_cases }}</span>
+      <span class="total-badge-label">Total Cases</span>
     </div>
   </div>
 
