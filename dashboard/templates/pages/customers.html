@@ -107,10 +107,10 @@ function customerTable() {
     tab: 'all',
     search: '',
     filters: { {% for col in filter_columns %}'{{ col }}': ''{% if not loop.last %}, {% endif %}{% endfor %} },
-    sortCol: 'PracticeName',
+    sortCol: 'CustomerID',
     sortDir: 'asc',
     page: 1,
-    perPage: 100,
+    perPage: 15,
     filteredCount: 0,
 
     init() {

@@ -148,6 +148,25 @@ body {
   margin-left: auto;
 }
 
+.nav-refresh-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  padding: 0;
+}
+.nav-refresh-btn:hover {
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
+}
+
 .nav-badge {
   display: flex;
   align-items: center;
@@ -192,6 +211,28 @@ body {
 .page-title {
   font-size: 20px;
   font-weight: 600;
+}
+
+.total-badge {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: #FFF3E0;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border-left: 4px solid #E74C3C;
+}
+.total-badge-count {
+  font-size: 28px;
+  font-weight: 700;
+  color: #C0392B;
+}
+.total-badge-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #E74C3C;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* === Filter Buttons === */

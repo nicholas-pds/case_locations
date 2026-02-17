@@ -141,10 +141,35 @@
   color: var(--text-muted);
 }
 
+/* === Hold Page Sticky Table === */
+.airway-hold-sticky {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 104px);
+  display: flex;
+  flex-direction: column;
+}
+.airway-hold-sticky .table-scroll {
+  max-height: none !important;
+  flex: 1;
+  overflow-y: auto;
+}
+
 /* === Airway Table Headers === */
 .airway-table thead th {
   background: var(--airway-primary);
 }
 .airway-table thead th:hover {
   background: var(--airway-dark);
+}
+
+/* === Sortable Column Headers === */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.sortable-th span {
+  font-size: 10px;
+  margin-left: 4px;
 }

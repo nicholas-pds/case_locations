@@ -25,7 +25,7 @@
   </select>
 </div>
 
-<div class="table-container">
+<div class="table-container airway-hold-sticky">
   <div id="airway-hold-content"
        hx-get="/partials/airway-hold-table"
        hx-trigger="sse:data-refreshed"
@@ -34,4 +34,40 @@
     {% include "partials/airway_hold_table.html" %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function airwaySort() {
+  return {
+    col: null,
+    dir: 'asc',
+    sort(colIdx) {
+      if (this.col === colIdx) {
+        this.dir = this.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.col = colIdx;
+        this.dir = 'asc';
+      }
+      const tbody = this.$el.querySelector('tbody');
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const dir = this.dir === 'asc' ? 1 : -1;
+      rows.sort((a, b) => {
+        const aText = (a.cells[colIdx]?.textContent || '').trim();
+        const bText = (b.cells[colIdx]?.textContent || '').trim();
+        const aNum = parseFloat(aText);
+        const bNum = parseFloat(bText);
+        if (!isNaN(aNum) && !isNaN(bNum)) return (aNum - bNum) * dir;
+        return aText.localeCompare(bText) * dir;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    },
+    indicator(colIdx) {
+      if (this.col !== colIdx) return '';
+      return this.dir === 'asc' ? '\u25B2' : '\u25BC';
+    }
+  };
+}
+</script>
 {% endblock %}

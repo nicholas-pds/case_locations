@@ -85,6 +85,16 @@ async def metadata_badge(request: Request):
     })
 
 
+@router.get("/total-cases-badge", response_class=HTMLResponse)
+async def total_cases_badge(request: Request):
+    df = await cache.get("case_locations")
+    total_cases = len(df) if df is not None and not df.empty else 0
+    return HTMLResponse(
+        f'<span class="total-badge-count">{total_cases}</span>'
+        f'<span class="total-badge-label">Total Cases</span>'
+    )
+
+
 @router.get("/workload-chart-data")
 async def workload_chart_data():
     df = await cache.get("workload_status")

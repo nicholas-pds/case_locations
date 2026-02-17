@@ -305,7 +305,7 @@ def build_workload_pace_data(df: pd.DataFrame) -> list[dict]:
             'status': 'ahead' if inv >= prod else 'behind',
         })
 
-    return pace
+    return pace[:6]
 
 
 def build_workload_pivot_table(df: pd.DataFrame) -> dict:

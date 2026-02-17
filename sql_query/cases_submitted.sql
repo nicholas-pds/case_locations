@@ -9,4 +9,5 @@ LEFT JOIN dbo.CaseLogLocations AS cll
     ON ca.LastLocationID = cll.ID
 WHERE ca.Status = 'Submitted'
   AND CAST(ca.DateIn AS DATE) >= CAST(DATEADD(day, -7, GETDATE()) AS DATE)
+  AND ca.Deleted = 0
 ORDER BY ca.ShipDate;

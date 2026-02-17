@@ -26,7 +26,7 @@ BUSINESS_HOURS_END = 18    # 6 PM
 
 # Query lookback
 DAYS_LOOKBACK = 6
-WORKLOAD_DAYS_RANGE = 9
+WORKLOAD_DAYS_RANGE = 6
 
 # MARPE planning locations to exclude from main view
 MARPE_EXCLUDED_LOCATIONS = [

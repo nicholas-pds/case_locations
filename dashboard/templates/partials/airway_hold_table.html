@@ -1,18 +1,40 @@
-<div class="table-scroll" style="max-height: calc(100vh - 220px);">
+<div class="table-scroll" x-data="airwaySort()">
   <table class="airway-table">
     <thead>
       <tr>
-        <th>Case #</th>
-        <th>Pan #</th>
-        <th>Doctor</th>
-        <th>Patient</th>
-        <th>Create Date</th>
-        <th>Ship Date</th>
-        <th>Hold Date</th>
-        <th>Hold Status</th>
-        <th>Hold Reason</th>
-        <th>Type</th>
-        <th>Follow-Up Date</th>
+        <th @click="sort(0)" class="sortable-th">
+          Case # <span x-text="indicator(0)"></span>
+        </th>
+        <th @click="sort(1)" class="sortable-th">
+          Pan # <span x-text="indicator(1)"></span>
+        </th>
+        <th @click="sort(2)" class="sortable-th">
+          Doctor <span x-text="indicator(2)"></span>
+        </th>
+        <th @click="sort(3)" class="sortable-th">
+          Patient <span x-text="indicator(3)"></span>
+        </th>
+        <th @click="sort(4)" class="sortable-th">
+          Create Date <span x-text="indicator(4)"></span>
+        </th>
+        <th @click="sort(5)" class="sortable-th">
+          Ship Date <span x-text="indicator(5)"></span>
+        </th>
+        <th @click="sort(6)" class="sortable-th">
+          Hold Date <span x-text="indicator(6)"></span>
+        </th>
+        <th @click="sort(7)" class="sortable-th">
+          Hold Status <span x-text="indicator(7)"></span>
+        </th>
+        <th @click="sort(8)" class="sortable-th">
+          Hold Reason <span x-text="indicator(8)"></span>
+        </th>
+        <th @click="sort(9)" class="sortable-th">
+          Type <span x-text="indicator(9)"></span>
+        </th>
+        <th @click="sort(10)" class="sortable-th">
+          Follow-Up Date <span x-text="indicator(10)"></span>
+        </th>
       </tr>
     </thead>
     <tbody>
