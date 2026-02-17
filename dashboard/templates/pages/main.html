@@ -34,7 +34,8 @@
     </div>
     <div class="total-badge"
          hx-get="/partials/total-cases-badge"
-         hx-trigger="sse:data-refreshed"
+         hx-trigger="sse:data-refreshed, filter-changed from:body"
+         hx-include="[name='filter']"
          hx-swap="innerHTML">
       <span class="total-badge-count">{{ total_cases }}</span>
       <span class="total-badge-label">Total Cases</span>

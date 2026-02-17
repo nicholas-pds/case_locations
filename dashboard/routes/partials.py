@@ -86,9 +86,14 @@ async def metadata_badge(request: Request):
 
 
 @router.get("/total-cases-badge", response_class=HTMLResponse)
-async def total_cases_badge(request: Request):
+async def total_cases_badge(request: Request, filter: str = None):
     df = await cache.get("case_locations")
-    total_cases = len(df) if df is not None and not df.empty else 0
+    if df is not None and not df.empty:
+        if filter:
+            df = filter_cases(df, filter)
+        total_cases = len(df)
+    else:
+        total_cases = 0
     return HTMLResponse(
         f'<span class="total-badge-count">{total_cases}</span>'
         f'<span class="total-badge-label">Total Cases</span>'
@@ -176,7 +181,7 @@ async def airway_table(request: Request, location: str = None, ship_date: str = 
                 df = df[df['ShipDate'] == target]
             except ValueError:
                 pass
-        cases = df.to_dict('records')[:100]
+        cases = df.to_dict('records')[:15]
     else:
         cases = []
     templates = request.app.state.templates
@@ -192,7 +197,7 @@ async def airway_hold_table(request: Request, hold_status: str = None):
     if df is not None and not df.empty:
         if hold_status:
             df = df[df['HoldStatus'] == hold_status]
-        cases = df.to_dict('records')
+        cases = df.to_dict('records')[:15]
     else:
         cases = []
     templates = request.app.state.templates

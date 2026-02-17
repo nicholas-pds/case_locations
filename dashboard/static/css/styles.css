@@ -217,20 +217,20 @@ body {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  background: #FFEBEE;
+  background: #FCE4EC;
   padding: 8px 20px;
   border-radius: 8px;
-  border-left: 4px solid #E74C3C;
+  border-left: 4px solid #E91E63;
 }
 .total-badge-count {
   font-size: 28px;
   font-weight: 700;
-  color: #C0392B;
+  color: #AD1457;
 }
 .total-badge-label {
   font-size: 12px;
   font-weight: 600;
-  color: #E74C3C;
+  color: #880E4F;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -737,8 +737,8 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 /* === Pace Visualization — Card Grid === */
 .pace-grid {
   display: grid;
-  grid-template-columns: repeat(var(--pace-cols, 6), 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
 }
 .pace-card {
   background: #FFFFFF;
