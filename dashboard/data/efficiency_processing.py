@@ -19,7 +19,7 @@ load_dotenv()
 logger = logging.getLogger("dashboard.efficiency_processing")
 
 # Path to employee lookup CSV
-_LOOKUP_PATH = Path(__file__).parent / "employee_lkups.csv"
+_LOOKUP_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "employee_lkups.csv"
 _SQL_DIR = Path(__file__).parent.parent.parent / "sql_query"
 
 # ─────────────────────────────────────────────
@@ -94,10 +94,8 @@ def stage1_task_processing(raw_df: pd.DataFrame, start_date: str, end_date: str)
         "Duration": "Duration",
     })
 
-    # 1b. Total duration per row
+    # 1b. Duration per row
     df["Duration"] = pd.to_numeric(df["Duration"], errors="coerce").fillna(0)
-    df["Quantity"] = pd.to_numeric(df["Quantity"], errors="coerce").fillna(1)
-    df["Total_Duration"] = df["Duration"] * df["Quantity"]
 
     # 1c. Convert Rejected to int
     if df["Rejected"].dtype == object:
@@ -121,7 +119,7 @@ def stage1_task_processing(raw_df: pd.DataFrame, start_date: str, end_date: str)
     agg = df.groupby("EmployeeID").agg(
         Cases_Worked_On=("CaseNumber", "nunique"),
         Tasks_Completed=("CaseNumber", "count"),
-        Tasks_Duration_Hours=("Total_Duration", lambda x: round(x.sum(), 2)),
+        Tasks_Duration_Hours=("Duration", lambda x: round(x.sum(), 2)),
     ).reset_index()
 
     # 1g. Sort and convert EmployeeID to string

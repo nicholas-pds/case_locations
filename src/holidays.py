@@ -8,7 +8,7 @@ from typing import Set
 logger = logging.getLogger(__name__)
 
 # Path to the company holidays CSV file (project root)
-_CSV_PATH = Path(__file__).parent.parent / "company_holidays.csv"
+_CSV_PATH = Path(__file__).parent.parent / "User_Inputs" / "company_holidays.csv"
 
 
 def _load_holidays_from_csv() -> Set[date]:

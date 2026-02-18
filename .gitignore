@@ -39,8 +39,8 @@ output/
 
 # File type ignores
 *.csv
-!company_holidays.csv
-!dashboard/data/employee_lkups.csv
+!User_Inputs/company_holidays.csv
+!User_Inputs/employee_lkups.csv
 
 # Other common ignores
 *.log
