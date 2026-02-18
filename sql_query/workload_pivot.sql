@@ -27,6 +27,8 @@ WITH CasesWithRankedCategories AS
     WHERE ca.Status IN ('In Production', 'Invoiced')
       AND ca.ShipDate IS NOT NULL
       AND pr.Category <> 'Airway'
+      AND CAST(ca.ShipDate AS DATE) >= DATEADD(day, -3, CAST(GETDATE() AS DATE))
+      AND CAST(ca.ShipDate AS DATE) <= DATEADD(day, 10, CAST(GETDATE() AS DATE))
 )
 , FinalAssignment AS
 (
@@ -53,6 +55,8 @@ WITH CasesWithRankedCategories AS
     FROM dbo.Cases AS ca
     WHERE ca.Status IN ('In Production', 'Invoiced')
       AND ca.ShipDate IS NOT NULL
+      AND CAST(ca.ShipDate AS DATE) >= DATEADD(day, -3, CAST(GETDATE() AS DATE))
+      AND CAST(ca.ShipDate AS DATE) <= DATEADD(day, 10, CAST(GETDATE() AS DATE))
       AND NOT EXISTS (
           SELECT 1
           FROM dbo.CaseProducts cp

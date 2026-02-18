@@ -121,7 +121,7 @@ def stage1_task_processing(raw_df: pd.DataFrame, start_date: str, end_date: str)
     agg = df.groupby("EmployeeID").agg(
         Cases_Worked_On=("CaseNumber", "nunique"),
         Tasks_Completed=("CaseNumber", "count"),
-        Tasks_Duration_Hours=("Duration", lambda x: round(x.sum() / 60, 2)),
+        Tasks_Duration_Hours=("Total_Duration", lambda x: round(x.sum(), 2)),
     ).reset_index()
 
     # 1g. Sort and convert EmployeeID to string
@@ -364,8 +364,11 @@ def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
     agg = filtered.groupby(["CompletedBy", "Name"]).agg(
         Cases=("CaseNumber", "nunique"),
         Tasks_Completed=("CaseNumber", "count"),
-        Total_Duration_Hours=("Duration", lambda x: round(x.sum() / 60, 2)),
+        Total_Duration_Hours=("Duration", lambda x: round(x.sum(), 2)),
     ).reset_index()
+
+    # Cast CompletedBy to int for merge compatibility
+    agg["CompletedBy"] = pd.to_numeric(agg["CompletedBy"], errors="coerce").fillna(0).astype(int)
 
     # Join with employee lookup to get Team
     lookup = load_employee_lookup()

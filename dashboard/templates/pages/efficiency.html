@@ -64,7 +64,7 @@
             <tr>
               <th>Date</th>
               <th style="text-align:right;">Num of People</th>
-              <th style="text-align:right;">EFF</th>
+              <th style="text-align:center;">EFF</th>
               <th style="text-align:right;">Cases Worked On</th>
               <th style="text-align:right;">Tasks Completed</th>
               <th style="text-align:right;">Tasks Duration</th>
@@ -75,7 +75,7 @@
             <tr>
               <td x-text="dailySummaryAll().date"></td>
               <td style="text-align:right;" x-text="dailySummaryAll().people"></td>
-              <td style="text-align:right; font-weight:600;" :style="effColor(dailySummaryAll().eff)" x-text="dailySummaryAll().eff.toFixed(0) + '%'"></td>
+              <td style="text-align:center; font-weight:600;" :style="effColor(dailySummaryAll().eff)" x-text="dailySummaryAll().eff.toFixed(0) + '%'"></td>
               <td style="text-align:right;" x-text="dailySummaryAll().cases"></td>
               <td style="text-align:right;" x-text="dailySummaryAll().tasks"></td>
               <td style="text-align:right;" x-text="dailySummaryAll().duration.toFixed(1)"></td>
@@ -95,7 +95,7 @@
             <tr>
               <th>Group</th>
               <th style="text-align:right;">Num of People</th>
-              <th style="text-align:right;">EFF</th>
+              <th style="text-align:center;">EFF</th>
               <th style="text-align:right;">Cases Worked On</th>
               <th style="text-align:right;">Tasks Completed</th>
               <th style="text-align:right;">Tasks Duration</th>
@@ -107,7 +107,7 @@
               <tr>
                 <td style="font-weight:600;" x-text="ts.team"></td>
                 <td style="text-align:right;" x-text="ts.people"></td>
-                <td style="text-align:right; font-weight:600;" :style="effColor(ts.eff)" x-text="ts.eff > 0 ? ts.eff.toFixed(0) + '%' : ''"></td>
+                <td style="text-align:center; font-weight:600;" :style="effColor(ts.eff)" x-text="ts.eff > 0 ? ts.eff.toFixed(0) + '%' : ''"></td>
                 <td style="text-align:right;" x-text="ts.cases"></td>
                 <td style="text-align:right;" x-text="ts.tasks"></td>
                 <td style="text-align:right;" x-text="ts.duration.toFixed(1)"></td>
@@ -128,7 +128,7 @@
             <tr>
               <th>Group</th>
               <th>Name</th>
-              <th style="text-align:right;">EFF</th>
+              <th style="text-align:center;">EFF</th>
               <th style="text-align:right;">Cases Worked On</th>
               <th style="text-align:right;">Tasks Completed</th>
               <th style="text-align:right;">Tasks Duration</th>
@@ -140,7 +140,7 @@
               <tr>
                 <td x-text="row.Team || ''"></td>
                 <td x-text="row['MT Name'] || ''" style="white-space:nowrap;"></td>
-                <td style="text-align:right; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
+                <td style="text-align:center; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
                 <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
                 <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
                 <td style="text-align:right;" x-text="(row.Tasks_Duration_Hours || 0).toFixed(1)"></td>
@@ -161,7 +161,7 @@
             <tr>
               <th>Group</th>
               <th>Name</th>
-              <th style="text-align:right;">EFF</th>
+              <th style="text-align:center;">EFF</th>
               <th style="text-align:right;">Cases Worked On</th>
               <th style="text-align:right;">Tasks Completed</th>
               <th style="text-align:right;">Tasks Duration</th>
@@ -173,7 +173,7 @@
               <tr>
                 <td x-text="row.Team || ''"></td>
                 <td x-text="row['MT Name'] || ''" style="white-space:nowrap;"></td>
-                <td style="text-align:right; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
+                <td style="text-align:center; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
                 <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
                 <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
                 <td style="text-align:right;" x-text="(row.Tasks_Duration_Hours || 0).toFixed(1)"></td>
@@ -212,7 +212,7 @@
           <table class="eff-table">
             <thead>
               <tr>
-                <th style="position:sticky; left:0; z-index:2; background:#1e2a38;">Teams</th>
+                <th style="position:sticky; left:0; z-index:2; background:#2C2C2C;">Teams</th>
                 {% for col in mm_eff_cols %}
                 <th style="white-space:nowrap; text-align:right; font-size:11px;">{{ col | replace('Efficiency_','') | replace('_',' ') }}</th>
                 {% endfor %}
@@ -243,8 +243,8 @@
           <table class="eff-table">
             <thead>
               <tr>
-                <th style="position:sticky; left:0; z-index:2; background:#1e2a38;">Team</th>
-                <th style="position:sticky; left:0; z-index:2; background:#1e2a38;">Name</th>
+                <th style="position:sticky; left:0; z-index:2; background:#2C2C2C;">Team</th>
+                <th style="position:sticky; left:0; z-index:2; background:#2C2C2C;">Name</th>
                 {% for col in mm_eff_cols %}
                 <th style="white-space:nowrap; text-align:right; font-size:11px;">{{ col | replace('Efficiency_','') | replace('_',' ') }}</th>
                 {% endfor %}
@@ -476,7 +476,7 @@
   .eff-section-label {
     font-size: 14px;
     font-weight: 700;
-    color: #7eb3d4;
+    color: #C0392B;
     padding: 8px 0 4px;
     letter-spacing: 0.03em;
   }
@@ -487,25 +487,29 @@
     margin-bottom: 4px;
   }
   .eff-table thead th {
-    background: #1e2a38;
-    color: #b0c4d8;
+    background: #2C2C2C;
+    color: #FFFFFF;
     padding: 6px 10px;
     text-align: left;
     font-weight: 600;
     font-size: 12px;
     white-space: nowrap;
-    border-bottom: 1px solid #2a3a4a;
+    border-bottom: 1px solid #E0E0E0;
   }
   .eff-table tbody td {
     padding: 4px 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid #E0E0E0;
     font-size: 13px;
+    color: #1A1A1A;
+  }
+  .eff-table tbody tr {
+    background: #FFFFFF;
   }
   .eff-table tbody tr:nth-child(even) {
-    background: rgba(255,255,255,0.02);
+    background: #FAFAFA;
   }
   .eff-table tbody tr:hover {
-    background: rgba(126, 179, 212, 0.07);
+    background: #F0F0F0;
   }
 </style>
 
@@ -539,7 +543,7 @@ function efficiencyPage() {
 
     // ─── Daily EFF ───────────────────────────────
     filteredDailyRows() {
-      let rows = this.dailyRows;
+      let rows = this.dailyRows.filter(r => r.Team !== 'z_Not On Report');
       if (this.dailyDate) rows = rows.filter(r => String(r.Date || '').startsWith(this.dailyDate));
       if (this.dailyTeam) rows = rows.filter(r => r.Team === this.dailyTeam);
       if (this.dailySearch.trim()) {
@@ -612,15 +616,15 @@ function efficiencyPage() {
 
     effColor(val) {
       const n = Number(val) || 0;
-      if (n >= 100) return 'color: #27ae60;';
-      if (n >= 80) return 'color: #f39c12;';
-      if (n > 0) return 'color: #e74c3c;';
-      return 'color: #888;';
+      if (n >= 80) return 'color: #27AE60;';
+      if (n >= 50) return '';
+      if (n > 0) return 'color: #C0392B;';
+      return 'color: #999;';
     },
 
     // ─── MM EFF ──────────────────────────────────
     filteredMMRows() {
-      let rows = this.mmRows;
+      let rows = this.mmRows.filter(r => r.Team !== 'z_Not On Report');
       if (this.mmTeam) rows = rows.filter(r => r.Team === this.mmTeam);
       return rows;
     },
@@ -661,12 +665,12 @@ function efficiencyPage() {
     },
 
     mmEffColor(val) {
-      if (val === 'x' || val === null || val === undefined) return 'color:#555;';
+      if (val === 'x' || val === null || val === undefined) return 'color:#999;';
       const n = Number(val);
-      if (isNaN(n) || n === 0) return 'color:#555;';
-      if (n >= 1.0) return 'color:#27ae60;';
-      if (n >= 0.8) return 'color:#f39c12;';
-      return 'color:#e74c3c;';
+      if (isNaN(n) || n === 0) return 'color:#999;';
+      if (n >= 0.80) return 'color:#27AE60;';
+      if (n >= 0.50) return '';
+      return 'color:#C0392B;';
     },
 
     formatMmEff(val) {
