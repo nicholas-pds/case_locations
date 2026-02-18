@@ -6,9 +6,9 @@ from fastapi import APIRouter, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 from dashboard.data.efficiency_store import (
-    load_daily, load_aggregated, load_midday,
+    load_daily, load_aggregated, load_midday, save_midday,
 )
-from dashboard.data.efficiency_processing import run_full_upload
+from dashboard.data.efficiency_processing import run_full_upload, process_midday_snapshot
 from dashboard.data.cache import cache
 
 router = APIRouter()
@@ -90,6 +90,24 @@ async def efficiency_upload(file: UploadFile = File(...)):
         return JSONResponse(content=result)
     except Exception as e:
         logger.error(f"Upload failed: {e}")
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
+
+
+@router.post("/efficiency/refresh-midday")
+async def efficiency_refresh_midday():
+    """Manually trigger noon and 3pm midday snapshot refresh."""
+    try:
+        results = {}
+        for window in ("noon", "3pm"):
+            df = process_midday_snapshot(window)
+            if not df.empty:
+                save_midday(window, df)
+                results[window] = len(df)
+            else:
+                results[window] = 0
+        return JSONResponse(content={"status": "ok", "rows": results})
+    except Exception as e:
+        logger.error(f"Midday refresh failed: {e}")
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
 
 

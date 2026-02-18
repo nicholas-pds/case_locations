@@ -363,6 +363,7 @@ def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
     filtered["Duration"] = pd.to_numeric(filtered["Duration"], errors="coerce").fillna(0)
     agg = filtered.groupby(["CompletedBy", "Name"]).agg(
         Cases=("CaseNumber", "nunique"),
+        Tasks_Completed=("CaseNumber", "count"),
         Total_Duration_Hours=("Duration", lambda x: round(x.sum() / 60, 2)),
     ).reset_index()
 
@@ -379,7 +380,7 @@ def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
     # Exclude z_Not On Report
     agg = agg[agg["Team"] != "z_Not On Report"]
 
-    return agg[["Team", "Name", "Cases", "Total_Duration_Hours"]].sort_values(["Team", "Name"]).reset_index(drop=True)
+    return agg[["Team", "Name", "Cases", "Tasks_Completed", "Total_Duration_Hours"]].sort_values(["Team", "Name"]).reset_index(drop=True)
 
 
 # ─────────────────────────────────────────────
