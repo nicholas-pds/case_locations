@@ -351,6 +351,12 @@ def build_workload_pivot_table(df: pd.DataFrame) -> dict:
     if df.empty:
         return {'dates': [], 'categories': [], 'data': {}, 'totals': {}}
 
+    # Pivot table shows only In Production cases
+    if 'Status' in df.columns:
+        df = df[df['Status'] == 'In Production']
+    if df.empty:
+        return {'dates': [], 'categories': [], 'data': {}, 'totals': {}}
+
     dates = sorted(df['ShipDate'].unique())
     categories_order = [
         'Hybrid', 'E2 Expanders', 'Lab to Lab', 'MARPE',

@@ -814,24 +814,24 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
   flex: 1;
 }
 .pace-card-half {
-  padding: 10px 8px;
-  border-radius: 8px;
+  padding: 5px 6px;
+  border-radius: 6px;
 }
 .pace-card-half .pace-day {
-  font-size: 9px;
-  margin-bottom: 6px;
+  font-size: 8px;
+  margin-bottom: 3px;
 }
 .pace-card-half .pace-fraction {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 .pace-card-half .pace-bar-container {
-  height: 6px;
-  margin-bottom: 4px;
+  height: 4px;
+  margin-bottom: 2px;
 }
 .pace-card-half .pace-pct {
-  font-size: 11px;
+  font-size: 9px;
 }
 
 /* === Date Navigation === */
