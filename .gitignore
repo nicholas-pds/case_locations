@@ -41,7 +41,6 @@ output/
 *.csv
 !company_holidays.csv
 !dashboard/data/employee_lkups.csv
-*.parquet
 
 # Other common ignores
 *.log

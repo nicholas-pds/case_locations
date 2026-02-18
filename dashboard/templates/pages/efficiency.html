@@ -19,6 +19,7 @@
         <input type="file" accept=".csv" style="display:none;" @change="uploadGusto($event)">
       </label>
       <button class="export-btn" @click="exportPdf()">Export PDF</button>
+      <a class="export-btn" href="/efficiency/export/mm" x-show="activeTab === 'mm'" style="text-decoration:none;">Download CSV</a>
     </div>
   </div>
 

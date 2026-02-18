@@ -1,8 +1,9 @@
 """Efficiency report page routes."""
+import io
 import logging
 
 from fastapi import APIRouter, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 from dashboard.data.efficiency_store import (
     load_daily, load_aggregated, load_midday,
@@ -90,3 +91,23 @@ async def efficiency_upload(file: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Upload failed: {e}")
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
+
+
+@router.get("/efficiency/export/mm")
+async def efficiency_export_mm():
+    """Export MM EFF aggregated data as CSV."""
+    df = load_aggregated()
+    if df is None or df.empty:
+        return StreamingResponse(
+            io.StringIO("No data available"),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=efficiency_mm.csv"},
+        )
+    output = io.StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=efficiency_mm.csv"},
+    )
