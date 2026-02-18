@@ -53,14 +53,16 @@ def create_app() -> FastAPI:
 
     # Custom Jinja2 filters for date/time formatting
     def fmt_time(value):
-        """Format timestamp to '2:56 PM'."""
+        """Format timestamp: time only if today, otherwise time + date."""
         if pd.isna(value) or value is None or value == '':
             return ''
         try:
             if isinstance(value, str):
                 value = pd.to_datetime(value)
             if hasattr(value, 'strftime'):
-                return value.strftime(_TIME_FMT)
+                if hasattr(value, 'date') and value.date() == date.today():
+                    return value.strftime(_TIME_FMT)
+                return value.strftime(_TIME_FMT) + ' ' + value.strftime(_DATE_SHORT_FMT)
         except Exception:
             pass
         return str(value)

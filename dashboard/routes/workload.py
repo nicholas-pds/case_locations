@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from dashboard.data.cache import cache
-from dashboard.data.transforms import build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data
+from dashboard.data.transforms import build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data, build_category_pace_data
 import json
 
 router = APIRouter()
@@ -38,6 +38,7 @@ async def workload_page(request: Request):
         'dates': [], 'categories': [], 'data': {}, 'totals': {}
     }
     pace_data = build_workload_pace_data(status_df) if status_df is not None else []
+    category_pace_data = build_category_pace_data(pivot_df) if pivot_df is not None else []
 
     total_in_production = sum(chart_data['in_production'])
     total_invoiced = sum(chart_data['invoiced'])
@@ -64,4 +65,5 @@ async def workload_page(request: Request):
         "design_count": design_count,
         "manufacturing_count": manufacturing_count,
         "production_floor_count": production_floor_count,
+        "category_pace_data": category_pace_data,
     })

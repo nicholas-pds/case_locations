@@ -1,0 +1,21 @@
+{% if category_pace_data %}
+{% for row in category_pace_data %}
+<div class="category-pace-row">
+  <div class="category-pace-label">{{ row.category }}</div>
+  <div class="pace-grid pace-grid-half">
+    {% for day in row.days %}
+    <div class="pace-card pace-card-half pace-card-{{ day.status }}">
+      <div class="pace-day">{{ day.label }}</div>
+      <div class="pace-fraction">{{ day.invoiced }}<span class="pace-separator"> / </span>{{ day.total }}</div>
+      <div class="pace-bar-container">
+        <div class="pace-bar pace-bar-{{ day.status }}" style="width: {{ day.pct }}%"></div>
+      </div>
+      <div class="pace-pct pace-pct-{{ day.status }}">{{ day.pct|int }}%</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state"><p>No category pace data available</p></div>
+{% endif %}

@@ -795,6 +795,45 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 .pace-pct-ahead { color: #27AE60; }
 .pace-pct-behind { color: #E74C3C; }
 
+/* === Category Pace Rows (half-height) === */
+.category-pace-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.category-pace-label {
+  min-width: 120px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;
+}
+.pace-grid-half {
+  flex: 1;
+}
+.pace-card-half {
+  padding: 10px 8px;
+  border-radius: 8px;
+}
+.pace-card-half .pace-day {
+  font-size: 9px;
+  margin-bottom: 6px;
+}
+.pace-card-half .pace-fraction {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.pace-card-half .pace-bar-container {
+  height: 6px;
+  margin-bottom: 4px;
+}
+.pace-card-half .pace-pct {
+  font-size: 11px;
+}
+
 /* === Date Navigation === */
 .date-nav {
   display: flex;

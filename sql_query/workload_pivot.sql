@@ -4,28 +4,34 @@ WITH CasesWithRankedCategories AS
         ca.CaseNumber,
         ca.PanNumber,
         CAST(ca.ShipDate AS DATE) AS ShipDate,
-        pr.Category,
+        ca.Status,
+        CASE WHEN pr.Category = 'Accessories' THEN 'Other'
+             ELSE pr.Category
+        END AS Category,
         ROW_NUMBER() OVER (
             PARTITION BY ca.CaseNumber, CAST(ca.ShipDate AS DATE)
             ORDER BY
-                CASE pr.Category
-                    WHEN 'E2 Expanders'   THEN 1
-                    WHEN 'Lab to Lab'     THEN 2
-                    WHEN 'Marpe'          THEN 3
-                    WHEN 'Metal'          THEN 4
-                    WHEN 'Clear'          THEN 5
-                    WHEN 'Wire Bending'   THEN 6
-                    WHEN 'Hybrid'         THEN 7
-                    WHEN 'Airway'         THEN 8
-                    ELSE 99                                -- Lowest priority
+                CASE WHEN pr.Category = 'Accessories' THEN 'Other'
+                     ELSE pr.Category
                 END,
-                pr.Category DESC  -- Just in case of ties (unlikely)
+                CASE
+                    WHEN pr.Category = 'Hybrid'        THEN 1
+                    WHEN pr.Category = 'E2 Expanders'  THEN 2
+                    WHEN pr.Category = 'Lab to Lab'    THEN 3
+                    WHEN pr.Category = 'Marpe'         THEN 4
+                    WHEN pr.Category = 'Metal'         THEN 5
+                    WHEN pr.Category = 'Clear'         THEN 6
+                    WHEN pr.Category = 'Wire Bending'  THEN 7
+                    ELSE 99
+                END,
+                pr.Category DESC
         ) AS rn
     FROM dbo.Cases AS ca
     INNER JOIN dbo.CaseProducts AS cp ON ca.CaseID = cp.CaseID
     INNER JOIN dbo.Products AS pr ON cp.ProductID = pr.ProductID
-    WHERE ca.Status = 'In Production'
+    WHERE ca.Status IN ('In Production', 'Invoiced')
       AND ca.ShipDate IS NOT NULL
+      AND pr.Category <> 'Airway'
 )
 , FinalAssignment AS
 (
@@ -33,10 +39,10 @@ WITH CasesWithRankedCategories AS
         ShipDate,
         CaseNumber,
         PanNumber,
-        ISNULL(
-            NULLIF(Category, ''),
-            'Other'
-        ) AS Category
+        Status,
+        CASE WHEN Category = 'Accessories' THEN 'Other'
+             ELSE ISNULL(NULLIF(Category, ''), 'Other')
+        END AS Category
     FROM CasesWithRankedCategories
     WHERE rn = 1
 
@@ -47,9 +53,10 @@ WITH CasesWithRankedCategories AS
         CAST(ca.ShipDate AS DATE) AS ShipDate,
         ca.CaseNumber,
         ca.PanNumber,
+        ca.Status,
         'Other' AS Category
     FROM dbo.Cases AS ca
-    WHERE ca.Status = 'In Production'
+    WHERE ca.Status IN ('In Production', 'Invoiced')
       AND ca.ShipDate IS NOT NULL
       AND NOT EXISTS (
           SELECT 1
@@ -60,20 +67,20 @@ WITH CasesWithRankedCategories AS
 )
 SELECT
     Category,
+    Status,
     ShipDate,
     PanNumber,
     CaseNumber
 FROM FinalAssignment
 ORDER BY ShipDate DESC,
          CASE Category
-             WHEN 'E2 Expanders' THEN 1
-             WHEN 'Lab to Lab'   THEN 2
-             WHEN 'Marpe'        THEN 3
-             WHEN 'Metal'        THEN 4
-             WHEN 'Clear'        THEN 5
-             WHEN 'Wire Bending' THEN 6
-             WHEN 'Hybrid'       THEN 7
-             WHEN 'Airway'       THEN 8
-             WHEN 'Other'       THEN 99
+             WHEN 'Hybrid'        THEN 1
+             WHEN 'E2 Expanders'  THEN 2
+             WHEN 'Lab to Lab'    THEN 3
+             WHEN 'Marpe'         THEN 4
+             WHEN 'Metal'         THEN 5
+             WHEN 'Clear'         THEN 6
+             WHEN 'Wire Bending'  THEN 7
+             WHEN 'Other'         THEN 99
          END,
          Category;

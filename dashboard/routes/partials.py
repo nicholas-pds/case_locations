@@ -7,7 +7,7 @@ from dashboard.data.transforms import (
     aggregate_by_location, filter_cases, add_filter_columns,
     filter_local_delivery, filter_local_delivery_today, filter_local_delivery_by_date,
     filter_overdue_no_scan,
-    build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data,
+    build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data, build_category_pace_data,
     aggregate_airway_stages,
 )
 from dashboard.config import CATEGORY_COLORS
@@ -157,6 +157,17 @@ async def workload_pace(request: Request):
     })
 
 
+@router.get("/workload-category-pace", response_class=HTMLResponse)
+async def workload_category_pace(request: Request):
+    df = await cache.get("workload_pivot")
+    category_pace_data = build_category_pace_data(df) if df is not None else []
+    templates = request.app.state.templates
+    return templates.TemplateResponse("partials/workload_category_pace.html", {
+        "request": request,
+        "category_pace_data": category_pace_data,
+    })
+
+
 @router.get("/airway-grid", response_class=HTMLResponse)
 async def airway_grid(request: Request):
     df = await cache.get("airway_workflow")
@@ -181,7 +192,7 @@ async def airway_table(request: Request, location: str = None, ship_date: str = 
                 df = df[df['ShipDate'] == target]
             except ValueError:
                 pass
-        cases = df.to_dict('records')[:15]
+        cases = df.to_dict('records')
     else:
         cases = []
     templates = request.app.state.templates
@@ -197,7 +208,7 @@ async def airway_hold_table(request: Request, hold_status: str = None):
     if df is not None and not df.empty:
         if hold_status:
             df = df[df['HoldStatus'] == hold_status]
-        cases = df.to_dict('records')[:15]
+        cases = df.to_dict('records')
     else:
         cases = []
     templates = request.app.state.templates

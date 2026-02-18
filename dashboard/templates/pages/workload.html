@@ -30,4 +30,13 @@
      hx-swap="innerHTML">
   {% include "partials/workload_table.html" %}
 </div>
+
+<!-- Category Pace Rows -->
+<h2 class="section-title" style="margin-top: 24px; margin-bottom: 8px;">Category Pace</h2>
+<div id="workload-category-pace"
+     hx-get="/partials/workload-category-pace"
+     hx-trigger="sse:data-refreshed"
+     hx-swap="innerHTML">
+  {% include "partials/workload_category_pace.html" %}
+</div>
 {% endblock %}

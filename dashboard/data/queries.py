@@ -93,8 +93,8 @@ def fetch_workload_pivot() -> pd.DataFrame:
     end_date = prev_biz_day + timedelta(days=WORKLOAD_DAYS_RANGE)
     df = df[(df['ShipDate'] >= start_date) & (df['ShipDate'] <= end_date)]
 
-    # Aggregate: group by Category + ShipDate, count cases
-    df = df.groupby(['Category', 'ShipDate']).size().reset_index(name='CaseCount')
+    # Aggregate: group by Category + Status + ShipDate, count cases
+    df = df.groupby(['Category', 'Status', 'ShipDate']).size().reset_index(name='CaseCount')
 
     return df.reset_index(drop=True)
 

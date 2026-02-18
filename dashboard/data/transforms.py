@@ -146,10 +146,26 @@ def aggregate_by_location(df: pd.DataFrame) -> list[dict]:
             'categories': cats,
         }
 
-    # Only include locations in the display order
+    # Include locations in the display order first
     for loc in LOCATION_DISPLAY_ORDER:
         if loc in location_data:
             result.append(location_data[loc])
+
+    # Append any extra locations not in the display order
+    for loc_name, loc_info in location_data.items():
+        if loc_name not in LOCATION_DISPLAY_ORDER:
+            result.append(loc_info)
+
+    # Add a bucket for cases with null/blank location
+    null_mask = df['Last Location'].isna() | (df['Last Location'].astype(str).str.strip() == '')
+    null_cases = df[null_mask]
+    if not null_cases.empty:
+        cats = null_cases['Category'].value_counts().to_dict()
+        result.append({
+            'name': 'Unknown',
+            'total': len(null_cases),
+            'categories': cats,
+        })
 
     return result
 
@@ -337,8 +353,8 @@ def build_workload_pivot_table(df: pd.DataFrame) -> dict:
 
     dates = sorted(df['ShipDate'].unique())
     categories_order = [
-        'Metal', 'Clear', 'Wire Bending', 'MARPE',
-        'E2 Expanders', 'Hybrid', 'Other', 'Lab to Lab', 'Airway',
+        'Hybrid', 'E2 Expanders', 'Lab to Lab', 'MARPE',
+        'Metal', 'Clear', 'Wire Bending', 'Other',
     ]
 
     # Get actual categories present
@@ -373,6 +389,61 @@ def build_workload_pivot_table(df: pd.DataFrame) -> dict:
         'data': data,
         'totals': totals,
     }
+
+
+def build_category_pace_data(df: pd.DataFrame) -> list[dict]:
+    """Build per-category pace rows from the workload_pivot data.
+
+    Expects a DataFrame with columns: Category, Status, ShipDate, CaseCount.
+    Returns a list of dicts, one per category, each containing 'category' and
+    'days' (a list of pace-tile dicts identical to build_workload_pace_data).
+    """
+    if df.empty:
+        return []
+
+    categories_order = [
+        'Hybrid', 'E2 Expanders', 'Lab to Lab', 'MARPE',
+        'Metal', 'Clear', 'Wire Bending', 'Other',
+    ]
+
+    dates = sorted(df['ShipDate'].unique())
+    actual_cats = df['Category'].unique().tolist() if 'Category' in df.columns else []
+    categories = [c for c in categories_order if c in actual_cats]
+    for c in actual_cats:
+        if c not in categories:
+            categories.append(c)
+
+    result = []
+    for cat in categories:
+        cat_df = df[df['Category'] == cat]
+        days = []
+        for d in dates:
+            day_data = cat_df[cat_df['ShipDate'] == d]
+            inv = int(day_data[day_data['Status'] == 'Invoiced']['CaseCount'].sum())
+            prod = int(day_data[day_data['Status'] == 'In Production']['CaseCount'].sum())
+            total = inv + prod
+            pct = round((inv / total * 100), 1) if total > 0 else 0
+
+            if hasattr(d, 'strftime'):
+                label = d.strftime('%a %b %d')
+            else:
+                label = str(d)
+
+            days.append({
+                'label': label,
+                'invoiced': inv,
+                'in_production': prod,
+                'total': total,
+                'pct': pct,
+                'status': 'ahead' if inv >= prod else 'behind',
+            })
+
+        result.append({
+            'category': cat,
+            'days': days[:6],
+        })
+
+    return result
 
 
 def build_sales_history(df: pd.DataFrame, num_days: int = 5) -> list[dict]:
