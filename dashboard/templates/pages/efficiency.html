@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+{% block title %}Efficiency{% endblock %}
+
+{% block content %}
+<div x-data="efficiencyPage()" x-init="init()">
+
+  <!-- Page Header -->
+  <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <h1 class="page-title">Efficiency Report</h1>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      {% if last_upload_date %}
+      <span style="font-size:12px; color:#888;">Last upload: {{ last_upload_date }}</span>
+      {% endif %}
+      <span x-show="uploadStatus" x-text="uploadStatus"
+            :style="uploadError ? 'color:#e74c3c; font-size:13px;' : 'color:#27ae60; font-size:13px;'"></span>
+      <label class="export-btn" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Gusto CSV
+        <input type="file" accept=".csv" style="display:none;" @change="uploadGusto($event)">
+      </label>
+      <button class="export-btn" @click="exportPdf()">Export PDF</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="customer-tabs">
+    <button class="customer-tab" :class="{ active: activeTab === 'daily' }" @click="activeTab = 'daily'">Daily EFF</button>
+    <button class="customer-tab" :class="{ active: activeTab === 'mm' }" @click="activeTab = 'mm'">MM EFF</button>
+    <button class="customer-tab" :class="{ active: activeTab === 'noon' }" @click="activeTab = 'noon'">Noon EFF</button>
+    <button class="customer-tab" :class="{ active: activeTab === '3pm' }" @click="activeTab = '3pm'">3PM EFF</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DAILY EFF TAB                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="activeTab === 'daily'">
+    <!-- Filters -->
+    <div class="customer-filters">
+      <input type="text" class="search-input" placeholder="Search name, team..." x-model="dailySearch" style="flex:1; max-width:280px;">
+      <select class="filter-select" x-model="dailyTeam">
+        <option value="">All Teams</option>
+        {% for team in teams %}
+        <option value="{{ team }}">{{ team }}</option>
+        {% endfor %}
+      </select>
+      <select class="filter-select" x-model="dailyTraining">
+        <option value="">All</option>
+        <option value="0">Not In Training</option>
+        <option value="1">In Training</option>
+      </select>
+      <button class="clear-filters-btn" @click="clearDailyFilters()"
+              x-show="dailySearch || dailyTeam || dailyTraining">Clear</button>
+    </div>
+
+    <!-- Daily Table -->
+    <div class="customer-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th @click="dailySort('Date')" style="cursor:pointer; white-space:nowrap;">
+              Date <span x-show="dailySortCol==='Date'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+            <th @click="dailySort('MT Name')" style="cursor:pointer; white-space:nowrap;">
+              Name <span x-show="dailySortCol==='MT Name'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+            <th @click="dailySort('Team')" style="cursor:pointer; white-space:nowrap;">
+              Team <span x-show="dailySortCol==='Team'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+            <th @click="dailySort('Training Plan')" style="cursor:pointer; white-space:nowrap;">
+              Training <span x-show="dailySortCol==='Training Plan'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+            <th @click="dailySort('Work Hours')" style="cursor:pointer; white-space:nowrap; text-align:right;">
+              Work Hrs <span x-show="dailySortCol==='Work Hours'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+            <th @click="dailySort('Cases_Worked_On')" style="cursor:pointer; white-space:nowrap; text-align:right;">
+              Cases <span x-show="dailySortCol==='Cases_Worked_On'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+            <th @click="dailySort('Tasks_Completed')" style="cursor:pointer; white-space:nowrap; text-align:right;">
+              Tasks <span x-show="dailySortCol==='Tasks_Completed'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+            <th @click="dailySort('Tasks_Duration_Hours')" style="cursor:pointer; white-space:nowrap; text-align:right;">
+              Task Hrs <span x-show="dailySortCol==='Tasks_Duration_Hours'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+            <th @click="dailySort('Efficiency')" style="cursor:pointer; white-space:nowrap; text-align:right;">
+              Efficiency <span x-show="dailySortCol==='Efficiency'" x-text="dailySortDir==='asc'?'▲':'▼'" style="font-size:10px;"></span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="row in pagedDailyRows()" :key="row.Date + '-' + row.EmployeeID">
+            <tr>
+              <td x-text="row.Date || ''" style="white-space:nowrap;"></td>
+              <td x-text="row['MT Name'] || ''" style="white-space:nowrap;"></td>
+              <td x-text="row.Team || ''" style="white-space:nowrap;"></td>
+              <td style="text-align:center;" x-text="row['Training Plan'] == 1 ? 'Yes' : ''"></td>
+              <td style="text-align:right;" x-text="(row['Work Hours'] || 0).toFixed(2)"></td>
+              <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
+              <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
+              <td style="text-align:right;" x-text="(row.Tasks_Duration_Hours || 0).toFixed(2)"></td>
+              <td style="text-align:right; font-weight:600;"
+                  :style="effColor(row.Efficiency)"
+                  x-text="(row.Efficiency || 0).toFixed(1) + '%'"></td>
+            </tr>
+          </template>
+          <tr x-show="filteredDailyRows().length === 0">
+            <td colspan="9" style="text-align:center; padding:24px; color:#888;">No data — upload a Gusto CSV to get started</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Daily Pagination -->
+    <div class="table-footer" x-show="dailyTotalPages() > 1">
+      <button class="page-btn" @click="dailyPage=1" :disabled="dailyPage===1">First</button>
+      <button class="page-btn" @click="dailyPage=Math.max(1,dailyPage-1)" :disabled="dailyPage===1">Prev</button>
+      <span style="font-size:13px; color:#666;" x-text="'Page '+dailyPage+' of '+dailyTotalPages()"></span>
+      <button class="page-btn" @click="dailyPage=Math.min(dailyTotalPages(),dailyPage+1)" :disabled="dailyPage===dailyTotalPages()">Next</button>
+      <button class="page-btn" @click="dailyPage=dailyTotalPages()" :disabled="dailyPage===dailyTotalPages()">Last</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- MM EFF TAB                                  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="activeTab === 'mm'">
+    <div class="customer-filters">
+      <select class="filter-select" x-model="mmTeam">
+        <option value="">All Teams</option>
+        {% for team in teams %}
+        <option value="{{ team }}">{{ team }}</option>
+        {% endfor %}
+      </select>
+      <select class="filter-select" x-model="mmTraining">
+        <option value="">All</option>
+        <option value="0">Not In Training</option>
+        <option value="1">In Training</option>
+      </select>
+      <button class="clear-filters-btn" @click="mmTeam=''; mmTraining=''" x-show="mmTeam || mmTraining">Clear</button>
+    </div>
+
+    <div class="customer-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="white-space:nowrap;">Name</th>
+            <th style="white-space:nowrap;">Team</th>
+            <th style="white-space:nowrap; text-align:center;">Training</th>
+            {% for col in mm_eff_cols %}
+            <th style="white-space:nowrap; text-align:right; font-size:11px;">{{ col | replace('Efficiency_','') | replace('_',' ') }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="row in flatMMRows()" :key="row._key">
+            <!-- Team header row -->
+            <tr x-show="row._type === 'header'"
+                style="background:#1a2332;">
+              <td :colspan="{{ mm_eff_cols|length + 3 }}"
+                  style="color:#7eb3d4; font-weight:700; font-size:12px; padding:6px 10px; letter-spacing:0.05em;"
+                  x-text="row._team"></td>
+            </tr>
+            <!-- Data row -->
+            <tr x-show="row._type === 'data'">
+              <td x-text="row['MT Name'] || ''" style="white-space:nowrap; padding-left:18px;"></td>
+              <td x-text="row.Team || ''" style="white-space:nowrap;"></td>
+              <td style="text-align:center;" x-text="row['Training Plan'] == 1 ? 'Yes' : ''"></td>
+              {% for col in mm_eff_cols %}
+              <td style="text-align:right; font-size:12px; font-weight:600;"
+                  :style="mmEffColor(row['{{ col }}'])"
+                  x-text="formatMmEff(row['{{ col }}'])"></td>
+              {% endfor %}
+            </tr>
+          </template>
+          <tr x-show="filteredMMRows().length === 0">
+            <td colspan="{{ mm_eff_cols|length + 3 }}" style="text-align:center; padding:24px; color:#888;">No aggregated data — upload a Gusto CSV to get started</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- NOON EFF TAB                                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="activeTab === 'noon'">
+    <div style="padding:8px 0 12px; color:#888; font-size:13px;">
+      Snapshot: today 3:00 AM – 12:00 PM &nbsp;·&nbsp; Updated automatically at noon on business days
+    </div>
+    <div class="customer-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Name</th>
+            <th style="text-align:right;">Cases</th>
+            <th style="text-align:right;">Duration (hrs)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(rows, team) in groupedMidday(noonRows)" :key="'noon-'+team">
+            <tr>
+              <td colspan="4" style="background:#1a2332; color:#7eb3d4; font-weight:700; font-size:12px; padding:6px 10px; letter-spacing:0.05em;" x-text="team"></td>
+            </tr>
+            <template x-for="row in rows" :key="'noon-'+team+'-'+row.Name">
+              <tr>
+                <td style="padding-left:18px;" x-text="''"></td>
+                <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
+                <td style="text-align:right;" x-text="row.Cases || 0"></td>
+                <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(2)"></td>
+              </tr>
+            </template>
+            <!-- Team subtotal -->
+            <tr style="font-weight:600; background:rgba(255,255,255,0.03);">
+              <td colspan="2" style="padding-left:18px; color:#aaa; font-size:12px;" x-text="team + ' Total'"></td>
+              <td style="text-align:right;" x-text="teamTotal(rows, 'Cases')"></td>
+              <td style="text-align:right;" x-text="teamTotal(rows, 'Total_Duration_Hours').toFixed(2)"></td>
+            </tr>
+          </template>
+          <tr x-show="noonRows.length === 0">
+            <td colspan="4" style="text-align:center; padding:24px; color:#888;">No noon data yet — updates automatically at 12:00 PM on business days</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- 3PM EFF TAB                                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="activeTab === '3pm'">
+    <div style="padding:8px 0 12px; color:#888; font-size:13px;">
+      Snapshot: today 3:00 AM – 3:00 PM &nbsp;·&nbsp; Updated automatically at 3:00 PM on business days
+    </div>
+    <div class="customer-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Name</th>
+            <th style="text-align:right;">Cases</th>
+            <th style="text-align:right;">Duration (hrs)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(rows, team) in groupedMidday(pm3Rows)" :key="'3pm-'+team">
+            <tr>
+              <td colspan="4" style="background:#1a2332; color:#7eb3d4; font-weight:700; font-size:12px; padding:6px 10px; letter-spacing:0.05em;" x-text="team"></td>
+            </tr>
+            <template x-for="row in rows" :key="'3pm-'+team+'-'+row.Name">
+              <tr>
+                <td style="padding-left:18px;" x-text="''"></td>
+                <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
+                <td style="text-align:right;" x-text="row.Cases || 0"></td>
+                <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(2)"></td>
+              </tr>
+            </template>
+            <!-- Team subtotal -->
+            <tr style="font-weight:600; background:rgba(255,255,255,0.03);">
+              <td colspan="2" style="padding-left:18px; color:#aaa; font-size:12px;" x-text="team + ' Total'"></td>
+              <td style="text-align:right;" x-text="teamTotal(rows, 'Cases')"></td>
+              <td style="text-align:right;" x-text="teamTotal(rows, 'Total_Duration_Hours').toFixed(2)"></td>
+            </tr>
+          </template>
+          <tr x-show="pm3Rows.length === 0">
+            <td colspan="4" style="text-align:center; padding:24px; color:#888;">No 3PM data yet — updates automatically at 3:00 PM on business days</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- end x-data -->
+
+<script>
+function efficiencyPage() {
+  return {
+    activeTab: 'daily',
+
+    // Daily EFF state
+    dailyRows: {{ daily_records | tojson }},
+    dailySearch: '',
+    dailyTeam: '',
+    dailyTraining: '',
+    dailySortCol: 'Date',
+    dailySortDir: 'desc',
+    dailyPage: 1,
+    dailyPerPage: 20,
+
+    // MM EFF state
+    mmRows: {{ agg_records | tojson }},
+    mmTeam: '',
+    mmTraining: '',
+
+    // Midday state
+    noonRows: {{ noon_records | tojson }},
+    pm3Rows: {{ pm3_records | tojson }},
+
+    // Upload state
+    uploadStatus: '',
+    uploadError: false,
+
+    init() {
+      this.$watch('dailySearch', () => this.dailyPage = 1);
+      this.$watch('dailyTeam', () => this.dailyPage = 1);
+      this.$watch('dailyTraining', () => this.dailyPage = 1);
+    },
+
+    // ─── Daily EFF ───────────────────────────────
+    filteredDailyRows() {
+      let rows = this.dailyRows;
+      if (this.dailyTeam) rows = rows.filter(r => r.Team === this.dailyTeam);
+      if (this.dailyTraining !== '') rows = rows.filter(r => String(r['Training Plan']) === this.dailyTraining);
+      if (this.dailySearch.trim()) {
+        const q = this.dailySearch.trim().toLowerCase();
+        rows = rows.filter(r =>
+          String(r['MT Name'] || '').toLowerCase().includes(q) ||
+          String(r.Team || '').toLowerCase().includes(q) ||
+          String(r.Date || '').includes(q)
+        );
+      }
+      // Sort
+      const col = this.dailySortCol;
+      const dir = this.dailySortDir === 'asc' ? 1 : -1;
+      const numCols = ['Work Hours', 'Cases_Worked_On', 'Tasks_Completed', 'Tasks_Duration_Hours', 'Efficiency', 'Training Plan'];
+      rows = [...rows].sort((a, b) => {
+        let va = a[col], vb = b[col];
+        if (va == null) va = '';
+        if (vb == null) vb = '';
+        if (numCols.includes(col)) return (Number(va) - Number(vb)) * dir;
+        return String(va).localeCompare(String(vb), undefined, { numeric: true }) * dir;
+      });
+      return rows;
+    },
+
+    pagedDailyRows() {
+      const rows = this.filteredDailyRows();
+      const start = (this.dailyPage - 1) * this.dailyPerPage;
+      return rows.slice(start, start + this.dailyPerPage);
+    },
+
+    dailyTotalPages() {
+      return Math.max(1, Math.ceil(this.filteredDailyRows().length / this.dailyPerPage));
+    },
+
+    dailySort(col) {
+      if (this.dailySortCol === col) {
+        this.dailySortDir = this.dailySortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.dailySortCol = col;
+        this.dailySortDir = col === 'Date' ? 'desc' : 'asc';
+      }
+    },
+
+    clearDailyFilters() {
+      this.dailySearch = '';
+      this.dailyTeam = '';
+      this.dailyTraining = '';
+    },
+
+    effColor(val) {
+      const n = Number(val) || 0;
+      if (n >= 100) return 'color: #27ae60;';
+      if (n >= 80) return 'color: #f39c12;';
+      if (n > 0) return 'color: #e74c3c;';
+      return 'color: #888;';
+    },
+
+    // ─── MM EFF ──────────────────────────────────
+    filteredMMRows() {
+      let rows = this.mmRows;
+      if (this.mmTeam) rows = rows.filter(r => r.Team === this.mmTeam);
+      if (this.mmTraining !== '') rows = rows.filter(r => String(r['Training Plan']) === this.mmTraining);
+      return rows;
+    },
+
+    groupedMM() {
+      const rows = this.filteredMMRows();
+      const groups = {};
+      rows.forEach(r => {
+        const team = r.Team || 'No Team';
+        if (!groups[team]) groups[team] = [];
+        groups[team].push(r);
+      });
+      // Sort teams alphabetically
+      const sorted = {};
+      Object.keys(groups).sort().forEach(k => sorted[k] = groups[k]);
+      return sorted;
+    },
+
+    flatMMRows() {
+      const groups = this.groupedMM();
+      const flat = [];
+      let idx = 0;
+      for (const team of Object.keys(groups)) {
+        flat.push({ _type: 'header', _team: team, _key: 'hdr-' + (idx++) });
+        groups[team].forEach(r => {
+          flat.push(Object.assign({ _type: 'data', _key: 'row-' + (idx++) }, r));
+        });
+      }
+      return flat;
+    },
+
+    mmEffColor(val) {
+      if (val === 'x' || val === null || val === undefined) return 'color:#555;';
+      const n = Number(val);
+      if (isNaN(n) || n === 0) return 'color:#555;';
+      if (n >= 1.0) return 'color:#27ae60;';
+      if (n >= 0.8) return 'color:#f39c12;';
+      return 'color:#e74c3c;';
+    },
+
+    formatMmEff(val) {
+      if (val === 'x') return 'x';
+      if (val === null || val === undefined || val === 0) return '—';
+      const n = Number(val);
+      if (isNaN(n)) return '—';
+      return (n * 100).toFixed(0) + '%';
+    },
+
+    // ─── Midday ──────────────────────────────────
+    groupedMidday(rows) {
+      const groups = {};
+      rows.forEach(r => {
+        const team = r.Team || 'Unknown';
+        if (!groups[team]) groups[team] = [];
+        groups[team].push(r);
+      });
+      const sorted = {};
+      Object.keys(groups).sort().forEach(k => sorted[k] = groups[k]);
+      return sorted;
+    },
+
+    teamTotal(rows, col) {
+      return rows.reduce((sum, r) => sum + (Number(r[col]) || 0), 0);
+    },
+
+    // ─── Upload ──────────────────────────────────
+    async uploadGusto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      this.uploadStatus = 'Uploading...';
+      this.uploadError = false;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const resp = await fetch('/efficiency/upload', { method: 'POST', body: formData });
+        const data = await resp.json();
+        if (data.status === 'ok') {
+          this.uploadStatus = `✓ Uploaded ${data.date_range} — ${data.new_rows} employees processed`;
+          this.uploadError = false;
+          // Reload page to show new data
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          this.uploadStatus = `Error: ${data.message}`;
+          this.uploadError = true;
+        }
+      } catch (e) {
+        this.uploadStatus = 'Upload failed — check console';
+        this.uploadError = true;
+      }
+      // Reset file input
+      event.target.value = '';
+    },
+
+    // ─── PDF Export ──────────────────────────────
+    exportPdf() {
+      const tabNames = { daily: 'Daily_EFF', mm: 'MM_EFF', noon: 'Noon_EFF', '3pm': '3PM_EFF' };
+      const tabLabel = tabNames[this.activeTab] || 'Efficiency';
+      const today = new Date().toISOString().slice(0, 10);
+      const filename = `Efficiency_${tabLabel}_${today}.pdf`;
+
+      // Build a print-friendly table based on active tab
+      let rows, headers, title;
+      if (this.activeTab === 'daily') {
+        title = 'Daily Efficiency Report';
+        headers = ['Date', 'Name', 'Team', 'Training', 'Work Hrs', 'Cases', 'Tasks', 'Task Hrs', 'Efficiency'];
+        rows = this.filteredDailyRows().map(r => [
+          r.Date || '', r['MT Name'] || '', r.Team || '',
+          r['Training Plan'] == 1 ? 'Yes' : '',
+          (r['Work Hours'] || 0).toFixed(2),
+          r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
+          (r.Tasks_Duration_Hours || 0).toFixed(2),
+          (r.Efficiency || 0).toFixed(1) + '%'
+        ]);
+      } else if (this.activeTab === 'mm') {
+        title = 'Multi-Period Efficiency Report';
+        const effCols = {{ mm_eff_cols | tojson }};
+        headers = ['Name', 'Team', 'Training', ...effCols.map(c => c.replace('Efficiency_','').replace(/_/g,' '))];
+        rows = [];
+        const groups = this.groupedMM();
+        for (const team of Object.keys(groups)) {
+          rows.push([{ text: team, colSpan: headers.length, header: true }]);
+          groups[team].forEach(r => {
+            rows.push([
+              r['MT Name'] || '', r.Team || '',
+              r['Training Plan'] == 1 ? 'Yes' : '',
+              ...effCols.map(c => this.formatMmEff(r[c]))
+            ]);
+          });
+        }
+      } else {
+        const isNoon = this.activeTab === 'noon';
+        title = isNoon ? 'Noon Efficiency Snapshot (3 AM – 12 PM)' : '3PM Efficiency Snapshot (3 AM – 3 PM)';
+        headers = ['Team', 'Name', 'Cases', 'Duration (hrs)'];
+        const src = isNoon ? this.noonRows : this.pm3Rows;
+        const groups = this.groupedMidday(src);
+        rows = [];
+        for (const team of Object.keys(groups)) {
+          rows.push([{ text: team, colSpan: 4, header: true }]);
+          groups[team].forEach(r => {
+            rows.push(['', r.Name || '', r.Cases || 0, (r.Total_Duration_Hours || 0).toFixed(2)]);
+          });
+          const totCases = this.teamTotal(groups[team], 'Cases');
+          const totDur = this.teamTotal(groups[team], 'Total_Duration_Hours').toFixed(2);
+          rows.push([{ text: team + ' Total', colSpan: 2, bold: true }, { text: totCases, bold: true }, { text: totDur, bold: true }]);
+        }
+      }
+
+      // Build HTML table for PDF
+      let html = `<div style="font-family:Arial,sans-serif; padding:20px;">`;
+      html += `<h2 style="margin:0 0 4px; color:#222;">${title}</h2>`;
+      html += `<p style="margin:0 0 16px; color:#666; font-size:12px;">Partners Dental Studio &nbsp;·&nbsp; Generated ${today}</p>`;
+      html += `<table style="width:100%; border-collapse:collapse; font-size:10px;">`;
+      html += `<thead><tr>`;
+      headers.forEach(h => {
+        html += `<th style="border:1px solid #ccc; background:#2c3e50; color:#fff; padding:6px 8px; text-align:left; white-space:nowrap;">${h}</th>`;
+      });
+      html += `</tr></thead><tbody>`;
+
+      rows.forEach((cells, i) => {
+        html += `<tr>`;
+        if (cells.length === 1 && cells[0].colSpan) {
+          const c = cells[0];
+          html += `<td colspan="${c.colSpan}" style="border:1px solid #ccc; background:#e8edf2; color:#2c3e50; padding:5px 8px; font-weight:700; font-size:11px;">${c.text}</td>`;
+        } else {
+          cells.forEach(c => {
+            const val = (typeof c === 'object') ? c.text : c;
+            const bold = (typeof c === 'object' && c.bold) ? 'font-weight:700;' : '';
+            const colSpan = (typeof c === 'object' && c.colSpan) ? ` colspan="${c.colSpan}"` : '';
+            const bg = i % 2 === 0 ? '#fff' : '#f7f8fa';
+            html += `<td${colSpan} style="border:1px solid #ddd; padding:4px 8px; background:${bg}; ${bold}">${val}</td>`;
+          });
+        }
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+      };
+
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      document.body.appendChild(el);
+      html2pdf().set(opt).from(el).save().then(() => {
+        document.body.removeChild(el);
+      });
+    },
+  };
+}
+</script>
+{% endblock %}

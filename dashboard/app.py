@@ -110,6 +110,7 @@ def create_app() -> FastAPI:
     from dashboard.routes.overdue_noscan import router as overdue_noscan_router
     from dashboard.routes.daily_summary import router as daily_summary_router
     from dashboard.routes.customers import router as customers_router
+    from dashboard.routes.efficiency import router as efficiency_router
     from dashboard.routes.partials import router as partials_router
     from dashboard.routes.sse import router as sse_router
     from dashboard.routes.login import router as login_router
@@ -123,6 +124,7 @@ def create_app() -> FastAPI:
     app.include_router(overdue_noscan_router)
     app.include_router(daily_summary_router)
     app.include_router(customers_router)
+    app.include_router(efficiency_router)
     app.include_router(partials_router)
     app.include_router(sse_router)
 

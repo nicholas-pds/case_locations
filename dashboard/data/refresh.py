@@ -1,7 +1,7 @@
 """Background task that refreshes the data cache every 60 seconds."""
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from .cache import cache
 from .queries import (
     fetch_case_locations,
@@ -15,8 +15,12 @@ from .queries import (
 )
 from .transforms import add_filter_columns
 from dashboard.config import REFRESH_INTERVAL_SECONDS, BUSINESS_HOURS_START, BUSINESS_HOURS_END
+from src.holidays import get_all_company_holidays
 
 logger = logging.getLogger("dashboard.refresh")
+
+# Track which midday jobs have already fired today (reset at midnight)
+_midday_jobs_fired: set = set()  # values: ('noon', date) or ('3pm', date)
 
 # SSE subscribers - routes/sse.py will register callbacks here
 _subscribers: list = []
@@ -88,11 +92,37 @@ async def refresh_all_queries():
     await _notify_subscribers()
 
 
+def _is_business_day(d: date = None) -> bool:
+    """Return True if d (default today) is a weekday and not a company holiday."""
+    if d is None:
+        d = date.today()
+    if d.weekday() >= 5:
+        return False
+    return d not in get_all_company_holidays()
+
+
+async def _run_midday_job(window: str) -> None:
+    """Run a midday snapshot job ('noon' or '3pm') in the thread pool."""
+    loop = asyncio.get_event_loop()
+    try:
+        from dashboard.data.efficiency_processing import process_midday_snapshot
+        from dashboard.data.efficiency_store import save_midday
+        logger.info(f"Running midday job: {window}")
+        df = await loop.run_in_executor(None, process_midday_snapshot, window)
+        await loop.run_in_executor(None, save_midday, window, df)
+        logger.info(f"Midday job '{window}' complete: {len(df)} rows")
+    except Exception as e:
+        logger.error(f"Midday job '{window}' failed: {e}")
+
+
 async def refresh_loop():
     """Main background refresh loop. Runs every REFRESH_INTERVAL_SECONDS."""
     logger.info("Background refresh task started")
 
     while True:
+        now = datetime.now()
+        today = now.date()
+
         if _is_business_hours():
             await cache.set_paused(False)
             try:
@@ -105,5 +135,23 @@ async def refresh_loop():
         else:
             await cache.set_paused(True)
             logger.debug("Outside business hours, skipping refresh")
+
+        # Midday scheduled jobs (noon and 3PM) — only on business days
+        if _is_business_day(today):
+            # Noon job: fires between 12:00:00 and 12:00:59
+            noon_key = ("noon", today)
+            if now.hour == 12 and now.minute == 0 and noon_key not in _midday_jobs_fired:
+                _midday_jobs_fired.add(noon_key)
+                asyncio.create_task(_run_midday_job("noon"))
+
+            # 3PM job: fires between 15:00:00 and 15:00:59
+            pm3_key = ("3pm", today)
+            if now.hour == 15 and now.minute == 0 and pm3_key not in _midday_jobs_fired:
+                _midday_jobs_fired.add(pm3_key)
+                asyncio.create_task(_run_midday_job("3pm"))
+
+            # Clean up old keys (keep only today's)
+            old_keys = {k for k in _midday_jobs_fired if k[1] != today}
+            _midday_jobs_fired.difference_update(old_keys)
 
         await asyncio.sleep(REFRESH_INTERVAL_SECONDS)

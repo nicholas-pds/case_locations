@@ -1,0 +1,90 @@
+"""Efficiency report page routes."""
+import logging
+
+from fastapi import APIRouter, Request, UploadFile, File
+from fastapi.responses import HTMLResponse, JSONResponse
+
+from dashboard.data.efficiency_store import (
+    load_daily, load_aggregated, load_midday,
+)
+from dashboard.data.efficiency_processing import run_full_upload
+from dashboard.data.cache import cache
+
+router = APIRouter()
+logger = logging.getLogger("dashboard.routes.efficiency")
+
+
+def _df_to_records(df):
+    """Convert DataFrame to JSON-safe list of dicts."""
+    if df is None or df.empty:
+        return []
+    # Convert all values to native Python types
+    records = []
+    for row in df.to_dict("records"):
+        clean = {}
+        for k, v in row.items():
+            if hasattr(v, "item"):  # numpy scalar
+                v = v.item()
+            elif hasattr(v, "isoformat"):  # date/datetime
+                v = str(v)
+            clean[k] = v
+        records.append(clean)
+    return records
+
+
+@router.get("/efficiency", response_class=HTMLResponse)
+async def efficiency_page(request: Request):
+    daily_df = load_daily()
+    agg_df = load_aggregated()
+    noon_df = load_midday("noon")
+    pm3_df = load_midday("3pm")
+
+    # Sort daily: Date desc, then MT Name asc
+    if not daily_df.empty:
+        daily_df = daily_df.sort_values(["Date", "MT Name"], ascending=[False, True])
+
+    # Get unique teams for filter dropdown (from daily data, exclude z_Not On Report)
+    teams = []
+    if not daily_df.empty and "Team" in daily_df.columns:
+        teams = sorted([
+            t for t in daily_df["Team"].dropna().unique().tolist()
+            if t and t != "z_Not On Report"
+        ])
+
+    # Get MM EFF column labels (all efficiency period columns)
+    mm_eff_cols = []
+    if not agg_df.empty:
+        mm_eff_cols = [c for c in agg_df.columns if c.startswith("Efficiency_")]
+
+    # Last upload date
+    last_upload_date = None
+    if not daily_df.empty and "Date" in daily_df.columns:
+        last_upload_date = str(daily_df["Date"].max())
+
+    templates = request.app.state.templates
+    return templates.TemplateResponse("pages/efficiency.html", {
+        "request": request,
+        "active_page": "efficiency",
+        "metadata": await cache.get_metadata(),
+        "daily_records": _df_to_records(daily_df),
+        "agg_records": _df_to_records(agg_df),
+        "noon_records": _df_to_records(noon_df),
+        "pm3_records": _df_to_records(pm3_df),
+        "teams": teams,
+        "mm_eff_cols": mm_eff_cols,
+        "last_upload_date": last_upload_date,
+    })
+
+
+@router.post("/efficiency/upload")
+async def efficiency_upload(file: UploadFile = File(...)):
+    """Accept a Gusto CSV upload, run the full pipeline, return JSON result."""
+    try:
+        contents = await file.read()
+        result = run_full_upload(contents, file.filename)
+        return JSONResponse(content=result)
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
+
+

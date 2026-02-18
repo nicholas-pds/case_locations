@@ -9,6 +9,7 @@
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
   <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body hx-ext="sse" sse-connect="/sse/stream">
   <nav class="nav">
@@ -27,6 +28,7 @@
       <a href="/local-delivery" class="nav-link {% if active_page == 'local-delivery' %}active{% endif %}">Local Delivery</a>
       <a href="/overdue-noscan" class="nav-link {% if active_page == 'overdue-noscan' %}active{% endif %}">No Scan Cases</a>
       <a href="/customers" class="nav-link {% if active_page == 'customers' %}active{% endif %}">Customers</a>
+      <a href="/efficiency" class="nav-link {% if active_page == 'efficiency' %}active{% endif %}">Efficiency</a>
     </div>
     <div class="nav-meta">
       <button class="nav-refresh-btn" onclick="window.location.reload()" title="Refresh page">
