@@ -12,7 +12,7 @@ INNER JOIN dbo.cases AS ca
 OUTER APPLY (
     SELECT TOP 1 ct.Duration
     FROM dbo.casetasks AS ct
-    WHERE ct.CaseID = cth.CaseID AND ct.task = cth.task
+    WHERE ct.CaseID = cth.CaseID AND ct.task = cth.task AND ct.CaseProductID = cth.CaseProductID
 ) AS dur
 WHERE cth.completeDate >= ?
   AND cth.completeDate < ?
