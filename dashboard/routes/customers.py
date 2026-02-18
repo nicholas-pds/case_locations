@@ -8,16 +8,16 @@ router = APIRouter()
 
 # Columns to display in the table (user-friendly order)
 DISPLAY_COLUMNS = [
-    'CustomerID', 'PracticeName', 'FullName', 'AccountManager', 'Type', 'Specialty',
+    'CustomerID', 'PracticeName', 'FullName', 'AccountManager', 'DentalGroup', 'Type', 'Specialty',
     'City', 'State',
-    'MTDSales', 'LMSales', 'YTDSales', 'LySales', 'LTDSales',
+    'PriceCatalog', 'MTDSales', 'LMSales', 'YTDSales', 'LySales', 'LTDSales',
     'DateOfFirstCase', 'DateOfLastCase',
     'Active', 'Prospect', 'ReferredBy',
     'OfficePhone', 'Email',
 ]
 
 # Columns available for dropdown filters
-FILTER_COLUMNS = ['AccountManager', 'Type', 'Specialty', 'State', 'City']
+FILTER_COLUMNS = ['AccountManager', 'DentalGroup', 'Type', 'Specialty', 'State', 'City', 'PriceCatalog']
 
 # Sales columns (formatted as currency)
 SALES_COLUMNS = ['MTDSales', 'LMSales', 'YTDSales', 'LySales', 'LTDSales']
@@ -28,12 +28,14 @@ COLUMN_LABELS = {
     'PracticeName': 'Practice Name',
     'FullName': 'Contact',
     'AccountManager': 'Account Manager',
+    'DentalGroup': 'Dental Group',
     'Type': 'Type',
     'Specialty': 'Specialty',
     'City': 'City',
     'State': 'State',
     'OfficePhone': 'Phone',
     'Email': 'Email',
+    'PriceCatalog': 'Price List',
     'MTDSales': 'MTD Sales',
     'LMSales': 'Last Month',
     'YTDSales': 'YTD Sales',
@@ -107,10 +109,12 @@ async def customers_page(request: Request):
 async def customers_export(
     tab: str = Query("all"),
     account_manager: str = Query(None, alias="AccountManager"),
+    dental_group: str = Query(None, alias="DentalGroup"),
     cust_type: str = Query(None, alias="Type"),
     specialty: str = Query(None, alias="Specialty"),
     state: str = Query(None, alias="State"),
     city: str = Query(None, alias="City"),
+    price_catalog: str = Query(None, alias="PriceCatalog"),
 ):
     df = await cache.get("customers")
     if df is None or df.empty:
@@ -129,10 +133,12 @@ async def customers_export(
     # Apply column filters
     filters = {
         'AccountManager': account_manager,
+        'DentalGroup': dental_group,
         'Type': cust_type,
         'Specialty': specialty,
         'State': state,
         'City': city,
+        'PriceCatalog': price_catalog,
     }
     for col, val in filters.items():
         if val and col in df.columns:
