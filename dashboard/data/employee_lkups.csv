@@ -1,0 +1,162 @@
+Employee ID,Last Name,First Name,MT Name,Department,Gusto Name,Team,Training Plan
+2,Abiyev,Trisha,Trisha Abiyev,Leadership,Trisha Abiyev,z_Not On Report,0
+4,Ivershen,Anna I,Anna I Ivershen,Dental Bees,Anna Ivershen,z_Not On Report,0
+8,Udovik,Nikolay,Nikolay Udovik,3D Manufacturing,Nikolay Udovik,3D Manufacturing,0
+11,Zudava,Volha,Volha Zudava,Dental Bees,Volha Zudava,ACRYLIC,0
+40,Yablochkin,Yev,Yev Yablochkin,Leadership,Yevgeniy Yablochkin,z_Not On Report,0
+47,Stevens,Douglas,Douglas Stevens,Shipping/Receiving,Douglas Stevens,,0
+59,Pukhnata,Iryna,Iryna Pukhnata,Leadership,Iryna Pukhnata,z_Not On Report,0
+66,Abiyev,Julian,Julian Abiyev,Airway,Julian Abiyev,Airway,0
+86,Glushets,Anatoliy,Anatoliy Glushets,Leadership,Anatoliy Glushets,z_Not On Report,0
+91,Wroblewski,James,James Wroblewski,Leadership,James Wroblewski,z_Not On Report,0
+93,Smirnitskiy,Dmitriy,Dmitriy Smirnitskiy,3D Design,Dmitriy Smirnitskiy,,0
+105,Birkholz,Haley,Haley Birkholz,Customer Relations,Haley Birkholz,,0
+106,Carlson,Amy,Amy Carlson,Airway,Amy Carlson,Airway,0
+107,Marcelino,Ivone,Ivone Marcelino,Dental Bees,Ivone Marcelino,BEnding,0
+114,Albino Diaz,Ana,Ana Albino Diaz,Dental Bees,Ana Albino Diaz,BEnding,0
+115,Yablochkin,Aleksandr,Aleksandr Yablochkin,Final Touch,Aleksandr Yablochkin,Finishing,0
+123,Vega,Salvador,Salvador Vega,Final Touch,Salvador Vega,MF & Marpe,0
+126,Sanchez,Araceli,Araceli Sanchez,Dental Bees,Araceli Sanchez,z_Not On Report,0
+127,Vongvanith,Jay,Jay Vongvanith,Final Touch,Viravouth Vongvanith,MF & Marpe,0
+130,Voloshina,Iulia,Iulia Voloshina,3D Design,Iuliia Voloshina,z_Not On Report,0
+144,Yablochkin,Yelena,Yelena Yablochkin,Dental Bees,Yelena Yablochkin,z_Not On Report,0
+145,Ray,Arpita,Arpita Ray,Customer Service,Arpita Ray,z_Not On Report,0
+146,Dorff,Vlad,Vlad Dorff,Final Touch,Vlad Dorff,MF & Marpe,0
+155,Kochergin,Artem,Artem Kochergin,Final Touch,Artem Kochergin,MF & Marpe,0
+161,Shypilova,Olena,Olena Shypilova,Dental Bees,Olena Shypilova,,0
+162,Bihun,Dmytro,Dmytro Bihun,Final Touch,Dmytro Bihun,MF & Marpe,0
+163,Semkiv,Bohdana,Bohdana Semkiv,Dental Bees,Bohdana Semkiv,ESSIX,0
+165,Popovska,Anna P,Anna P Popovska,Customer Service,Hanna Popovska,Airway,0
+166,Parfylo,Galina,Galina Parfylo,Accounting,Galina Parfylo,,0
+169,Yablochkin,Claudia,Claudia Yablochkin,Airway,Claudia Yablochkin,z_Not On Report,0
+171,Osypchuk,Maryna,Maryna Osypchuk,Final Touch,Maryna Osypchuk,Finishing,0
+175,Gunnarson,Daniel,Daniel Gunnarson,Dental Bees,Daniel Gunnarson,BEnding,0
+180,Hryhorchuk,Yuliia,Yuliia Hryhorchuk,Final Touch,Yuliia Hryhorchuk,MF & Marpe,0
+181,Osypchuk,Dina,Dina Osypchuk,Dental Bees,Dina Osypchuk,ESSIX,0
+182,Hryhorchuk,Vitta,Vitta Hryhorchuk,3D Manufacturing,Vitta Hryhorchuk,z_Not On Report,0
+186,Kruk,Daryna,Daryna Kruk,3D Design,Daryna Kruk,3D Design,0
+197,Rakhmanov,Dima R,Dima R Rakhmanov,Dental Bees,Dmytro Rakhmanov,BEnding,0
+200,Komar,Nataliia,Nataliia Komar,Airway,Nataliia Komar,Airway,0
+201,Kozachenko,Tanya,Tanya Kozachenko,Final Touch,Tetiana Kozachenko,z_Not On Report,0
+206,Yefimenko,Maryna,Maryna Yefimenko,Final Touch,Maryna Yefimenko,z_Not On Report,0
+207,Zakharova,Yuliia Z,Yuliia Z Zakharova,Dental Bees,Yuliia Zakharova,BEnding,0
+212,Martyniuk,Yuliia M,Yuliia M Martyniuk,Dental Bees,Yuliia Martyniuk,BEnding,0
+215,Budai,Svitlana,Svitlana Budai,Final Touch,Svitlana Budai,Finishing,0
+216,Kolesnychenko,Yuliia K,Yuliia K Kolesnychenko,3D Design,Yuliia Kolesnychenko,3D Design,0
+222,Cherinikov,Ivan,Ivan Cherinikov,3D Design,Ivan Chernikov,3D Design,0
+223,Yablochkin,Vasiliy,Vasiliy Yablochkin,Final Touch,Vasiliy Yablochkin,Welding,0
+224,Budai,Maksim,Maksim Budai,Leadership,Maksim Budai,z_Not On Report,0
+227,Budai,Siarhei,Siarhei Budai,3D Design,Siarhei Budai,3D Design,0
+237,Khalimonenko,Volodymyr,Volodymyr Khalimonenko,Final Touch,Volodymyr Khalimonenko,Finishing,0
+239,McDaniels,Brian,Brian McDaniels,Shipping/Receiving,Brian McDaniels,z_Not On Report,0
+241,Petrova,Oksana,Oksana Petrova,Dental Bees,Oksana Petrova,z_Not On Report,0
+243,Ivkova,Ekaterina,Ekaterina Ivkova,Final Touch,Ekaterina Ivkova,Welding,0
+250,Huseynova,Maryam,Maryam Huseynova,Leadership,Maryam Huseynova,z_Not On Report,0
+252,Heise,Alexia,Alexia Heise,Leadership,Alexia Heise,z_Not On Report,0
+253,Krasii,Mariia,Mariia Krasii,Final Touch,Mariia Krasii,z_Not On Report,0
+255,Kolesnychenko,Veronika,Veronika Kolesnychenko,3D Design,Veronika Kolesnychenko,3D Design,0
+256,Campuzano,Nicholas,Nicholas Campuzano,3D Manufacturing,Nicholas Campuzano,z_Not On Report,0
+257,Kunze,Jeff,Jeff Kunze,Customer Service,Jeff Kunze,,0
+258,Villanueva-Montoya,Santiago,Santiago Villanueva-Montoya,3D Design,Santiago Villanueva-Montoya,3D Design,0
+261,Morozova,Ekaterina,Ekaterina Morozova,Dental Bees,Ekaterina Morozova,QC,0
+262,Kuzmin,Dmitrii,Dmitrii Kuzmin,3D Manufacturing,Dmitrii Kuzmin,z_Not On Report,0
+263,Khalilova,Milena,Milena Khalilova,Dental Bees,Milena Khalilova,QC,0
+264,Krasichkov,Vitaliy,Vitaliy Krasichkov,Final Touch,Vitalii Krasichkov,Welding,0
+266,Tollefson,Andrew,Andrew Tollefson,3D Design,Andrew Tollefson,z_Not On Report,0
+268,Bzovyk,Ivan,Ivan Bzovyk,Shipping/Receiving,Ivan Bzovyk,,0
+269,Bruss,Sarah,Sarah Bruss,Leadership,Sarah Bruss,z_Not On Report,0
+270,Tovpenko,Oleg,Oleg Tovpenko,3D Design,Oleh Tovpeko,3D Design,0
+272,Oriekhova,Nataliia,Nataliia Oriekhova,Dental Bees,Nataliia Oriekhova,BAnding,0
+274,Vega,Angel,Angel Vega,3D Manufacturing,Luis Vega,3D Design,0
+275,Parafilenko,Vladimir,Vladimir Parafilenko,Final Touch,Vladimir Parafilenko,MF & Marpe,0
+276,Abiyev,Bennett,Bennett Abiyev,Customer Service,Bennett Abiyev,,0
+277,Hobday,Jake,Jake Hobday,3D Design,Jacob Hobday,3D Design,0
+281,Ostwald,Tara,Tara Ostwald,Customer Relations,Tara Ostwald,,0
+282,Emirov,Emir,Emir Emirov,3D Manufacturing,Emir Emirov,z_Not On Report,0
+283,Baboretskyi,Bohdan,Bohdan Baboretskyi,3D Manufacturing,Bohdan Baboretskyi,3D Manufacturing,0
+284,Baraniuk,Liliia,Liliia Baraniuk,Final Touch,Liliia Baraniuk,Welding,0
+285,Wells,Steven,Steven Wells,Final Touch,Steven Wells,Finishing,0
+286,Lehman,Larry,Larry Lehman,3D Design,Lawrence Lehman,z_Not On Report,0
+289,Dircks,Kristy,Kristy Dircks,Leadership,Kristara Dircks,z_Not On Report,0
+291,Burlaka,Karina,Karina Burlaka,Dental Bees,Karina Burlaka,BEnding,0
+295,Mumphrey,Michelle,Michelle Mumphrey,Customer Service,Michelle Mumphrey,z_Not On Report,0
+297,Mishyn,Andrii,Andrii Mishyn,Final Touch,Andrii Mishyn,,0
+298,Galimova,Evelina,Evelina Galimova,Airway,Evelina Galimova,z_Not On Report,0
+299,Krasichkov,Inna,Inna Krasichkov,3D Design,Inna Krasichkova,3D Design,0
+300,Yakibchuk,Myroslav,Myroslav Yakibchuk,Dental Bees,Myroslav Yakibchuk,z_Not On Report,0
+301,Hryhorchuk,Dima,Dima Hryhorchuk,Final Touch,Dmytro Hryhorchuk,z_Not On Report,0
+302,Olson,Fischer,Fischer Olson,3D Design,Fischer Olson,z_Not On Report,0
+303,Krasichkov,Evgenii,Evgenii Krasichkov,Shipping,Evgenii Krasichkov,QC,0
+304,Krasichkov,Artemii,Artemii Krasichkov,Shipping,Artemii Krasichkov,MF & Marpe,0
+305,Shiringa,Vitalina,Vitalina Shyringa,Dental Bees,Vitalina Shyringa,ESSIX,0
+306,Yeremeichuk,Daryna,Daryna Yeremeichuk,Final Touch,Daryna Yeremeichuk,MF & Marpe,0
+307,Herder,Adalynn,Adalynn Herder,Customer Service,Adalynn Herder,z_Not On Report,0
+308,Nedovba,Anna,Anna Nedovba,Airway,Anna Nedovba,Airway,0
+309,Myrgan,Yaraslav,Yaraslav Myrgan,Final Touch,Yaraslav Myrgan,z_Not On Report,0
+310,Titus,Emily,Emily Titus,Leadership,Emily Titus,z_Not On Report,0
+311,Jones,Kendal,Kendal Jones,Customer Relations,Kendal Jones,,0
+312,Borysenko,Olena,Olena Borysenko,Dental Bees,Olena Borysenko,ESSIX,0
+313,Maslo,Oleksii,Oleksii Maslo,Final Touch,Oleksii Maslo,MF & Marpe,0
+314,Voronoi,Roman,Roman Voronoi,Dental Bees,Roman Voronoi,BEnding,0
+315,Kramer,Toby,Toby Kramer,3D Design,Tobias Kramer,z_Not On Report,0
+316,Lietz,Taylor,Taylor Lietz,Customer Relations,Taylor Lietz,,0
+317,Perez,Josh,Josh Perez,Leadership,Joshua Perez,z_Not On Report,0
+318,Sanchez,Gonzalo,Gonzalo Sanchez,Final Touch,Gonzalo Sanchez,z_Not On Report,0
+319,VonThoma,Andy,Andy VonThoma,3D Manufacturing,Andrew VonThoma,3D Manufacturing,0
+320,Pozdnyako,Konstantin,Konstantin Pozdnyakov,Final Touch,Konstantin Pozdnyakov,Welding,0
+321,Velhan,Vladyslav,Vladyslav Velhan,Airway,Vladyslav Velhan,Airway,0
+322,Bunsness,Josef,Josef Bunsness,Leadership,Josef Bunsness,z_Not On Report,0
+323,Hatch,Forrest,Forrest Hatch,Leadership,Forrest Hatch,z_Not On Report,0
+324,Nastepniak,Marina,Marina Nastepniak,Customer Relations,Marina Nastepniak,z_Not On Report,0
+325,Bracken,Jacob,Jacob Bracken,Shipping/Receiving,Jacob Bracken,z_Not On Report,0
+326,Rich,Kaila,Kaila Rich,Customer Service,Kaila Rich,,0
+328,Anderson,Sophia,Sophia Anderson,Customer Service,Sophia Anderson,,0
+329,Yang,Perry,Perry Yang,3D Design,Perry Yang,3D Design,0
+331,Nicholas,Donte,Donte Nicholas,Final Touch,Donte Nicholas,z_Not On Report,0
+332,Pink,Hanna,Hanna Pink,3D Design,Hanna Pink,3D Design,0
+333,Buniak,Tetiana,Tetiana Buniak,Dental Bees,Tanya Buniak,z_Not On Report,0
+334,Luhautsou,Andrei,Andrei Luhautsou,Dental Bees,Andrei Luhautsou,z_Not On Report,0
+335,Salas,Nate,Nate Salas,3D Manufacturing,Natanael Salas,z_Not On Report,0
+336,Flaherty,Preston,Preston Flaherty,3D Manufacturing,Preston Flaherty,z_Not On Report,0
+337,Safina,Karina,Karina Safina,Final Touch,Karina Safina,MF & Marpe,0
+338,Zaichenko,Anastasiia,Anastasiia Zaichenko,Final Touch,Anastasiia Zaichenko,MF & Marpe,0
+339,Rybalko Ona,Valeria,Valeria Rybalko Ona,QC TEAM,Valeria Rybalko Ona,QC,0
+340,Zakusylo,Snizhana,Snizhana Zakusylo,Final Touch,Snizhana Zakusylo,MF & Marpe,0
+341,Zakusylo,Viktoriia,Viktoriia Zakusylo,Final Touch,Viktoriia Zakusylo,MF & Marpe,0
+342,Marcelino Yerbafria,Elisa,Elisa Marcelino Yerbafria,Dental Bees,Elisa Marcelino Yerbafria,BEnding,0
+343,Parfylo,Arina,Arina Parfylo,Leadership,Arina Parfylo,z_Not On Report,0
+344,De La Torre Herdoiza,Isabel,Isabel De La Torre Herdoiza,Dental Bees,Maria De La Torre Herdoiza,z_Not On Report,0
+345,Thomas,Saige,Saige Thomas,3D Design,Saige Thomas,3D Design,0
+347,Lialko,Kristina,Kristina Lialko,Airway,Kristina Lialko,z_Not On Report,0
+348,Cherniavskyi,Vladyslav,Vladyslav Cherniavskyi,Airway,Vladyslav Cherniavskyi,Airway,0
+349,Goncharenko,Jacob,Jacob Goncharenko,Customer Service,Jacob Goncharenko,z_Not On Report,0
+351,Kolesnik,Orest,Orest Kolesnik,3D Design,Orest Kolesnik,3D Design,0
+353,Nakonechnyy,Olesia,Olesia Nakonechnyy,Leadership,Olesia Nakonechnyy,z_Not On Report,0
+354,Kelly,Harrison,Harrison Kelly,3D Design,Harrison Kelly,3D Design,0
+356,Reboruk,Marharyta,Marharyta Reboruk,3D Design,Marharyta Reboruk,3D Design,0
+357,Gibson,Kai,Kai Gibson,Shipping/Receiving,Kai Gibson,z_Not On Report,0
+358,Theis,Samantha,Sam Theis,Shipping/Receiving,Sam Theis,z_Not On Report,0
+360,Masiuchok,Olha,Olha Masiuchok,Final Touch,Olha Masiuchok,Welding,0
+362,Badalov,David,David Badalov,Dental Bees,David Badalov,BEnding,0
+361,Reboruk,Polina,Polina Reboruk,Final Touch,Polina Reboruk,Finishing,0
+364,Rerick,Bennett,Bennett Rerick,3D Manufacturing,Bennett Rerick,z_Not On Report,0
+366,Treml,Julie,Julie Treml,Customer Service,Julie Treml,Airway,0
+365,Ciumac,Irina,Irina Ciumac,Dental Bees,Irina Ciumac,ESSIX,0
+368,Bahr,Andrew,Andrew Bahr,Shipping/Receiving,Andrew Bahr,QC,0
+370,Erwin-Sweeney,Jackson,Jackson Erwin-Sweeney,3D Manufacturing,Jackson Erwin-Sweeney,3D Manufacturing,0
+367,Kolikhova,Olena,Olena Kolikhova,Airway,Olena Kolikhova,z_Not On Report,0
+372,Dronov,Mykola,Mykola Dronov,3D Manufacturing,Mykola Dronov,z_Not On Report,0
+371,Guseva,Albina,Albina Guseva,Dental Bees,Albina Guseva,BEnding,0
+369,Lanctot,Sam,Sam Lanctot,Shipping/Receiving,Sam Lanctot,z_Not On Report,0
+373,Koserik,Daria,Daria Koserik,3D Design,Daria Koserik,3D Design,0
+374,Dzhambaeva,Aysana,Aysana Dzhambaeva,3D Design,Aysana Dzhambaeva,3D Design,0
+375,Willford,Taylor,Taylor Willford,Airway,Taylor Willford,Airway,0
+376,Lytvynenko,Yurii,Yurii Lytvynenko,Dental Bees,Yurii Lytvynenko,BEnding,0
+377,Sauer,Aurora,Aurora Sauer,Dental Bees,Aurora Sauer,z_Not On Report,0
+379,Dronova,Iryna,Iryna Dronova,Final Touch,Iryna Dronova,z_Not On Report,0
+382,Benson,Brandon,Brandon Benson,3D Design,Brandon Benson,z_Not On Report,1
+386,Ramotar,Patricia,Tricia Ramotar,Customer Service,Patricia Ramotar,z_Not On Report,1
+388,Burke,Sarah,Sarah Burke,Dental Bees,Sarah Burke,ACRYLIC,1
+390,Xiong,Nyiaj,Nyiaj Xiong,3D Manufacturing,Nyiaj Xiong,3D Manufacturing,1
+384,Gilleland,Jon,Jon Gilleland,Airway,Jonathan Gilleland,Airway,1
+391,Ciumac,Ina,Ina Ciumac,Dental Bees,Ina Ciumac,BEnding,1

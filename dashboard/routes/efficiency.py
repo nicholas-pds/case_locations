@@ -56,10 +56,13 @@ async def efficiency_page(request: Request):
     if not agg_df.empty:
         mm_eff_cols = [c for c in agg_df.columns if c.startswith("Efficiency_")]
 
-    # Last upload date
-    last_upload_date = None
+    # Available dates (sorted desc) and latest date for default filter
+    available_dates = []
+    latest_date = None
     if not daily_df.empty and "Date" in daily_df.columns:
-        last_upload_date = str(daily_df["Date"].max())
+        available_dates = sorted(daily_df["Date"].dropna().unique().tolist(), reverse=True)
+        available_dates = [str(d) for d in available_dates]
+        latest_date = available_dates[0] if available_dates else None
 
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/efficiency.html", {
@@ -72,7 +75,8 @@ async def efficiency_page(request: Request):
         "pm3_records": _df_to_records(pm3_df),
         "teams": teams,
         "mm_eff_cols": mm_eff_cols,
-        "last_upload_date": last_upload_date,
+        "available_dates": available_dates,
+        "latest_date": latest_date,
     })
 
 
@@ -86,5 +90,3 @@ async def efficiency_upload(file: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Upload failed: {e}")
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
-
-

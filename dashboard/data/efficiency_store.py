@@ -34,11 +34,24 @@ def save_daily(df: pd.DataFrame) -> None:
 
 
 def load_aggregated() -> pd.DataFrame:
-    return _safe_read(_AGGREGATED_PATH)
+    df = _safe_read(_AGGREGATED_PATH)
+    if not df.empty:
+        # Efficiency columns stored as str — convert numeric values back to float, keep "x"
+        for col in df.columns:
+            if col.startswith("Efficiency_"):
+                df[col] = df[col].apply(
+                    lambda v: float(v) if v not in ("x", "nan", "None", "") else v
+                )
+    return df
 
 
 def save_aggregated(df: pd.DataFrame) -> None:
-    df.to_parquet(_AGGREGATED_PATH, index=False)
+    # Efficiency columns have mixed types (float + "x" string) — cast to str for parquet
+    out = df.copy()
+    for col in out.columns:
+        if col.startswith("Efficiency_"):
+            out[col] = out[col].astype(str)
+    out.to_parquet(_AGGREGATED_PATH, index=False)
     logger.info(f"Saved aggregated efficiency data: {len(df)} rows")
 
 

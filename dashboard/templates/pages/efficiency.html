@@ -8,8 +8,8 @@
   <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
     <h1 class="page-title">Efficiency Report</h1>
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-      {% if last_upload_date %}
-      <span style="font-size:12px; color:#888;">Last upload: {{ last_upload_date }}</span>
+      {% if latest_date %}
+      <span style="font-size:12px; color:#888;">Latest data: {{ latest_date }}</span>
       {% endif %}
       <span x-show="uploadStatus" x-text="uploadStatus"
             :style="uploadError ? 'color:#e74c3c; font-size:13px;' : 'color:#27ae60; font-size:13px;'"></span>
@@ -36,6 +36,12 @@
   <div x-show="activeTab === 'daily'">
     <!-- Filters -->
     <div class="customer-filters">
+      <select class="filter-select" x-model="dailyDate">
+        <option value="">All Dates</option>
+        {% for d in available_dates %}
+        <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+      </select>
       <input type="text" class="search-input" placeholder="Search name, team..." x-model="dailySearch" style="flex:1; max-width:280px;">
       <select class="filter-select" x-model="dailyTeam">
         <option value="">All Teams</option>
@@ -49,7 +55,7 @@
         <option value="1">In Training</option>
       </select>
       <button class="clear-filters-btn" @click="clearDailyFilters()"
-              x-show="dailySearch || dailyTeam || dailyTraining">Clear</button>
+              x-show="dailySearch || dailyTeam || dailyTraining || dailyDate !== {{ latest_date | tojson }}">Clear</button>
     </div>
 
     <!-- Daily Table -->
@@ -279,6 +285,7 @@ function efficiencyPage() {
 
     // Daily EFF state
     dailyRows: {{ daily_records | tojson }},
+    dailyDate: {{ latest_date | tojson }},
     dailySearch: '',
     dailyTeam: '',
     dailyTraining: '',
@@ -301,6 +308,7 @@ function efficiencyPage() {
     uploadError: false,
 
     init() {
+      this.$watch('dailyDate', () => this.dailyPage = 1);
       this.$watch('dailySearch', () => this.dailyPage = 1);
       this.$watch('dailyTeam', () => this.dailyPage = 1);
       this.$watch('dailyTraining', () => this.dailyPage = 1);
@@ -309,6 +317,7 @@ function efficiencyPage() {
     // ─── Daily EFF ───────────────────────────────
     filteredDailyRows() {
       let rows = this.dailyRows;
+      if (this.dailyDate) rows = rows.filter(r => String(r.Date || '').startsWith(this.dailyDate));
       if (this.dailyTeam) rows = rows.filter(r => r.Team === this.dailyTeam);
       if (this.dailyTraining !== '') rows = rows.filter(r => String(r['Training Plan']) === this.dailyTraining);
       if (this.dailySearch.trim()) {
@@ -353,6 +362,7 @@ function efficiencyPage() {
     },
 
     clearDailyFilters() {
+      this.dailyDate = {{ latest_date | tojson }};
       this.dailySearch = '';
       this.dailyTeam = '';
       this.dailyTraining = '';
