@@ -53,9 +53,19 @@
   max-height: calc(100vh - 104px);
 }
 .airway-layout-right .table-scroll {
-  max-height: none !important;
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
+}
+
+/* Bridge the flex chain through the HTMX content divs */
+#airway-table-content,
+#airway-hold-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* === Stage Section Groups === */
@@ -150,9 +160,9 @@
   flex-direction: column;
 }
 .airway-hold-sticky .table-scroll {
-  max-height: none !important;
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 /* === Airway Table Headers === */
