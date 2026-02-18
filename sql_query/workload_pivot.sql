@@ -5,23 +5,18 @@ WITH CasesWithRankedCategories AS
         ca.PanNumber,
         CAST(ca.ShipDate AS DATE) AS ShipDate,
         ca.Status,
-        CASE WHEN pr.Category = 'Accessories' THEN 'Other'
-             ELSE pr.Category
-        END AS Category,
+        pr.Category,
         ROW_NUMBER() OVER (
             PARTITION BY ca.CaseNumber, CAST(ca.ShipDate AS DATE)
             ORDER BY
-                CASE WHEN pr.Category = 'Accessories' THEN 'Other'
-                     ELSE pr.Category
-                END,
-                CASE
-                    WHEN pr.Category = 'Hybrid'        THEN 1
-                    WHEN pr.Category = 'E2 Expanders'  THEN 2
-                    WHEN pr.Category = 'Lab to Lab'    THEN 3
-                    WHEN pr.Category = 'Marpe'         THEN 4
-                    WHEN pr.Category = 'Metal'         THEN 5
-                    WHEN pr.Category = 'Clear'         THEN 6
-                    WHEN pr.Category = 'Wire Bending'  THEN 7
+                CASE pr.Category
+                    WHEN 'Hybrid'        THEN 1
+                    WHEN 'E2 Expanders'  THEN 2
+                    WHEN 'Lab to Lab'    THEN 3
+                    WHEN 'Marpe'         THEN 4
+                    WHEN 'Metal'         THEN 5
+                    WHEN 'Clear'         THEN 6
+                    WHEN 'Wire Bending'  THEN 7
                     ELSE 99
                 END,
                 pr.Category DESC
