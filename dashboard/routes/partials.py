@@ -134,11 +134,17 @@ async def workload_summary(request: Request):
     submitted_df = await cache.get("submitted_cases")
     case_df = await cache.get("case_locations")
 
+    total_in_production = sum(chart_data['in_production'])
+    total_invoiced = sum(chart_data['invoiced'])
+    denom = total_invoiced + total_in_production
+    invoice_pace_pct = round(total_in_production / denom * 100) if denom > 0 else 0
+
     templates = request.app.state.templates
     return templates.TemplateResponse("partials/workload_summary.html", {
         "request": request,
-        "total_in_production": sum(chart_data['in_production']),
-        "total_invoiced": sum(chart_data['invoiced']),
+        "total_in_production": total_in_production,
+        "total_invoiced": total_invoiced,
+        "invoice_pace_pct": invoice_pace_pct,
         "submitted_count": len(submitted_df) if submitted_df is not None and not submitted_df.empty else 0,
         "design_count": _count_by_locations(case_df, DESIGN_LOCATIONS),
         "manufacturing_count": _count_by_locations(case_df, MANUFACTURING_LOCATIONS),

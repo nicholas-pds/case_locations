@@ -15,6 +15,26 @@ _NOON_PATH = _DATA_DIR / "noon.parquet"
 _3PM_PATH = _DATA_DIR / "3pm.parquet"
 
 
+_TEAM_FIX_NAMES = {
+    "Albert Cherniavskyi", "Andrii Mishyn", "Don William",
+    "Olena Shypilova", "Vlad Dorofieiev",
+}
+
+
+def _fix_team_assignments(df: pd.DataFrame) -> pd.DataFrame:
+    """Fix records where Team is '0' or 'O' for specific employees."""
+    if df.empty or "Team" not in df.columns:
+        return df
+    name_col = "MT Name" if "MT Name" in df.columns else "Name" if "Name" in df.columns else None
+    if name_col is None:
+        return df
+    mask = df["Team"].isin(["0", "O"]) & df[name_col].isin(_TEAM_FIX_NAMES)
+    if mask.any():
+        df = df.copy()
+        df.loc[mask, "Team"] = "z_Not On Report"
+    return df
+
+
 def _safe_read(path: Path) -> pd.DataFrame:
     if path.exists():
         try:
@@ -25,7 +45,7 @@ def _safe_read(path: Path) -> pd.DataFrame:
 
 
 def load_daily() -> pd.DataFrame:
-    return _safe_read(_DAILY_PATH)
+    return _fix_team_assignments(_safe_read(_DAILY_PATH))
 
 
 def save_daily(df: pd.DataFrame) -> None:
@@ -42,7 +62,7 @@ def load_aggregated() -> pd.DataFrame:
                 df[col] = df[col].apply(
                     lambda v: float(v) if v not in ("x", "nan", "None", "") else v
                 )
-    return df
+    return _fix_team_assignments(df)
 
 
 def save_aggregated(df: pd.DataFrame) -> None:
@@ -58,7 +78,7 @@ def save_aggregated(df: pd.DataFrame) -> None:
 def load_midday(window: str) -> pd.DataFrame:
     """window: 'noon' or '3pm'"""
     path = _NOON_PATH if window == "noon" else _3PM_PATH
-    return _safe_read(path)
+    return _fix_team_assignments(_safe_read(path))
 
 
 def save_midday(window: str, df: pd.DataFrame) -> None:

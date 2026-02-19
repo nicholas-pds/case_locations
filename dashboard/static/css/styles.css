@@ -755,6 +755,10 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 }
 .pace-card-ahead { border-top-color: #27AE60; }
 .pace-card-behind { border-top-color: #E74C3C; }
+.pace-card-red { border-top-color: #E74C3C; }
+.pace-card-orange { border-top-color: #F39C12; }
+.pace-card-yellow { border-top-color: #F1C40F; }
+.pace-card-green { border-top-color: #27AE60; }
 .pace-day {
   font-size: 11px;
   font-weight: 600;
@@ -788,12 +792,20 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 }
 .pace-bar-ahead { background: linear-gradient(90deg, #27AE60, #2ECC71); }
 .pace-bar-behind { background: linear-gradient(90deg, #E74C3C, #E57373); }
+.pace-bar-red { background: linear-gradient(90deg, #E74C3C, #E57373); }
+.pace-bar-orange { background: linear-gradient(90deg, #F39C12, #F5B041); }
+.pace-bar-yellow { background: linear-gradient(90deg, #F1C40F, #F4D03F); }
+.pace-bar-green { background: linear-gradient(90deg, #27AE60, #2ECC71); }
 .pace-pct {
   font-size: 13px;
   font-weight: 600;
 }
 .pace-pct-ahead { color: #27AE60; }
 .pace-pct-behind { color: #E74C3C; }
+.pace-pct-red { color: #E74C3C; }
+.pace-pct-orange { color: #F39C12; }
+.pace-pct-yellow { color: #b7950b; }
+.pace-pct-green { color: #27AE60; }
 
 /* === Category Pace Rows (half-height) === */
 .category-pace-row {
@@ -916,6 +928,8 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 }
 .customer-table-wrap {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 70vh;
   border-radius: 10px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
   background: #FFFFFF;

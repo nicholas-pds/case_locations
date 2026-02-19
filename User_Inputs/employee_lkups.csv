@@ -23,7 +23,7 @@ Employee ID,Last Name,First Name,MT Name,Department,Gusto Name,Team,Training Pla
 145,Ray,Arpita,Arpita Ray,Customer Service,Arpita Ray,z_Not On Report,0
 146,Dorff,Vlad,Vlad Dorff,Final Touch,Vlad Dorff,MF & Marpe,0
 155,Kochergin,Artem,Artem Kochergin,Final Touch,Artem Kochergin,MF & Marpe,0
-161,Shypilova,Olena,Olena Shypilova,Dental Bees,Olena Shypilova,,0
+161,Shypilova,Olena,Olena Shypilova,Dental Bees,Olena Shypilova,z_Not On Report,0
 162,Bihun,Dmytro,Dmytro Bihun,Final Touch,Dmytro Bihun,MF & Marpe,0
 163,Semkiv,Bohdana,Bohdana Semkiv,Dental Bees,Bohdana Semkiv,ESSIX,0
 165,Popovska,Anna P,Anna P Popovska,Customer Service,Hanna Popovska,Airway,0
@@ -80,7 +80,7 @@ Employee ID,Last Name,First Name,MT Name,Department,Gusto Name,Team,Training Pla
 289,Dircks,Kristy,Kristy Dircks,Leadership,Kristara Dircks,z_Not On Report,0
 291,Burlaka,Karina,Karina Burlaka,Dental Bees,Karina Burlaka,BEnding,0
 295,Mumphrey,Michelle,Michelle Mumphrey,Customer Service,Michelle Mumphrey,z_Not On Report,0
-297,Mishyn,Andrii,Andrii Mishyn,Final Touch,Andrii Mishyn,,0
+297,Mishyn,Andrii,Andrii Mishyn,Final Touch,Andrii Mishyn,z_Not On Report,0
 298,Galimova,Evelina,Evelina Galimova,Airway,Evelina Galimova,z_Not On Report,0
 299,Krasichkov,Inna,Inna Krasichkov,3D Design,Inna Krasichkova,3D Design,0
 300,Yakibchuk,Myroslav,Myroslav Yakibchuk,Dental Bees,Myroslav Yakibchuk,z_Not On Report,0

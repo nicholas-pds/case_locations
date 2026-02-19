@@ -70,7 +70,7 @@
         </tr>
       </thead>
       <tbody>
-        <template x-for="row in pagedRows()" :key="row.CustomerID">
+        <template x-for="row in filteredRows()" :key="row.CustomerID">
           <tr>
             {% for col in display_columns %}
             {% if col in sales_columns %}
@@ -90,14 +90,6 @@
     </table>
   </div>
 
-  <!-- Pagination -->
-  <div class="table-footer" x-show="totalPages() > 1">
-    <button class="page-btn" @click="page = 1" :disabled="page === 1">First</button>
-    <button class="page-btn" @click="page = Math.max(1, page - 1)" :disabled="page === 1">Prev</button>
-    <span style="font-size: 13px; color: #666;" x-text="'Page ' + page + ' of ' + totalPages()"></span>
-    <button class="page-btn" @click="page = Math.min(totalPages(), page + 1)" :disabled="page === totalPages()">Next</button>
-    <button class="page-btn" @click="page = totalPages()" :disabled="page === totalPages()">Last</button>
-  </div>
 </div>
 
 <script>
@@ -109,16 +101,10 @@ function customerTable() {
     filters: { {% for col in filter_columns %}'{{ col }}': ''{% if not loop.last %}, {% endif %}{% endfor %} },
     sortCol: 'CustomerID',
     sortDir: 'asc',
-    page: 1,
-    perPage: 15,
     filteredCount: 0,
 
     init() {
       this.customers = {{ customers | tojson }};
-      // Watch filters/tab/search to reset page
-      this.$watch('tab', () => this.page = 1);
-      this.$watch('search', () => this.page = 1);
-      this.$watch('filters', () => this.page = 1, { deep: true });
     },
 
     baseFilteredRows() {
@@ -195,16 +181,6 @@ function customerTable() {
 
       this.filteredCount = rows.length;
       return rows;
-    },
-
-    pagedRows() {
-      const rows = this.filteredRows();
-      const start = (this.page - 1) * this.perPage;
-      return rows.slice(start, start + this.perPage);
-    },
-
-    totalPages() {
-      return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
     },
 
     sortBy(col) {

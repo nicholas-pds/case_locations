@@ -119,38 +119,40 @@
       </div>
     </template>
 
-    <!-- Per-Team Detail Sections -->
-    <template x-for="section in dailyTeamSections()" :key="'sec-'+section.team">
-      <div style="margin-bottom:24px;">
-        <div class="eff-section-label" x-text="section.team"></div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Name</th>
-              <th style="text-align:center;">EFF</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-              <th style="text-align:right;">Work Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="row in section.rows" :key="'d-'+row.EmployeeID">
+    <!-- Per-Team Detail Sections (2-column grid) -->
+    <div class="eff-team-grid">
+      <template x-for="section in dailyTeamSections()" :key="'sec-'+section.team">
+        <div style="margin-bottom:24px;">
+          <div class="eff-section-label" x-text="section.team"></div>
+          <table class="eff-table">
+            <thead>
               <tr>
-                <td x-text="row.Team || ''"></td>
-                <td x-text="row['MT Name'] || ''" style="white-space:nowrap;"></td>
-                <td style="text-align:center; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
-                <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
-                <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
-                <td style="text-align:right;" x-text="(row.Tasks_Duration_Hours || 0).toFixed(1)"></td>
-                <td style="text-align:right;" x-text="(row['Work Hours'] || 0).toFixed(1)"></td>
+                <th>Group</th>
+                <th>Name</th>
+                <th style="text-align:center;">EFF</th>
+                <th style="text-align:right;">Cases Worked On</th>
+                <th style="text-align:right;">Tasks Completed</th>
+                <th style="text-align:right;">Tasks Duration</th>
+                <th style="text-align:right;">Work Hours</th>
               </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </template>
+            </thead>
+            <tbody>
+              <template x-for="row in section.rows" :key="'d-'+row.EmployeeID">
+                <tr>
+                  <td x-text="row.Team || ''"></td>
+                  <td x-text="row['MT Name'] || ''" style="white-space:nowrap;"></td>
+                  <td style="text-align:center; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
+                  <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
+                  <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
+                  <td style="text-align:right;" x-text="(row.Tasks_Duration_Hours || 0).toFixed(1)"></td>
+                  <td style="text-align:right;" x-text="(row['Work Hours'] || 0).toFixed(1)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </div>
 
     <!-- Training Section -->
     <template x-if="dailyTrainingRows().length > 0">
@@ -243,8 +245,8 @@
           <table class="eff-table">
             <thead>
               <tr>
-                <th style="position:sticky; left:0; z-index:2; background:#2C2C2C;">Team</th>
-                <th style="position:sticky; left:0; z-index:2; background:#2C2C2C;">Name</th>
+                <th style="position:sticky; left:0; z-index:2; background:#2C2C2C; min-width:80px;">Team</th>
+                <th style="position:sticky; left:80px; z-index:2; background:#2C2C2C; min-width:120px;">Name</th>
                 {% for col in mm_eff_cols %}
                 <th style="white-space:nowrap; text-align:right; font-size:11px;">{{ col | replace('Efficiency_','') | replace('_',' ') }}</th>
                 {% endfor %}
@@ -253,8 +255,8 @@
             <tbody>
               <template x-for="row in section.rows" :key="'mm-'+row['MT Name']">
                 <tr>
-                  <td x-text="row.Team || ''" style="white-space:nowrap;"></td>
-                  <td x-text="row['MT Name'] || ''" style="white-space:nowrap;"></td>
+                  <td x-text="row.Team || ''" style="white-space:nowrap; position:sticky; left:0; z-index:1; background:inherit;"></td>
+                  <td x-text="row['MT Name'] || ''" style="white-space:nowrap; position:sticky; left:80px; z-index:1; background:inherit;"></td>
                   {% for col in mm_eff_cols %}
                   <td style="text-align:right; font-size:12px; font-weight:600;"
                       :style="mmEffColor(row['{{ col }}'])"
@@ -338,34 +340,36 @@
       </div>
     </template>
 
-    <!-- Per-Team Details -->
-    <template x-for="section in middayTeamSections(noonRows)" :key="'nsec-'+section.team">
-      <div style="margin-bottom:24px;">
-        <div class="eff-section-label" x-text="section.team"></div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Name</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="row in section.rows" :key="'n-'+row.Name">
+    <!-- Per-Team Details (2-column grid) -->
+    <div class="eff-team-grid">
+      <template x-for="section in middayTeamSections(noonRows)" :key="'nsec-'+section.team">
+        <div style="margin-bottom:24px;">
+          <div class="eff-section-label" x-text="section.team"></div>
+          <table class="eff-table">
+            <thead>
               <tr>
-                <td x-text="row.Team || ''"></td>
-                <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
-                <td style="text-align:right;" x-text="row.Cases || 0"></td>
-                <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
-                <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
+                <th>Group</th>
+                <th>Name</th>
+                <th style="text-align:right;">Cases Worked On</th>
+                <th style="text-align:right;">Tasks Completed</th>
+                <th style="text-align:right;">Tasks Duration</th>
               </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </template>
+            </thead>
+            <tbody>
+              <template x-for="row in section.rows" :key="'n-'+row.Name">
+                <tr>
+                  <td x-text="row.Team || ''"></td>
+                  <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
+                  <td style="text-align:right;" x-text="row.Cases || 0"></td>
+                  <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
+                  <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </div>
 
     <div x-show="noonRows.length === 0" style="text-align:center; padding:24px; color:#888;">
       No noon data yet — updates automatically at 12:00 PM on business days
@@ -436,34 +440,36 @@
       </div>
     </template>
 
-    <!-- Per-Team Details -->
-    <template x-for="section in middayTeamSections(pm3Rows)" :key="'psec-'+section.team">
-      <div style="margin-bottom:24px;">
-        <div class="eff-section-label" x-text="section.team"></div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Name</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="row in section.rows" :key="'p-'+row.Name">
+    <!-- Per-Team Details (2-column grid) -->
+    <div class="eff-team-grid">
+      <template x-for="section in middayTeamSections(pm3Rows)" :key="'psec-'+section.team">
+        <div style="margin-bottom:24px;">
+          <div class="eff-section-label" x-text="section.team"></div>
+          <table class="eff-table">
+            <thead>
               <tr>
-                <td x-text="row.Team || ''"></td>
-                <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
-                <td style="text-align:right;" x-text="row.Cases || 0"></td>
-                <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
-                <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
+                <th>Group</th>
+                <th>Name</th>
+                <th style="text-align:right;">Cases Worked On</th>
+                <th style="text-align:right;">Tasks Completed</th>
+                <th style="text-align:right;">Tasks Duration</th>
               </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </template>
+            </thead>
+            <tbody>
+              <template x-for="row in section.rows" :key="'p-'+row.Name">
+                <tr>
+                  <td x-text="row.Team || ''"></td>
+                  <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
+                  <td style="text-align:right;" x-text="row.Cases || 0"></td>
+                  <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
+                  <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </div>
 
     <div x-show="pm3Rows.length === 0" style="text-align:center; padding:24px; color:#888;">
       No 3PM data yet — updates automatically at 3:00 PM on business days
@@ -510,6 +516,16 @@
   }
   .eff-table tbody tr:hover {
     background: #F0F0F0;
+  }
+  .eff-team-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .eff-team-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 
@@ -773,100 +789,136 @@ function efficiencyPage() {
     },
 
     // ─── PDF Export ──────────────────────────────
-    exportPdf() {
+    async exportPdf() {
       const tabNames = { daily: 'Daily_EFF', mm: 'MM_EFF', noon: 'Noon_EFF', '3pm': '3PM_EFF' };
       const tabLabel = tabNames[this.activeTab] || 'Efficiency';
       const today = new Date().toISOString().slice(0, 10);
       const filename = `Efficiency_${tabLabel}_${today}.pdf`;
 
-      let html = `<div style="font-family:Arial,sans-serif; padding:20px;">`;
+      // Load logo as base64
+      let logoBase64 = '';
+      try {
+        const resp = await fetch('/static/logo.png');
+        const blob = await resp.blob();
+        logoBase64 = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) { /* logo optional */ }
+
+      let html = `<div style="font-family:Arial,sans-serif; padding:8px;">`;
+
+      // Logo + header
+      if (logoBase64) {
+        html += `<div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">`;
+        html += `<img src="${logoBase64}" style="max-height:40px;">`;
+        html += `<h2 style="margin:0; color:#000; font-size:14px;">${tabLabel.replace(/_/g,' ')} — ${today}</h2>`;
+        html += `</div>`;
+      } else {
+        html += `<h2 style="margin:0 0 8px; color:#000; font-size:14px;">${tabLabel.replace(/_/g,' ')} — ${today}</h2>`;
+      }
 
       if (this.activeTab === 'daily') {
         const summary = this.dailySummaryAll();
-        html += `<h2 style="margin:0 0 12px; color:#222;">${summary.date}</h2>`;
 
-        // ALL table
-        html += `<p style="margin:0 0 4px; font-weight:700; font-size:12px;">ALL</p>`;
+        // ALL table (full-width)
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">ALL</p>`;
         html += this._pdfTable(
-          ['Date','Num of People','EFF','Cases Worked On','Tasks Completed','Tasks Duration','Work Hours'],
+          ['Date','People','EFF','Cases','Tasks','Duration','Work Hrs'],
           [[summary.date, summary.people, summary.eff.toFixed(0)+'%', summary.cases, summary.tasks, summary.duration.toFixed(1), summary.hours.toFixed(1)]]
         );
 
-        // Teams table
-        html += `<p style="margin:16px 0 4px; font-weight:700; font-size:12px;">Teams</p>`;
+        // Teams table (full-width)
+        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams</p>`;
         const teamRows = this.dailySummaryTeams().map(ts => [
           ts.team, ts.people, ts.eff > 0 ? ts.eff.toFixed(0)+'%' : '', ts.cases, ts.tasks, ts.duration.toFixed(1), ts.hours.toFixed(1)
         ]);
-        html += this._pdfTable(['Group','Num of People','EFF','Cases Worked On','Tasks Completed','Tasks Duration','Work Hours'], teamRows);
+        html += this._pdfTable(['Group','People','EFF','Cases','Tasks','Duration','Work Hrs'], teamRows);
 
-        // Per-team
-        this.dailyTeamSections().forEach(sec => {
-          html += `<p style="margin:16px 0 4px; font-weight:700; font-size:12px;">${sec.team}</p>`;
+        // Per-team (2-column grid)
+        const sections = this.dailyTeamSections();
+        html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
+        sections.forEach(sec => {
+          html += `<div style="page-break-inside:avoid;">`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
           const rows = sec.rows.map(r => [
-            r.Team || '', r['MT Name'] || '', r.Efficiency > 0 ? r.Efficiency.toFixed(0)+'%' : '',
+            r['MT Name'] || '', r.Efficiency > 0 ? r.Efficiency.toFixed(0)+'%' : '',
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
             (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
           ]);
-          html += this._pdfTable(['Group','Name','EFF','Cases Worked On','Tasks Completed','Tasks Duration','Work Hours'], rows);
+          html += this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows);
+          html += `</div>`;
         });
+        html += `</div>`;
 
-        // Training
+        // Training (full-width)
         const trainRows = this.dailyTrainingRows();
         if (trainRows.length) {
-          html += `<p style="margin:16px 0 4px; font-weight:700; font-size:12px;">Training</p>`;
+          html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Training</p>`;
           const rows = trainRows.map(r => [
-            r.Team || '', r['MT Name'] || '', r.Efficiency > 0 ? r.Efficiency.toFixed(0)+'%' : '',
+            r['MT Name'] || '', r.Efficiency > 0 ? r.Efficiency.toFixed(0)+'%' : '',
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
             (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
           ]);
-          html += this._pdfTable(['Group','Name','EFF','Cases Worked On','Tasks Completed','Tasks Duration','Work Hours'], rows);
+          html += this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows);
         }
 
       } else if (this.activeTab === 'mm') {
         const effCols = this.mmEffCols;
         const headers = ['Teams', ...effCols.map(c => c.replace('Efficiency_','').replace(/_/g,' '))];
-        html += `<h2 style="margin:0 0 12px; color:#222;">Multi-Period Efficiency</h2>`;
 
-        // Teams summary
+        // Teams summary (full-width)
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams Summary</p>`;
         const teamRows = this.mmTeamsSummary().map(ts => [ts.team, ...effCols.map(c => this.formatMmEff(ts[c]))]);
         html += this._pdfTable(headers, teamRows);
 
-        // Per-team
-        const detailHeaders = ['Team', 'Name', ...effCols.map(c => c.replace('Efficiency_','').replace(/_/g,' '))];
-        this.mmTeamSections().forEach(sec => {
-          html += `<p style="margin:16px 0 4px; font-weight:700; font-size:12px;">${sec.team}</p>`;
-          const rows = sec.rows.map(r => [r.Team || '', r['MT Name'] || '', ...effCols.map(c => this.formatMmEff(r[c]))]);
+        // Per-team (2-column grid)
+        const detailHeaders = ['Name', ...effCols.map(c => c.replace('Efficiency_','').replace(/_/g,' '))];
+        const sections = this.mmTeamSections();
+        html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
+        sections.forEach(sec => {
+          html += `<div style="page-break-inside:avoid;">`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
+          const rows = sec.rows.map(r => [r['MT Name'] || '', ...effCols.map(c => this.formatMmEff(r[c]))]);
           html += this._pdfTable(detailHeaders, rows);
+          html += `</div>`;
         });
+        html += `</div>`;
 
       } else {
         const isNoon = this.activeTab === 'noon';
         const src = isNoon ? this.noonRows : this.pm3Rows;
         const label = isNoon ? '12:00 PM' : '3:00 PM';
-        html += `<h2 style="margin:0 0 12px; color:#222;">${label} Snapshot</h2>`;
 
         const summary = this.middaySummaryAll(src);
-        html += `<p style="margin:0 0 4px; font-weight:700; font-size:12px;">ALL</p>`;
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">ALL — ${label} Snapshot</p>`;
         html += this._pdfTable(
-          ['Date','Num of People','Cases Worked On','Tasks Completed','Tasks Duration'],
+          ['Date','People','Cases','Tasks','Duration'],
           [[summary.date, summary.people, summary.cases, summary.tasks, summary.duration.toFixed(1)]]
         );
 
-        html += `<p style="margin:16px 0 4px; font-weight:700; font-size:12px;">Teams</p>`;
+        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams</p>`;
         const teamRows = this.middaySummaryTeams(src).map(ts => [ts.team, ts.people, ts.cases, ts.tasks, ts.duration.toFixed(1)]);
-        html += this._pdfTable(['Team/Group','Num of People','Cases Worked On','Tasks Completed','Tasks Duration'], teamRows);
+        html += this._pdfTable(['Team/Group','People','Cases','Tasks','Duration'], teamRows);
 
-        this.middayTeamSections(src).forEach(sec => {
-          html += `<p style="margin:16px 0 4px; font-weight:700; font-size:12px;">${sec.team}</p>`;
-          const rows = sec.rows.map(r => [r.Team || '', r.Name || '', r.Cases || 0, r.Tasks_Completed || 0, (r.Total_Duration_Hours || 0).toFixed(1)]);
-          html += this._pdfTable(['Group','Name','Cases Worked On','Tasks Completed','Tasks Duration'], rows);
+        // Per-team (2-column grid)
+        const sections = this.middayTeamSections(src);
+        html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
+        sections.forEach(sec => {
+          html += `<div style="page-break-inside:avoid;">`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
+          const rows = sec.rows.map(r => [r.Name || '', r.Cases || 0, r.Tasks_Completed || 0, (r.Total_Duration_Hours || 0).toFixed(1)]);
+          html += this._pdfTable(['Name','Cases','Tasks','Duration'], rows);
+          html += `</div>`;
         });
+        html += `</div>`;
       }
 
       html += `</div>`;
 
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [8, 8, 8, 8],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
@@ -883,17 +935,17 @@ function efficiencyPage() {
     },
 
     _pdfTable(headers, rows) {
-      let h = `<table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:4px;">`;
+      let h = `<table style="width:100%; border-collapse:collapse; font-size:7px; margin-bottom:3px; page-break-inside:avoid;">`;
       h += `<thead><tr>`;
       headers.forEach(hdr => {
-        h += `<th style="border:1px solid #ccc; background:#2c3e50; color:#fff; padding:4px 6px; text-align:left; white-space:nowrap; font-size:9px;">${hdr}</th>`;
+        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:2px 4px; text-align:left; white-space:nowrap; font-size:7px;">${hdr}</th>`;
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
-        const bg = i % 2 === 0 ? '#fff' : '#f7f8fa';
+        const bg = i % 2 === 0 ? '#fff' : '#f2f2f2';
         h += `<tr>`;
         cells.forEach(c => {
-          h += `<td style="border:1px solid #ddd; padding:3px 6px; background:${bg}; font-size:9px;">${c}</td>`;
+          h += `<td style="border:1px solid #999; padding:2px 4px; background:${bg}; font-size:7px;">${c}</td>`;
         });
         h += `</tr>`;
       });

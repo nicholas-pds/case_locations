@@ -42,6 +42,8 @@ async def workload_page(request: Request):
 
     total_in_production = sum(chart_data['in_production'])
     total_invoiced = sum(chart_data['invoiced'])
+    denom = total_invoiced + total_in_production
+    invoice_pace_pct = round(total_in_production / denom * 100) if denom > 0 else 0
 
     # Stage tile counts
     submitted_df = await cache.get("submitted_cases")
@@ -61,6 +63,7 @@ async def workload_page(request: Request):
         "active_page": "workload",
         "total_in_production": total_in_production,
         "total_invoiced": total_invoiced,
+        "invoice_pace_pct": invoice_pace_pct,
         "submitted_count": submitted_count,
         "design_count": design_count,
         "manufacturing_count": manufacturing_count,

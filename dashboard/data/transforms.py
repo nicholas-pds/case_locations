@@ -314,6 +314,17 @@ def build_workload_chart_data(df: pd.DataFrame) -> dict:
     }
 
 
+def _pace_status(pct: float) -> str:
+    """Return 4-tier color status based on percentage."""
+    if pct <= 25:
+        return 'red'
+    elif pct <= 50:
+        return 'orange'
+    elif pct <= 75:
+        return 'yellow'
+    return 'green'
+
+
 def build_workload_pace_data(df: pd.DataFrame) -> list[dict]:
     """Build per-day pace data: invoiced as percentage of total."""
     if df.empty:
@@ -340,7 +351,7 @@ def build_workload_pace_data(df: pd.DataFrame) -> list[dict]:
             'in_production': prod,
             'total': total,
             'pct': pct,
-            'status': 'ahead' if inv >= prod else 'behind',
+            'status': _pace_status(pct),
         })
 
     return pace[:6]
@@ -441,7 +452,7 @@ def build_category_pace_data(df: pd.DataFrame) -> list[dict]:
                 'in_production': prod,
                 'total': total,
                 'pct': pct,
-                'status': 'ahead' if inv >= prod else 'behind',
+                'status': _pace_status(pct),
             })
 
         result.append({
