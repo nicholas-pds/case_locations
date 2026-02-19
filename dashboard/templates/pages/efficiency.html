@@ -788,12 +788,51 @@ function efficiencyPage() {
       }
     },
 
+    // ─── PDF Helpers ──────────────────────────────
+    _pdfEffStyle(val) {
+      const n = Number(val) || 0;
+      if (n >= 80) return 'color:#27AE60; font-weight:600;';
+      if (n >= 50) return 'font-weight:600;';
+      if (n > 0) return 'color:#C0392B; font-weight:600;';
+      return 'color:#999;';
+    },
+
+    _pdfMmEffStyle(val) {
+      if (val === 'x' || val === null || val === undefined) return 'color:#999;';
+      const n = Number(val);
+      if (isNaN(n) || n === 0) return 'color:#999;';
+      if (n >= 0.80) return 'color:#27AE60; font-weight:600;';
+      if (n >= 0.50) return 'font-weight:600;';
+      return 'color:#C0392B; font-weight:600;';
+    },
+
+    _pdfEffCell(val) {
+      if (!val || val <= 0) return '';
+      const pct = val.toFixed(0);
+      return `<span style="${this._pdfEffStyle(val)}">${pct}%</span>`;
+    },
+
+    _pdfMmEffCell(val) {
+      const text = this.formatMmEff(val);
+      return `<span style="${this._pdfMmEffStyle(val)}">${text}</span>`;
+    },
+
     // ─── PDF Export ──────────────────────────────
     async exportPdf() {
       const tabNames = { daily: 'Daily_EFF', mm: 'MM_EFF', noon: 'Noon_EFF', '3pm': '3PM_EFF' };
       const tabLabel = tabNames[this.activeTab] || 'Efficiency';
       const today = new Date().toISOString().slice(0, 10);
-      const filename = `Efficiency_${tabLabel}_${today}.pdf`;
+
+      // Determine report date from data (not today)
+      let reportDate = today;
+      if (this.activeTab === 'daily') {
+        reportDate = this.dailySummaryAll().date || today;
+      } else if (this.activeTab === 'noon' || this.activeTab === '3pm') {
+        const src = this.activeTab === 'noon' ? this.noonRows : this.pm3Rows;
+        reportDate = this.middaySummaryAll(src).date || today;
+      }
+
+      const filename = `Efficiency_${tabLabel}_${reportDate}.pdf`;
 
       // Load logo as base64
       let logoBase64 = '';
@@ -813,10 +852,10 @@ function efficiencyPage() {
       if (logoBase64) {
         html += `<div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">`;
         html += `<img src="${logoBase64}" style="max-height:40px;">`;
-        html += `<h2 style="margin:0; color:#000; font-size:14px;">${tabLabel.replace(/_/g,' ')} — ${today}</h2>`;
+        html += `<h2 style="margin:0; color:#000; font-size:14px;">${tabLabel.replace(/_/g,' ')} — ${reportDate}</h2>`;
         html += `</div>`;
       } else {
-        html += `<h2 style="margin:0 0 8px; color:#000; font-size:14px;">${tabLabel.replace(/_/g,' ')} — ${today}</h2>`;
+        html += `<h2 style="margin:0 0 8px; color:#000; font-size:14px;">${tabLabel.replace(/_/g,' ')} — ${reportDate}</h2>`;
       }
 
       if (this.activeTab === 'daily') {
@@ -826,13 +865,13 @@ function efficiencyPage() {
         html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">ALL</p>`;
         html += this._pdfTable(
           ['Date','People','EFF','Cases','Tasks','Duration','Work Hrs'],
-          [[summary.date, summary.people, summary.eff.toFixed(0)+'%', summary.cases, summary.tasks, summary.duration.toFixed(1), summary.hours.toFixed(1)]]
+          [[summary.date, summary.people, this._pdfEffCell(summary.eff), summary.cases, summary.tasks, summary.duration.toFixed(1), summary.hours.toFixed(1)]]
         );
 
         // Teams table (full-width)
         html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams</p>`;
         const teamRows = this.dailySummaryTeams().map(ts => [
-          ts.team, ts.people, ts.eff > 0 ? ts.eff.toFixed(0)+'%' : '', ts.cases, ts.tasks, ts.duration.toFixed(1), ts.hours.toFixed(1)
+          ts.team, ts.people, this._pdfEffCell(ts.eff), ts.cases, ts.tasks, ts.duration.toFixed(1), ts.hours.toFixed(1)
         ]);
         html += this._pdfTable(['Group','People','EFF','Cases','Tasks','Duration','Work Hrs'], teamRows);
 
@@ -843,7 +882,7 @@ function efficiencyPage() {
           html += `<div style="page-break-inside:avoid;">`;
           html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
           const rows = sec.rows.map(r => [
-            r['MT Name'] || '', r.Efficiency > 0 ? r.Efficiency.toFixed(0)+'%' : '',
+            r['MT Name'] || '', this._pdfEffCell(r.Efficiency),
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
             (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
           ]);
@@ -857,7 +896,7 @@ function efficiencyPage() {
         if (trainRows.length) {
           html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Training</p>`;
           const rows = trainRows.map(r => [
-            r['MT Name'] || '', r.Efficiency > 0 ? r.Efficiency.toFixed(0)+'%' : '',
+            r['MT Name'] || '', this._pdfEffCell(r.Efficiency),
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
             (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
           ]);
@@ -870,7 +909,7 @@ function efficiencyPage() {
 
         // Teams summary (full-width)
         html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams Summary</p>`;
-        const teamRows = this.mmTeamsSummary().map(ts => [ts.team, ...effCols.map(c => this.formatMmEff(ts[c]))]);
+        const teamRows = this.mmTeamsSummary().map(ts => [ts.team, ...effCols.map(c => this._pdfMmEffCell(ts[c]))]);
         html += this._pdfTable(headers, teamRows);
 
         // Per-team (2-column grid)
@@ -880,7 +919,7 @@ function efficiencyPage() {
         sections.forEach(sec => {
           html += `<div style="page-break-inside:avoid;">`;
           html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
-          const rows = sec.rows.map(r => [r['MT Name'] || '', ...effCols.map(c => this.formatMmEff(r[c]))]);
+          const rows = sec.rows.map(r => [r['MT Name'] || '', ...effCols.map(c => this._pdfMmEffCell(r[c]))]);
           html += this._pdfTable(detailHeaders, rows);
           html += `</div>`;
         });
@@ -937,15 +976,17 @@ function efficiencyPage() {
     _pdfTable(headers, rows) {
       let h = `<table style="width:100%; border-collapse:collapse; font-size:7px; margin-bottom:3px; page-break-inside:avoid;">`;
       h += `<thead><tr>`;
-      headers.forEach(hdr => {
-        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:2px 4px; text-align:left; white-space:nowrap; font-size:7px;">${hdr}</th>`;
+      headers.forEach((hdr, idx) => {
+        const align = idx === 0 ? 'left' : 'center';
+        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:2px 4px; text-align:${align}; white-space:nowrap; font-size:7px;">${hdr}</th>`;
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
         const bg = i % 2 === 0 ? '#fff' : '#f2f2f2';
         h += `<tr>`;
-        cells.forEach(c => {
-          h += `<td style="border:1px solid #999; padding:2px 4px; background:${bg}; font-size:7px;">${c}</td>`;
+        cells.forEach((c, idx) => {
+          const align = idx === 0 ? 'left' : 'center';
+          h += `<td style="border:1px solid #999; padding:2px 4px; background:${bg}; font-size:7px; text-align:${align};">${c}</td>`;
         });
         h += `</tr>`;
       });
