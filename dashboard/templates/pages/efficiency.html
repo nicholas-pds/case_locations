@@ -605,7 +605,7 @@ function efficiencyPage() {
     },
 
     dailyTeamSections() {
-      const rows = this.filteredDailyRows().filter(r => r['Training Plan'] != 1);
+      const rows = this.filteredDailyRows();
       const teams = {};
       rows.forEach(r => {
         const t = r.Team || '#N/A';
@@ -891,16 +891,18 @@ function efficiencyPage() {
         });
         html += `</div>`;
 
-        // Training (full-width)
+        // Training (half-width)
         const trainRows = this.dailyTrainingRows();
         if (trainRows.length) {
-          html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Training</p>`;
+          html += `<div style="max-width:50%; margin-top:6px;">`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Training</p>`;
           const rows = trainRows.map(r => [
             r['MT Name'] || '', this._pdfEffCell(r.Efficiency),
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
             (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
           ]);
           html += this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows);
+          html += `</div>`;
         }
 
       } else if (this.activeTab === 'mm') {
@@ -957,7 +959,7 @@ function efficiencyPage() {
       html += `</div>`;
 
       const opt = {
-        margin: [8, 8, 8, 8],
+        margin: [5, 5, 5, 5],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
@@ -978,7 +980,8 @@ function efficiencyPage() {
       h += `<thead><tr>`;
       headers.forEach((hdr, idx) => {
         const align = idx === 0 ? 'left' : 'center';
-        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:2px 4px; text-align:${align}; white-space:nowrap; font-size:7px;">${hdr}</th>`;
+        const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
+        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:1px 2px; text-align:${align}; ${nowrap} font-size:6px;">${hdr}</th>`;
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
@@ -986,7 +989,8 @@ function efficiencyPage() {
         h += `<tr>`;
         cells.forEach((c, idx) => {
           const align = idx === 0 ? 'left' : 'center';
-          h += `<td style="border:1px solid #999; padding:2px 4px; background:${bg}; font-size:7px; text-align:${align};">${c}</td>`;
+          const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
+          h += `<td style="border:1px solid #999; padding:1px 2px; background:${bg}; font-size:7px; text-align:${align}; ${nowrap}">${c}</td>`;
         });
         h += `</tr>`;
       });
