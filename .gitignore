@@ -41,6 +41,7 @@ output/
 *.csv
 !User_Inputs/company_holidays.csv
 !User_Inputs/employee_lkups.csv
+!User_Inputs/tech_constants.csv
 
 # Other common ignores
 *.log

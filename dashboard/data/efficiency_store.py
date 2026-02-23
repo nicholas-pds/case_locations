@@ -14,6 +14,9 @@ _AGGREGATED_PATH = _DATA_DIR / "aggregated.parquet"
 _NOON_PATH = _DATA_DIR / "noon.parquet"
 _3PM_PATH = _DATA_DIR / "3pm.parquet"
 
+# Tech constants CSV
+_CONSTANTS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "tech_constants.csv"
+
 
 _TEAM_FIX_NAMES = {
     "Albert Cherniavskyi", "Andrii Mishyn", "Don William",
@@ -86,3 +89,25 @@ def save_midday(window: str, df: pd.DataFrame) -> None:
     path = _NOON_PATH if window == "noon" else _3PM_PATH
     df.to_parquet(path, index=False)
     logger.info(f"Saved {window} midday data: {len(df)} rows")
+
+
+# ─────────────────────────────────────────────
+# Tech Constants (CSV-based)
+# ─────────────────────────────────────────────
+
+def load_tech_constants() -> pd.DataFrame:
+    """Load tech constants CSV. Returns DataFrame with Name, Noon, 3PM, ShiftType, DesignType."""
+    if _CONSTANTS_PATH.exists():
+        try:
+            df = pd.read_csv(_CONSTANTS_PATH, dtype=str)
+            # Keep Noon/3PM as strings to preserve "NA" values
+            return df
+        except Exception as e:
+            logger.warning(f"Failed to read tech constants: {e}")
+    return pd.DataFrame(columns=["Name", "Noon", "3PM", "ShiftType", "DesignType"])
+
+
+def save_tech_constants(df: pd.DataFrame) -> None:
+    """Write tech constants DataFrame back to CSV."""
+    df.to_csv(_CONSTANTS_PATH, index=False)
+    logger.info(f"Saved tech constants: {len(df)} rows")

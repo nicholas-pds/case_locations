@@ -13,13 +13,14 @@
       {% endif %}
       <span x-show="uploadStatus" x-text="uploadStatus"
             :style="uploadError ? 'color:#e74c3c; font-size:13px;' : 'color:#27ae60; font-size:13px;'"></span>
-      <label class="export-btn" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+      <label class="export-btn" x-show="activeTab === 'daily'" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Upload Gusto CSV
         <input type="file" accept=".csv" style="display:none;" @change="uploadGusto($event)">
       </label>
-      <button class="export-btn" @click="refreshMidday()" x-show="activeTab === 'noon' || activeTab === '3pm'">Refresh Midday</button>
       <button class="export-btn" @click="exportPdf()">Export PDF</button>
+      <button class="export-btn" @click="export3dDesignPdf()" x-show="activeTab === 'noon' || activeTab === '3pm'">Export 3D Design PDF</button>
+      <button class="export-btn" @click="openConstantsModal()" x-show="activeTab === 'noon' || activeTab === '3pm'">Edit Constants</button>
       <a class="export-btn" href="/efficiency/export/mm" x-show="activeTab === 'mm'" style="text-decoration:none;">Download CSV</a>
     </div>
   </div>
@@ -210,7 +211,7 @@
     <template x-if="filteredMMRows().length > 0">
       <div style="margin-bottom:20px;">
         <div class="eff-section-label" x-text="dailyDate ? dailyDate : 'Multi-Period'"></div>
-        <div class="customer-table-wrap">
+        <div class="mm-eff-wrap">
           <table class="eff-table">
             <thead>
               <tr>
@@ -241,7 +242,7 @@
     <template x-for="section in mmTeamSections()" :key="'mmsec-'+section.team">
       <div style="margin-bottom:24px;">
         <div class="eff-section-label" x-text="section.team"></div>
-        <div class="customer-table-wrap">
+        <div class="mm-eff-wrap">
           <table class="eff-table">
             <thead>
               <tr>
@@ -360,7 +361,7 @@
                 <tr>
                   <td x-text="row.Team || ''"></td>
                   <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
-                  <td style="text-align:right;" x-text="row.Cases || 0"></td>
+                  <td style="text-align:right;" :style="caseGoalColor(row.Cases, row.Noon_Goal)" x-text="row.Cases || 0"></td>
                   <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
                   <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
                 </tr>
@@ -460,7 +461,7 @@
                 <tr>
                   <td x-text="row.Team || ''"></td>
                   <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
-                  <td style="text-align:right;" x-text="row.Cases || 0"></td>
+                  <td style="text-align:right;" :style="caseGoalColor(row.Cases, row.PM3_Goal)" x-text="row.Cases || 0"></td>
                   <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
                   <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
                 </tr>
@@ -473,6 +474,65 @@
 
     <div x-show="pm3Rows.length === 0" style="text-align:center; padding:24px; color:#888;">
       No 3PM data yet — updates automatically at 3:00 PM on business days
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- EDIT CONSTANTS MODAL                       -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="showConstantsModal" x-cloak
+       style="position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5);"
+       @click.self="showConstantsModal = false">
+    <div style="background:#fff; border-radius:8px; padding:24px; max-width:800px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0; color:#1A1A1A;">Edit Tech Constants</h3>
+        <button @click="showConstantsModal = false" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">&times;</button>
+      </div>
+      <table class="eff-table" style="font-size:12px;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th style="width:70px;">Noon</th>
+            <th style="width:70px;">3PM</th>
+            <th style="width:110px;">Shift Type</th>
+            <th style="width:100px;">Design Type</th>
+            <th style="width:40px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, idx) in constantsData" :key="'ce-'+idx">
+            <tr>
+              <td><input type="text" x-model="row.Name" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px;"></td>
+              <td><input type="text" x-model="row.Noon" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px; text-align:center;"></td>
+              <td><input type="text" x-model="row['3PM']" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px; text-align:center;"></td>
+              <td>
+                <select x-model="row.ShiftType" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px;">
+                  <option value="Morning">Morning</option>
+                  <option value="Evening">Evening</option>
+                  <option value="Outsource">Outsource</option>
+                </select>
+              </td>
+              <td>
+                <select x-model="row.DesignType" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px;">
+                  <option value="Regular">Regular</option>
+                  <option value="Marpe">Marpe</option>
+                </select>
+              </td>
+              <td style="text-align:center;">
+                <button @click="constantsData.splice(idx, 1)" style="background:none; border:none; color:#C0392B; cursor:pointer; font-size:14px;" title="Remove">&times;</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <div style="display:flex; gap:12px; margin-top:12px;">
+        <button @click="constantsData.push({Name:'', Noon:'0', '3PM':'0', ShiftType:'Morning', DesignType:'Regular'})"
+                class="export-btn" style="background:#2196F3;">+ Add Row</button>
+        <button @click="saveConstants()" class="export-btn" :disabled="constantsSaving"
+                x-text="constantsSaving ? 'Saving...' : 'Save Constants'"></button>
+        <button @click="showConstantsModal = false" class="export-btn" style="background:#999;">Cancel</button>
+      </div>
+      <p x-show="constantsError" x-text="constantsError" style="color:#C0392B; margin-top:8px; font-size:13px;"></p>
     </div>
   </div>
 
@@ -527,6 +587,22 @@
       grid-template-columns: 1fr;
     }
   }
+  .mm-eff-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+    background: #FFFFFF;
+  }
+  .mm-eff-wrap table {
+    width: 100%;
+    min-width: unset;
+  }
+  .mm-eff-wrap th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  [x-cloak] { display: none !important; }
 </style>
 
 <script>
@@ -547,6 +623,13 @@ function efficiencyPage() {
     // Midday state
     noonRows: {{ noon_records | tojson }},
     pm3Rows: {{ pm3_records | tojson }},
+
+    // Constants state
+    constantsRecords: {{ constants_records | tojson }},
+    showConstantsModal: false,
+    constantsData: [],
+    constantsSaving: false,
+    constantsError: '',
 
     // Upload state
     uploadStatus: '',
@@ -704,8 +787,8 @@ function efficiencyPage() {
       const cases = rows.reduce((s, r) => s + (Number(r.Cases) || 0), 0);
       const tasks = rows.reduce((s, r) => s + (Number(r.Tasks_Completed) || 0), 0);
       const duration = rows.reduce((s, r) => s + (Number(r.Total_Duration_Hours) || 0), 0);
-      const today = new Date().toISOString().slice(0, 10);
-      return { date: today, people, cases, tasks, duration };
+      const date = (rows[0] && rows[0].Data_Date) ? rows[0].Data_Date : new Date().toISOString().slice(0, 10);
+      return { date, people, cases, tasks, duration };
     },
 
     middaySummaryTeams(rows) {
@@ -738,6 +821,49 @@ function efficiencyPage() {
         team,
         rows: teams[team].sort((a, b) => String(a.Name || '').localeCompare(String(b.Name || '')))
       }));
+    },
+
+    // ─── Goal Color ──────────────────────────────
+    caseGoalColor(actual, goal) {
+      if (goal === null || goal === undefined || goal === 'NA' || goal === '') return '';
+      const g = Number(goal);
+      if (isNaN(g) || g === 0) return '';
+      return Number(actual) >= g ? 'color:#27AE60; font-weight:600;' : 'color:#C0392B; font-weight:600;';
+    },
+
+    // ─── Constants Modal ─────────────────────────
+    async openConstantsModal() {
+      this.constantsError = '';
+      this.constantsSaving = false;
+      try {
+        const resp = await fetch('/efficiency/constants');
+        this.constantsData = await resp.json();
+      } catch (e) {
+        this.constantsData = JSON.parse(JSON.stringify(this.constantsRecords));
+      }
+      this.showConstantsModal = true;
+    },
+
+    async saveConstants() {
+      this.constantsSaving = true;
+      this.constantsError = '';
+      try {
+        const resp = await fetch('/efficiency/constants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.constantsData),
+        });
+        const data = await resp.json();
+        if (data.status === 'ok') {
+          this.showConstantsModal = false;
+          setTimeout(() => window.location.reload(), 500);
+        } else {
+          this.constantsError = data.message || 'Save failed';
+        }
+      } catch (e) {
+        this.constantsError = 'Save failed — check console';
+      }
+      this.constantsSaving = false;
     },
 
     // ─── Upload ──────────────────────────────────
@@ -945,11 +1071,21 @@ function efficiencyPage() {
 
         // Per-team (2-column grid)
         const sections = this.middayTeamSections(src);
+        const goalKey = isNoon ? 'Noon_Goal' : 'PM3_Goal';
         html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
         sections.forEach(sec => {
           html += `<div style="page-break-inside:avoid;">`;
           html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
-          const rows = sec.rows.map(r => [r.Name || '', r.Cases || 0, r.Tasks_Completed || 0, (r.Total_Duration_Hours || 0).toFixed(1)]);
+          const rows = sec.rows.map(r => {
+            const cases = r.Cases || 0;
+            const goal = r[goalKey];
+            let casesCell = String(cases);
+            if (goal !== null && goal !== undefined && goal !== 'NA' && goal !== '' && !isNaN(Number(goal)) && Number(goal) > 0) {
+              const color = Number(cases) >= Number(goal) ? '#27AE60' : '#C0392B';
+              casesCell = `<span style="color:${color}; font-weight:600;">${cases}</span>`;
+            }
+            return [r.Name || '', casesCell, r.Tasks_Completed || 0, (r.Total_Duration_Hours || 0).toFixed(1)];
+          });
           html += this._pdfTable(['Name','Cases','Tasks','Duration'], rows);
           html += `</div>`;
         });
@@ -996,6 +1132,208 @@ function efficiencyPage() {
       });
       h += `</tbody></table>`;
       return h;
+    },
+
+    // ─── 3D Design PDF (Larry_ex format) ─────────
+    _larryCell(actual, goal) {
+      // Actual cell with red/green background based on goal
+      if (goal === 'NA' || goal === null || goal === undefined || goal === '') return 'NA';
+      const a = Number(actual) || 0;
+      const g = Number(goal);
+      if (isNaN(g)) return String(a);
+      const bg = a >= g ? '#00B050' : '#FF0000';
+      return `<span style="background:${bg}; color:#fff; padding:1px 4px; font-weight:600;">${a}</span>`;
+    },
+
+    _larryTable(headers, rows, opts = {}) {
+      const headerBg = opts.headerBg || '#D9D2E9';
+      let h = `<table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:6px;">`;
+      h += `<thead><tr>`;
+      headers.forEach((hdr, idx) => {
+        const align = idx === 0 ? 'left' : 'center';
+        h += `<th style="border:1px solid #999; background:${headerBg}; padding:3px 6px; text-align:${align}; font-size:10px; font-weight:600;">${hdr}</th>`;
+      });
+      h += `</tr></thead><tbody>`;
+      rows.forEach((cells, i) => {
+        const bg = i % 2 === 0 ? '#fff' : '#f5f5f5';
+        const isTotalRow = opts.totalRowIdx === i;
+        h += `<tr>`;
+        cells.forEach((c, idx) => {
+          const align = idx === 0 ? 'left' : 'center';
+          const fw = isTotalRow ? 'font-weight:700;' : '';
+          h += `<td style="border:1px solid #999; padding:2px 6px; background:${bg}; font-size:10px; text-align:${align}; ${fw}">${c}</td>`;
+        });
+        h += `</tr>`;
+      });
+      h += `</tbody></table>`;
+      return h;
+    },
+
+    async export3dDesignPdf() {
+      const isNoon = this.activeTab === 'noon';
+      const constants = this.constantsRecords;
+
+      // Build lookup: name -> constant row
+      const constMap = {};
+      constants.forEach(c => {
+        const key = c.Name + '|' + (c.ShiftType || 'Morning');
+        constMap[key] = c;
+      });
+
+      // Build actual data lookup from noon/3pm rows
+      const noonMap = {};
+      this.noonRows.forEach(r => { noonMap[r.Name] = r; });
+      const pm3Map = {};
+      this.pm3Rows.forEach(r => { pm3Map[r.Name] = r; });
+
+      // Get data date
+      const dataDate = this.middaySummaryAll(isNoon ? this.noonRows : this.pm3Rows).date;
+      const d = new Date(dataDate + 'T00:00:00');
+      const dateStr = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
+
+      // Group constants by ShiftType
+      const morning = constants.filter(c => c.ShiftType === 'Morning');
+      const evening = constants.filter(c => c.ShiftType === 'Evening');
+      const outsource = constants.filter(c => c.ShiftType === 'Outsource');
+
+      let html = `<div style="font-family:Arial,sans-serif; padding:12px;">`;
+      html += `<p style="margin:0 0 2px; font-size:12px;"><strong>DATE:</strong> &nbsp; ${dateStr}</p>`;
+      html += `<p style="margin:0 0 8px; font-size:12px; font-weight:600;">Morning shift</p>`;
+
+      // Morning shift table
+      let mHeaders, mRows;
+      if (isNoon) {
+        mHeaders = ['Designer', 'By 12 PM', '12:00 PM', 'Notes'];
+        mRows = morning.map(c => {
+          const actual = noonMap[c.Name];
+          const noonGoal = c.Noon;
+          const noonActual = actual ? actual.Cases : null;
+          return [
+            c.Name,
+            noonGoal === 'NA' ? 'NA' : noonGoal,
+            this._larryCell(noonActual, noonGoal),
+            '',
+          ];
+        });
+        // Total row
+        const totalNoonGoal = morning.reduce((s, c) => c.Noon !== 'NA' ? s + (Number(c.Noon) || 0) : s, 0);
+        const totalNoonActual = morning.reduce((s, c) => {
+          const a = noonMap[c.Name];
+          return a && c.Noon !== 'NA' ? s + (Number(a.Cases) || 0) : s;
+        }, 0);
+        mRows.push([
+          '<strong>Total made by this time:</strong>',
+          totalNoonGoal,
+          this._larryCell(totalNoonActual, totalNoonGoal),
+          '',
+        ]);
+      } else {
+        mHeaders = ['Designer', 'By 12 PM', '12:00 PM', 'By 3 PM', '3:00 PM', 'Notes'];
+        mRows = morning.map(c => {
+          const noonActualRow = noonMap[c.Name];
+          const pm3ActualRow = pm3Map[c.Name];
+          const noonGoal = c.Noon;
+          const pm3Goal = c['3PM'];
+          const noonActual = noonActualRow ? noonActualRow.Cases : null;
+          const pm3Actual = pm3ActualRow ? pm3ActualRow.Cases : null;
+          return [
+            c.Name,
+            noonGoal === 'NA' ? 'NA' : noonGoal,
+            this._larryCell(noonActual, noonGoal),
+            pm3Goal === 'NA' ? 'NA' : pm3Goal,
+            this._larryCell(pm3Actual, pm3Goal),
+            '',
+          ];
+        });
+        // Total row
+        const totalNoonGoal = morning.reduce((s, c) => c.Noon !== 'NA' ? s + (Number(c.Noon) || 0) : s, 0);
+        const totalNoonActual = morning.reduce((s, c) => {
+          const a = noonMap[c.Name];
+          return a && c.Noon !== 'NA' ? s + (Number(a.Cases) || 0) : s;
+        }, 0);
+        const totalPm3Goal = morning.reduce((s, c) => c['3PM'] !== 'NA' ? s + (Number(c['3PM']) || 0) : s, 0);
+        const totalPm3Actual = morning.reduce((s, c) => {
+          const a = pm3Map[c.Name];
+          return a && c['3PM'] !== 'NA' ? s + (Number(a.Cases) || 0) : s;
+        }, 0);
+        mRows.push([
+          '<strong>Total made by this time:</strong>',
+          totalNoonGoal,
+          this._larryCell(totalNoonActual, totalNoonGoal),
+          totalPm3Goal,
+          this._larryCell(totalPm3Actual, totalPm3Goal),
+          '',
+        ]);
+      }
+      html += this._larryTable(mHeaders, mRows, { totalRowIdx: mRows.length - 1 });
+
+      // Evening Shift
+      if (evening.length) {
+        html += `<p style="margin:12px 0 2px; font-size:12px; font-weight:600;">Evening Shift</p>`;
+        const eHeaders = ['Designer', 'Capacity', 'Made', 'Notes'];
+        const eRows = evening.map(c => {
+          const actual = pm3Map[c.Name] || noonMap[c.Name];
+          const capacity = c['3PM'] === 'NA' ? 'NA' : c['3PM'];
+          const made = actual ? actual.Cases : 0;
+          return [c.Name, capacity, this._larryCell(made, capacity), ''];
+        });
+        html += this._larryTable(eHeaders, eRows, { headerBg: '#D9D2E9' });
+      }
+
+      // Outsource
+      if (outsource.length) {
+        html += `<p style="margin:12px 0 2px; font-size:12px; font-weight:600;">Outsource</p>`;
+        const oHeaders = ['Designer', 'Capacity', 'Made', 'Notes'];
+        const oRows = outsource.map(c => {
+          const actual = pm3Map[c.Name] || noonMap[c.Name];
+          const capacity = c['3PM'] === 'NA' ? 'NA' : c['3PM'];
+          const made = actual ? actual.Cases : 0;
+          return [c.Name, capacity, this._larryCell(made, capacity), ''];
+        });
+        html += this._larryTable(oHeaders, oRows, { headerBg: '#D9D2E9' });
+      }
+
+      // Yesterday totals from Daily EFF data
+      const dailyRows = this.dailyRows.filter(r => r.Team !== 'z_Not On Report');
+      if (dailyRows.length) {
+        // Get latest date
+        const dates = [...new Set(dailyRows.map(r => String(r.Date || '')))].sort().reverse();
+        const latestDate = dates[0];
+        const yesterdayRows = dailyRows.filter(r => String(r.Date || '').startsWith(latestDate));
+
+        // Match by MT Name to constants Name
+        const constNames = new Set(constants.map(c => c.Name));
+        const matchedRows = yesterdayRows.filter(r => constNames.has(r['MT Name']));
+
+        const totalParts = matchedRows.reduce((s, r) => s + (Number(r.Cases_Worked_On) || 0), 0);
+
+        // Total MARPEs: only DesignType=Marpe employees
+        const marpeNames = new Set(constants.filter(c => c.DesignType === 'Marpe').map(c => c.Name));
+        const totalMarpes = yesterdayRows
+          .filter(r => marpeNames.has(r['MT Name']))
+          .reduce((s, r) => s + (Number(r.Cases_Worked_On) || 0), 0);
+
+        html += `<p style="margin:16px 0 2px; font-size:11px;"><strong>Total parts made from yesterday:</strong> &nbsp; ${totalParts}</p>`;
+        html += `<p style="margin:2px 0; font-size:11px;"><strong>Total MARPEs made from yesterday:</strong> &nbsp; ${totalMarpes}</p>`;
+      }
+
+      html += `</div>`;
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `3D_Design_Report_${dataDate}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+      };
+
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      document.body.appendChild(el);
+      html2pdf().set(opt).from(el).save().then(() => {
+        document.body.removeChild(el);
+      });
     },
   };
 }

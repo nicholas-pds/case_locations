@@ -381,7 +381,11 @@ def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
     # Exclude z_Not On Report
     agg = agg[agg["Team"] != "z_Not On Report"]
 
-    return agg[["Team", "Name", "Cases", "Tasks_Completed", "Total_Duration_Hours"]].sort_values(["Team", "Name"]).reset_index(drop=True)
+    # Capture the actual data date from the filtered records
+    data_date = filtered["CompleteDate"].max().strftime("%Y-%m-%d")
+    agg["Data_Date"] = data_date
+
+    return agg[["Team", "Name", "Cases", "Tasks_Completed", "Total_Duration_Hours", "Data_Date"]].sort_values(["Team", "Name"]).reset_index(drop=True)
 
 
 # ─────────────────────────────────────────────
