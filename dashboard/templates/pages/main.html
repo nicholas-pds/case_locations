@@ -64,6 +64,13 @@
         <option value="{{ sd }}">{{ sd }}</option>
         {% endfor %}
       </select>
+
+      <button class="btn btn-reset"
+              x-show="activeFilter || selectedCategory || selectedLocation || selectedShipDate"
+              x-transition
+              @click="activeFilter = null; selectedCategory = ''; selectedLocation = ''; selectedShipDate = ''; document.querySelector('[name=search]').value = ''; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })">
+        Reset Filters
+      </button>
     </div>
     <div class="total-badge"
          hx-get="/partials/total-cases-badge"
@@ -104,6 +111,9 @@
              style="text-decoration:none; vertical-align:middle;">
             Export CSV
           </a>
+          <button class="btn btn-view-all" @click="exportTilesPDF()" style="vertical-align:middle;">
+            Export PDF
+          </button>
           <input type="hidden" name="filter" :value="activeFilter || ''">
           <input type="hidden" name="category" :value="selectedCategory || ''">
           <input type="hidden" name="location" :value="selectedLocation || ''">
@@ -121,4 +131,84 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportTilesPDF() {
+  // Build filter label
+  var filters = [];
+  var alpineData = Alpine.$data(document.querySelector('[x-data]'));
+  if (alpineData.activeFilter) {
+    var labels = {rush: 'Rush', overdue: 'Overdue', leaves_today: 'Leaves Today'};
+    filters.push(labels[alpineData.activeFilter] || alpineData.activeFilter);
+  }
+  if (alpineData.selectedCategory) filters.push('Category: ' + alpineData.selectedCategory);
+  if (alpineData.selectedLocation) filters.push('Location: ' + alpineData.selectedLocation);
+  if (alpineData.selectedShipDate) filters.push('Ship Date: ' + alpineData.selectedShipDate);
+  var filterText = filters.length ? filters.join('  |  ') : 'All Cases';
+
+  // Create a wrapper div for PDF content
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = 'background:#fff; padding:24px; width:900px;';
+
+  // Logo
+  var logo = document.createElement('img');
+  logo.src = '/static/logo.png';
+  logo.style.cssText = 'height:50px; display:block; margin-bottom:8px;';
+  wrapper.appendChild(logo);
+
+  // Date
+  var dateLine = document.createElement('div');
+  dateLine.style.cssText = 'font-size:13px; color:#666; margin-bottom:4px; font-family:sans-serif;';
+  dateLine.textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  wrapper.appendChild(dateLine);
+
+  // Filter label
+  var filterLine = document.createElement('div');
+  filterLine.style.cssText = 'font-size:14px; font-weight:600; color:#333; margin-bottom:16px; font-family:sans-serif; padding-bottom:12px; border-bottom:2px solid #e53935;';
+  filterLine.textContent = filterText;
+  wrapper.appendChild(filterLine);
+
+  // Clone the location grid
+  var grid = document.getElementById('location-grid');
+  var gridClone = grid.cloneNode(true);
+  gridClone.style.cssText = '';
+  // Remove Alpine click handlers from clone
+  gridClone.querySelectorAll('[\\@click], [\\@click\\.stop]').forEach(function(el) {
+    el.removeAttribute('@click');
+    el.removeAttribute('@click.stop');
+    el.style.cursor = 'default';
+  });
+  wrapper.appendChild(gridClone);
+
+  // Temporarily add to DOM (offscreen) for html2pdf to render
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-9999px';
+  wrapper.style.top = '0';
+  document.body.appendChild(wrapper);
+
+  // Wait for logo to load, then generate PDF
+  logo.onload = function() { generatePDF(); };
+  logo.onerror = function() { generatePDF(); };
+  if (logo.complete) generatePDF();
+
+  var generated = false;
+  function generatePDF() {
+    if (generated) return;
+    generated = true;
+
+    html2pdf().set({
+      margin: [10, 10, 10, 10],
+      filename: 'case_locations_tiles.pdf',
+      image: {type: 'png', quality: 1},
+      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff'},
+      jsPDF: {unit: 'mm', format: 'letter', orientation: 'portrait'},
+      pagebreak: {mode: ['avoid-all']}
+    }).from(wrapper).save().then(function() {
+      document.body.removeChild(wrapper);
+    });
+  }
+}
+</script>
 {% endblock %}
