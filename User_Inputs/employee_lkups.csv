@@ -4,13 +4,13 @@ Employee ID,Last Name,First Name,MT Name,Department,Gusto Name,Team,Training Pla
 8,Udovik,Nikolay,Nikolay Udovik,3D Manufacturing,Nikolay Udovik,3D Manufacturing,0
 11,Zudava,Volha,Volha Zudava,Dental Bees,Volha Zudava,ACRYLIC,0
 40,Yablochkin,Yev,Yev Yablochkin,Leadership,Yevgeniy Yablochkin,z_Not On Report,0
-47,Stevens,Douglas,Douglas Stevens,Shipping/Receiving,Douglas Stevens,,0
+47,Stevens,Douglas,Douglas Stevens,Shipping/Receiving,Douglas Stevens,z_Not On Report,0
 59,Pukhnata,Iryna,Iryna Pukhnata,Leadership,Iryna Pukhnata,z_Not On Report,0
 66,Abiyev,Julian,Julian Abiyev,Airway,Julian Abiyev,Airway,0
 86,Glushets,Anatoliy,Anatoliy Glushets,Leadership,Anatoliy Glushets,z_Not On Report,0
 91,Wroblewski,James,James Wroblewski,Leadership,James Wroblewski,z_Not On Report,0
-93,Smirnitskiy,Dmitriy,Dmitriy Smirnitskiy,3D Design,Dmitriy Smirnitskiy,,0
-105,Birkholz,Haley,Haley Birkholz,Customer Relations,Haley Birkholz,,0
+93,Smirnitskiy,Dmitriy,Dmitriy Smirnitskiy,3D Design,Dmitriy Smirnitskiy,z_Not On Report,0
+105,Birkholz,Haley,Haley Birkholz,Customer Relations,Haley Birkholz,z_Not On Report,0
 106,Carlson,Amy,Amy Carlson,Airway,Amy Carlson,Airway,0
 107,Marcelino,Ivone,Ivone Marcelino,Dental Bees,Ivone Marcelino,BEnding,0
 114,Albino Diaz,Ana,Ana Albino Diaz,Dental Bees,Ana Albino Diaz,BEnding,0
@@ -27,7 +27,7 @@ Employee ID,Last Name,First Name,MT Name,Department,Gusto Name,Team,Training Pla
 162,Bihun,Dmytro,Dmytro Bihun,Final Touch,Dmytro Bihun,MF & Marpe,0
 163,Semkiv,Bohdana,Bohdana Semkiv,Dental Bees,Bohdana Semkiv,ESSIX,0
 165,Popovska,Anna P,Anna P Popovska,Customer Service,Hanna Popovska,Airway,0
-166,Parfylo,Galina,Galina Parfylo,Accounting,Galina Parfylo,,0
+166,Parfylo,Galina,Galina Parfylo,Accounting,Galina Parfylo,z_Not On Report,0
 169,Yablochkin,Claudia,Claudia Yablochkin,Airway,Claudia Yablochkin,z_Not On Report,0
 171,Osypchuk,Maryna,Maryna Osypchuk,Final Touch,Maryna Osypchuk,Finishing,0
 175,Gunnarson,Daniel,Daniel Gunnarson,Dental Bees,Daniel Gunnarson,BEnding,0
@@ -56,22 +56,22 @@ Employee ID,Last Name,First Name,MT Name,Department,Gusto Name,Team,Training Pla
 253,Krasii,Mariia,Mariia Krasii,Final Touch,Mariia Krasii,z_Not On Report,0
 255,Kolesnychenko,Veronika,Veronika Kolesnychenko,3D Design,Veronika Kolesnychenko,3D Design,0
 256,Campuzano,Nicholas,Nicholas Campuzano,3D Manufacturing,Nicholas Campuzano,z_Not On Report,0
-257,Kunze,Jeff,Jeff Kunze,Customer Service,Jeff Kunze,,0
+257,Kunze,Jeff,Jeff Kunze,Customer Service,Jeff Kunze,z_Not On Report,0
 258,Villanueva-Montoya,Santiago,Santiago Villanueva-Montoya,3D Design,Santiago Villanueva-Montoya,3D Design,0
 261,Morozova,Ekaterina,Ekaterina Morozova,Dental Bees,Ekaterina Morozova,QC,0
 262,Kuzmin,Dmitrii,Dmitrii Kuzmin,3D Manufacturing,Dmitrii Kuzmin,z_Not On Report,0
 263,Khalilova,Milena,Milena Khalilova,Dental Bees,Milena Khalilova,QC,0
 264,Krasichkov,Vitaliy,Vitaliy Krasichkov,Final Touch,Vitalii Krasichkov,Welding,0
 266,Tollefson,Andrew,Andrew Tollefson,3D Design,Andrew Tollefson,z_Not On Report,0
-268,Bzovyk,Ivan,Ivan Bzovyk,Shipping/Receiving,Ivan Bzovyk,,0
+268,Bzovyk,Ivan,Ivan Bzovyk,Shipping/Receiving,Ivan Bzovyk,z_Not On Report,0
 269,Bruss,Sarah,Sarah Bruss,Leadership,Sarah Bruss,z_Not On Report,0
 270,Tovpenko,Oleg,Oleg Tovpenko,3D Design,Oleh Tovpeko,3D Design,0
 272,Oriekhova,Nataliia,Nataliia Oriekhova,Dental Bees,Nataliia Oriekhova,BAnding,0
 274,Vega,Angel,Angel Vega,3D Manufacturing,Luis Vega,3D Design,0
 275,Parafilenko,Vladimir,Vladimir Parafilenko,Final Touch,Vladimir Parafilenko,MF & Marpe,0
-276,Abiyev,Bennett,Bennett Abiyev,Customer Service,Bennett Abiyev,,0
+276,Abiyev,Bennett,Bennett Abiyev,Customer Service,Bennett Abiyev,z_Not On Report,0
 277,Hobday,Jake,Jake Hobday,3D Design,Jacob Hobday,3D Design,0
-281,Ostwald,Tara,Tara Ostwald,Customer Relations,Tara Ostwald,,0
+281,Ostwald,Tara,Tara Ostwald,Customer Relations,Tara Ostwald,z_Not On Report,0
 282,Emirov,Emir,Emir Emirov,3D Manufacturing,Emir Emirov,z_Not On Report,0
 283,Baboretskyi,Bohdan,Bohdan Baboretskyi,3D Manufacturing,Bohdan Baboretskyi,3D Manufacturing,0
 284,Baraniuk,Liliia,Liliia Baraniuk,Final Touch,Liliia Baraniuk,Welding,0
@@ -94,12 +94,12 @@ Employee ID,Last Name,First Name,MT Name,Department,Gusto Name,Team,Training Pla
 308,Nedovba,Anna,Anna Nedovba,Airway,Anna Nedovba,Airway,0
 309,Myrgan,Yaraslav,Yaraslav Myrgan,Final Touch,Yaraslav Myrgan,z_Not On Report,0
 310,Titus,Emily,Emily Titus,Leadership,Emily Titus,z_Not On Report,0
-311,Jones,Kendal,Kendal Jones,Customer Relations,Kendal Jones,,0
+311,Jones,Kendal,Kendal Jones,Customer Relations,Kendal Jones,z_Not On Report,0
 312,Borysenko,Olena,Olena Borysenko,Dental Bees,Olena Borysenko,ESSIX,0
 313,Maslo,Oleksii,Oleksii Maslo,Final Touch,Oleksii Maslo,MF & Marpe,0
 314,Voronoi,Roman,Roman Voronoi,Dental Bees,Roman Voronoi,BEnding,0
 315,Kramer,Toby,Toby Kramer,3D Design,Tobias Kramer,z_Not On Report,0
-316,Lietz,Taylor,Taylor Lietz,Customer Relations,Taylor Lietz,,0
+316,Lietz,Taylor,Taylor Lietz,Customer Relations,Taylor Lietz,z_Not On Report,0
 317,Perez,Josh,Josh Perez,Leadership,Joshua Perez,z_Not On Report,0
 318,Sanchez,Gonzalo,Gonzalo Sanchez,Final Touch,Gonzalo Sanchez,z_Not On Report,0
 319,VonThoma,Andy,Andy VonThoma,3D Manufacturing,Andrew VonThoma,3D Manufacturing,0
@@ -109,8 +109,8 @@ Employee ID,Last Name,First Name,MT Name,Department,Gusto Name,Team,Training Pla
 323,Hatch,Forrest,Forrest Hatch,Leadership,Forrest Hatch,z_Not On Report,0
 324,Nastepniak,Marina,Marina Nastepniak,Customer Relations,Marina Nastepniak,z_Not On Report,0
 325,Bracken,Jacob,Jacob Bracken,Shipping/Receiving,Jacob Bracken,z_Not On Report,0
-326,Rich,Kaila,Kaila Rich,Customer Service,Kaila Rich,,0
-328,Anderson,Sophia,Sophia Anderson,Customer Service,Sophia Anderson,,0
+326,Rich,Kaila,Kaila Rich,Customer Service,Kaila Rich,z_Not On Report,0
+328,Anderson,Sophia,Sophia Anderson,Customer Service,Sophia Anderson,z_Not On Report,0
 329,Yang,Perry,Perry Yang,3D Design,Perry Yang,3D Design,0
 331,Nicholas,Donte,Donte Nicholas,Final Touch,Donte Nicholas,z_Not On Report,0
 332,Pink,Hanna,Hanna Pink,3D Design,Hanna Pink,3D Design,0

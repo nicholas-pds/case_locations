@@ -27,7 +27,9 @@ def _df_to_records(df):
     for row in df.to_dict("records"):
         clean = {}
         for k, v in row.items():
-            if hasattr(v, "item"):  # numpy scalar
+            if pd.isna(v):
+                v = ""
+            elif hasattr(v, "item"):  # numpy scalar
                 v = v.item()
             elif hasattr(v, "isoformat"):  # date/datetime
                 v = str(v)
