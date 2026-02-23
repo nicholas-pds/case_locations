@@ -17,9 +17,7 @@
   {% endif %}
 
   <div class="location-card"
-       hx-get="/partials/case-table?location={{ loc.name | urlencode }}"
-       hx-target="#case-table-content"
-       hx-swap="innerHTML">
+       @click="selectedLocation = '{{ loc.name }}'; selectedCategory = ''; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })">
     <div class="donut" style="background: conic-gradient({{ ns.segments | join(', ') }}); box-shadow: 0 0 0 3px {{ status_color }}; border-radius: 50%;">
       <div class="donut-center">{{ loc.total }}</div>
     </div>
@@ -27,10 +25,7 @@
     <div class="cat-dots">
       {% for cat_name, count in cats.items() %}
         <span class="cat-dot"
-              onclick="event.stopPropagation()"
-              hx-get="/partials/case-table?location={{ loc.name | urlencode }}&category={{ cat_name | urlencode }}"
-              hx-target="#case-table-content"
-              hx-swap="innerHTML">
+              @click.stop="selectedLocation = '{{ loc.name }}'; selectedCategory = '{{ cat_name }}'; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })">
           <span class="cat-dot-color" style="background:{{ category_colors.get(cat_name, '#B0BEC5') }}"></span>
           {{ cat_name }} {{ count }}
         </span>

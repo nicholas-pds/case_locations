@@ -86,11 +86,16 @@ async def metadata_badge(request: Request):
 
 
 @router.get("/total-cases-badge", response_class=HTMLResponse)
-async def total_cases_badge(request: Request, filter: str = None):
+async def total_cases_badge(
+    request: Request,
+    filter: str = None,
+    location: str = None,
+    category: str = None,
+):
     df = await cache.get("case_locations")
     if df is not None and not df.empty:
-        if filter:
-            df = filter_cases(df, filter)
+        if filter or location or category:
+            df = filter_cases(df, filter, location=location, category=category)
         total_cases = len(df)
     else:
         total_cases = 0

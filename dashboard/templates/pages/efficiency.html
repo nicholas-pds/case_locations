@@ -142,7 +142,7 @@
               <template x-for="row in section.rows" :key="'d-'+row.EmployeeID">
                 <tr>
                   <td x-text="row.Team || ''"></td>
-                  <td x-text="row['MT Name'] || ''" style="white-space:nowrap;"></td>
+                  <td x-text="shortName(row['MT Name'])" style="white-space:nowrap;"></td>
                   <td style="text-align:center; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
                   <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
                   <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
@@ -176,7 +176,7 @@
             <template x-for="row in dailyTrainingRows()" :key="'tr-'+row.EmployeeID">
               <tr>
                 <td x-text="row.Team || ''"></td>
-                <td x-text="row['MT Name'] || ''" style="white-space:nowrap;"></td>
+                <td x-text="shortName(row['MT Name'])" style="white-space:nowrap;"></td>
                 <td style="text-align:center; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
                 <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
                 <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
@@ -258,7 +258,7 @@
               <template x-for="row in section.rows" :key="'mm-'+row['MT Name']">
                 <tr>
                   <td x-text="row.Team || ''" style="white-space:nowrap; position:sticky; left:0; z-index:1; background:inherit;"></td>
-                  <td x-text="row['MT Name'] || ''" style="white-space:nowrap; position:sticky; left:80px; z-index:1; background:inherit;"></td>
+                  <td x-text="shortName(row['MT Name'])" style="white-space:nowrap; position:sticky; left:80px; z-index:1; background:inherit;"></td>
                   {% for col in mm_eff_cols %}
                   <td style="text-align:right; font-size:12px; font-weight:600;"
                       :style="mmEffColor(row['{{ col }}'])"
@@ -361,7 +361,7 @@
               <template x-for="row in section.rows" :key="'n-'+row.Name">
                 <tr>
                   <td x-text="row.Team || ''"></td>
-                  <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
+                  <td x-text="shortName(row.Name)" style="white-space:nowrap;"></td>
                   <td style="text-align:right;" :style="caseGoalColor(row.Cases, row.Noon_Goal)" x-text="row.Cases || 0"></td>
                   <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
                   <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
@@ -461,7 +461,7 @@
               <template x-for="row in section.rows" :key="'p-'+row.Name">
                 <tr>
                   <td x-text="row.Team || ''"></td>
-                  <td x-text="row.Name || ''" style="white-space:nowrap;"></td>
+                  <td x-text="shortName(row.Name)" style="white-space:nowrap;"></td>
                   <td style="text-align:right;" :style="caseGoalColor(row.Cases, row.PM3_Goal)" x-text="row.Cases || 0"></td>
                   <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
                   <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
@@ -726,6 +726,13 @@ function efficiencyPage() {
     mmEffCols: {{ mm_eff_cols | tojson }},
 
     init() {},
+
+    shortName(name) {
+      if (!name) return '';
+      const parts = name.trim().split(/\s+/);
+      if (parts.length < 2) return name;
+      return parts[0] + ' ' + parts[parts.length - 1][0] + '.';
+    },
 
     // ─── Daily EFF ───────────────────────────────
     filteredDailyRows() {
@@ -1140,7 +1147,7 @@ function efficiencyPage() {
           html += `<div style="page-break-inside:avoid;">`;
           html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
           const rows = sec.rows.map(r => [
-            r['MT Name'] || '', this._pdfEffCell(r.Efficiency),
+            this.shortName(r['MT Name']), this._pdfEffCell(r.Efficiency),
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
             (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
           ]);
@@ -1155,7 +1162,7 @@ function efficiencyPage() {
           html += `<div style="max-width:50%; margin-top:6px;">`;
           html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Training</p>`;
           const rows = trainRows.map(r => [
-            r['MT Name'] || '', this._pdfEffCell(r.Efficiency),
+            this.shortName(r['MT Name']), this._pdfEffCell(r.Efficiency),
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
             (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
           ]);
@@ -1178,7 +1185,7 @@ function efficiencyPage() {
         sections.forEach(sec => {
           html += `<div style="margin-top:4px;">`;
           html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
-          const rows = sec.rows.map(r => [r['MT Name'] || '', ...effCols.map(c => this._pdfMmEffCell(r[c]))]);
+          const rows = sec.rows.map(r => [this.shortName(r['MT Name']), ...effCols.map(c => this._pdfMmEffCell(r[c]))]);
           html += this._pdfMmTable(detailHeaders, rows);
           html += `</div>`;
         });
@@ -1214,7 +1221,7 @@ function efficiencyPage() {
               const color = Number(cases) >= Number(goal) ? '#27AE60' : '#C0392B';
               casesCell = `<span style="color:${color}; font-weight:600;">${cases}</span>`;
             }
-            return [r.Name || '', casesCell, r.Tasks_Completed || 0, (r.Total_Duration_Hours || 0).toFixed(1)];
+            return [this.shortName(r.Name), casesCell, r.Tasks_Completed || 0, (r.Total_Duration_Hours || 0).toFixed(1)];
           });
           html += this._pdfTable(['Name','Cases','Tasks','Duration'], rows);
           html += `</div>`;
@@ -1362,7 +1369,7 @@ function efficiencyPage() {
           const noonGoal = c.Noon;
           const noonActual = actual ? actual.Cases : null;
           return [
-            c.Name,
+            this.shortName(c.Name),
             noonGoal === 'NA' ? 'NA' : noonGoal,
             this._larryCell(noonActual, noonGoal),
             '',
@@ -1390,7 +1397,7 @@ function efficiencyPage() {
           const noonActual = noonActualRow ? noonActualRow.Cases : null;
           const pm3Actual = pm3ActualRow ? pm3ActualRow.Cases : null;
           return [
-            c.Name,
+            this.shortName(c.Name),
             noonGoal === 'NA' ? 'NA' : noonGoal,
             this._larryCell(noonActual, noonGoal),
             pm3Goal === 'NA' ? 'NA' : pm3Goal,
@@ -1428,7 +1435,7 @@ function efficiencyPage() {
           const actual = pm3Map[c.Name] || noonMap[c.Name];
           const capacity = c['3PM'] === 'NA' ? 'NA' : c['3PM'];
           const made = actual ? actual.Cases : 0;
-          return [c.Name, capacity, this._larryCell(made, capacity), ''];
+          return [this.shortName(c.Name), capacity, this._larryCell(made, capacity), ''];
         });
         html += this._larryTable(eHeaders, eRows, { headerBg: '#D9D2E9' });
       }
@@ -1441,7 +1448,7 @@ function efficiencyPage() {
           const actual = pm3Map[c.Name] || noonMap[c.Name];
           const capacity = c['3PM'] === 'NA' ? 'NA' : c['3PM'];
           const made = actual ? actual.Cases : 0;
-          return [c.Name, capacity, this._larryCell(made, capacity), ''];
+          return [this.shortName(c.Name), capacity, this._larryCell(made, capacity), ''];
         });
         html += this._larryTable(oHeaders, oRows, { headerBg: '#D9D2E9' });
       }
