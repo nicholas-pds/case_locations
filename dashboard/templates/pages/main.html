@@ -98,6 +98,12 @@
                  hx-trigger="keyup changed delay:300ms"
                  hx-target="#case-table-content"
                  hx-include="[name='filter'],[name='location'],[name='category'],[name='ship_date']">
+          <a class="btn btn-view-all"
+             :href="'/partials/export-csv?' + new URLSearchParams({filter: activeFilter || '', search: document.querySelector('[name=search]')?.value || '', location: selectedLocation || '', category: selectedCategory || '', ship_date: selectedShipDate || ''}).toString()"
+             download="case_locations.csv"
+             style="text-decoration:none; vertical-align:middle;">
+            Export CSV
+          </a>
           <input type="hidden" name="filter" :value="activeFilter || ''">
           <input type="hidden" name="category" :value="selectedCategory || ''">
           <input type="hidden" name="location" :value="selectedLocation || ''">

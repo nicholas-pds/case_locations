@@ -1,6 +1,10 @@
 """HTMX partial endpoints for filtered tables and grids."""
+import io
+import os
+import csv
+import pandas as pd
 from fastapi import APIRouter, Request, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from dashboard.data.cache import cache
 from datetime import date
 from dashboard.data.transforms import (
@@ -71,6 +75,69 @@ async def case_table(
         "page_size": page_size,
         "active_filter": filter,
     })
+
+
+@router.get("/export-csv")
+async def export_csv(
+    filter: str = None,
+    search: str = None,
+    location: str = None,
+    category: str = None,
+    ship_date: str = None,
+):
+    _time_fmt = '%#I:%M %p' if os.name == 'nt' else '%-I:%M %p'
+    _date_short_fmt = '%#m/%#d' if os.name == 'nt' else '%-m/%-d'
+    _date_year_fmt = '%#m/%#d/%Y' if os.name == 'nt' else '%-m/%-d/%Y'
+
+    df = await cache.get("case_locations")
+    if df is not None and not df.empty:
+        df = filter_cases(df, filter, search, location, category, ship_date=ship_date)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Case #', 'Pan #', 'Ship Date', 'Category', 'Last Task', 'Last Location', 'Last Scan Time'])
+
+    if df is not None and not df.empty:
+        for _, row in df.iterrows():
+            # Format ship date as M/D/YYYY
+            sd = row.get('Ship Date')
+            if pd.notna(sd) and hasattr(sd, 'strftime'):
+                sd = sd.strftime(_date_year_fmt)
+            elif pd.isna(sd):
+                sd = ''
+
+            # Format scan time
+            st = row.get('Last Scan Time')
+            if pd.notna(st) and st != '':
+                try:
+                    if isinstance(st, str):
+                        st = pd.to_datetime(st)
+                    if hasattr(st, 'strftime'):
+                        if hasattr(st, 'date') and st.date() == date.today():
+                            st = st.strftime(_time_fmt)
+                        else:
+                            st = st.strftime(_time_fmt) + ' ' + st.strftime(_date_short_fmt)
+                except Exception:
+                    st = str(st)
+            else:
+                st = ''
+
+            writer.writerow([
+                row.get('Case Number', ''),
+                row.get('Pan Number', ''),
+                sd,
+                row.get('Category', ''),
+                row.get('Last Task Completed', ''),
+                row.get('Last Location', ''),
+                st,
+            ])
+
+    output.seek(0)
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=case_locations.csv"},
+    )
 
 
 @router.get("/metadata", response_class=HTMLResponse)
