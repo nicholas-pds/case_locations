@@ -575,7 +575,23 @@
               <td><input type="text" x-model="row['MT Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
               <td><input type="text" x-model="row.Department" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
               <td><input type="text" x-model="row['Gusto Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
-              <td><input type="text" x-model="row.Team" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
+              <td>
+                <select x-model="row.Team" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;">
+                  <option value="">—</option>
+                  <option value="3D Design">3D Design</option>
+                  <option value="3D Manufacturing">3D Manufacturing</option>
+                  <option value="ACRYLIC">ACRYLIC</option>
+                  <option value="Airway">Airway</option>
+                  <option value="BAnding">BAnding</option>
+                  <option value="BEnding">BEnding</option>
+                  <option value="ESSIX">ESSIX</option>
+                  <option value="Finishing">Finishing</option>
+                  <option value="MF &amp; Marpe">MF &amp; Marpe</option>
+                  <option value="QC">QC</option>
+                  <option value="Welding">Welding</option>
+                  <option value="z_Not On Report">z_Not On Report</option>
+                </select>
+              </td>
               <td>
                 <select x-model="row['Training Plan']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;">
                   <option value="0">0</option>
@@ -590,7 +606,7 @@
         </tbody>
       </table>
       <div style="display:flex; gap:12px; margin-top:12px;">
-        <button @click="employeesData.push({'Employee ID':'', 'Last Name':'', 'First Name':'', 'MT Name':'', Department:'', 'Gusto Name':'', Team:'', 'Training Plan':'0'})"
+        <button @click="employeesData.push({'Employee ID':'', 'Last Name':'', 'First Name':'', 'MT Name':'', Department:'', 'Gusto Name':'', Team:'z_Not On Report', 'Training Plan':'0'})"
                 class="export-btn" style="background:#2196F3;">+ Add Row</button>
         <button @click="saveEmployees()" class="export-btn" :disabled="employeesSaving"
                 x-text="employeesSaving ? 'Saving...' : 'Save Employees'"></button>
