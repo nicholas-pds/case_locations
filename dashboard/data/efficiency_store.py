@@ -17,6 +17,9 @@ _3PM_PATH = _DATA_DIR / "3pm.parquet"
 # Tech constants CSV
 _CONSTANTS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "tech_constants.csv"
 
+# Employee lookups CSV
+_EMPLOYEE_LKUPS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "employee_lkups.csv"
+
 
 _TEAM_FIX_NAMES = {
     "Albert Cherniavskyi", "Andrii Mishyn", "Don William",
@@ -111,3 +114,29 @@ def save_tech_constants(df: pd.DataFrame) -> None:
     """Write tech constants DataFrame back to CSV."""
     df.to_csv(_CONSTANTS_PATH, index=False)
     logger.info(f"Saved tech constants: {len(df)} rows")
+
+
+# ─────────────────────────────────────────────
+# Employee Lookups (CSV-based)
+# ─────────────────────────────────────────────
+
+_EMPLOYEE_COLS = [
+    "Employee ID", "Last Name", "First Name", "MT Name",
+    "Department", "Gusto Name", "Team", "Training Plan",
+]
+
+
+def load_employee_lkups() -> pd.DataFrame:
+    """Load employee lookups CSV."""
+    if _EMPLOYEE_LKUPS_PATH.exists():
+        try:
+            return pd.read_csv(_EMPLOYEE_LKUPS_PATH, dtype=str)
+        except Exception as e:
+            logger.warning(f"Failed to read employee lookups: {e}")
+    return pd.DataFrame(columns=_EMPLOYEE_COLS)
+
+
+def save_employee_lkups(df: pd.DataFrame) -> None:
+    """Write employee lookups back to CSV."""
+    df.to_csv(_EMPLOYEE_LKUPS_PATH, index=False)
+    logger.info(f"Saved employee lookups: {len(df)} rows")

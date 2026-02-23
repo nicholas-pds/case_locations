@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from dashboard.data.efficiency_store import (
     load_daily, load_aggregated, load_midday, save_midday,
     load_tech_constants, save_tech_constants,
+    load_employee_lkups, save_employee_lkups,
 )
 from dashboard.data.efficiency_processing import run_full_upload, process_midday_snapshot
 from dashboard.data.cache import cache
@@ -41,6 +42,20 @@ async def efficiency_page(request: Request):
     agg_df = load_aggregated()
     noon_df = load_midday("noon")
     pm3_df = load_midday("3pm")
+
+    # One-time migration: regenerate midday if Data_Date column is missing
+    for window, df_check in [("noon", noon_df), ("3pm", pm3_df)]:
+        if not df_check.empty and "Data_Date" not in df_check.columns:
+            try:
+                refreshed = process_midday_snapshot(window)
+                if not refreshed.empty:
+                    save_midday(window, refreshed)
+                    if window == "noon":
+                        noon_df = refreshed
+                    else:
+                        pm3_df = refreshed
+            except Exception:
+                pass  # Will use JS fallback date
 
     # Sort daily: Date desc, then MT Name asc
     if not daily_df.empty:
@@ -173,3 +188,37 @@ async def efficiency_export_mm():
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=efficiency_mm.csv"},
     )
+
+
+# ─────────────────────────────────────────────
+# Employee Lookups CRUD
+# ─────────────────────────────────────────────
+
+@router.get("/efficiency/employees")
+async def get_employees():
+    """Return employee lookups as JSON."""
+    df = load_employee_lkups()
+    return JSONResponse(content=_df_to_records(df))
+
+
+@router.post("/efficiency/employees")
+async def save_employees(request: Request):
+    """Save employee lookups from JSON array."""
+    try:
+        data = await request.json()
+        df = pd.DataFrame(data)
+        required = [
+            "Employee ID", "Last Name", "First Name", "MT Name",
+            "Department", "Gusto Name", "Team", "Training Plan",
+        ]
+        for col in required:
+            if col not in df.columns:
+                return JSONResponse(
+                    content={"status": "error", "message": f"Missing column: {col}"},
+                    status_code=400,
+                )
+        save_employee_lkups(df)
+        return JSONResponse(content={"status": "ok", "rows": len(df)})
+    except Exception as e:
+        logger.error(f"Save employees failed: {e}")
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)

@@ -21,6 +21,7 @@
       <button class="export-btn" @click="exportPdf()">Export PDF</button>
       <button class="export-btn" @click="export3dDesignPdf()" x-show="activeTab === 'noon' || activeTab === '3pm'">Export 3D Design PDF</button>
       <button class="export-btn" @click="openConstantsModal()" x-show="activeTab === 'noon' || activeTab === '3pm'">Edit Constants</button>
+      <button class="export-btn" @click="openEmployeesModal()" x-show="activeTab === 'daily'">Edit Employees</button>
       <a class="export-btn" href="/efficiency/export/mm" x-show="activeTab === 'mm'" style="text-decoration:none;">Download CSV</a>
     </div>
   </div>
@@ -536,6 +537,69 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- EDIT EMPLOYEES MODAL                       -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="showEmployeesModal" x-cloak
+       style="position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5);"
+       @click.self="showEmployeesModal = false">
+    <div style="background:#fff; border-radius:8px; padding:24px; max-width:1100px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; color:#1A1A1A;">Edit Employees</h3>
+        <button @click="showEmployeesModal = false" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">&times;</button>
+      </div>
+      <div style="margin-bottom:10px;">
+        <input type="text" x-model="employeesFilter" placeholder="Filter by name, team, department..."
+               style="width:300px; padding:6px 10px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
+      </div>
+      <table class="eff-table" style="font-size:11px;">
+        <thead>
+          <tr>
+            <th style="width:55px;">Emp ID</th>
+            <th>Last Name</th>
+            <th>First Name</th>
+            <th>MT Name</th>
+            <th>Department</th>
+            <th>Gusto Name</th>
+            <th style="width:110px;">Team</th>
+            <th style="width:55px;">Training</th>
+            <th style="width:30px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, idx) in filteredEmployees()" :key="'emp-'+idx">
+            <tr>
+              <td><input type="text" x-model="row['Employee ID']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px; text-align:center;"></td>
+              <td><input type="text" x-model="row['Last Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
+              <td><input type="text" x-model="row['First Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
+              <td><input type="text" x-model="row['MT Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
+              <td><input type="text" x-model="row.Department" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
+              <td><input type="text" x-model="row['Gusto Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
+              <td><input type="text" x-model="row.Team" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
+              <td>
+                <select x-model="row['Training Plan']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;">
+                  <option value="0">0</option>
+                  <option value="1">1</option>
+                </select>
+              </td>
+              <td style="text-align:center;">
+                <button @click="employeesData.splice(employeesData.indexOf(row), 1)" style="background:none; border:none; color:#C0392B; cursor:pointer; font-size:14px;" title="Remove">&times;</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <div style="display:flex; gap:12px; margin-top:12px;">
+        <button @click="employeesData.push({'Employee ID':'', 'Last Name':'', 'First Name':'', 'MT Name':'', Department:'', 'Gusto Name':'', Team:'', 'Training Plan':'0'})"
+                class="export-btn" style="background:#2196F3;">+ Add Row</button>
+        <button @click="saveEmployees()" class="export-btn" :disabled="employeesSaving"
+                x-text="employeesSaving ? 'Saving...' : 'Save Employees'"></button>
+        <button @click="showEmployeesModal = false" class="export-btn" style="background:#999;">Cancel</button>
+      </div>
+      <p x-show="employeesError" x-text="employeesError" style="color:#C0392B; margin-top:8px; font-size:13px;"></p>
+    </div>
+  </div>
+
 </div><!-- end x-data -->
 
 <style>
@@ -630,6 +694,13 @@ function efficiencyPage() {
     constantsData: [],
     constantsSaving: false,
     constantsError: '',
+
+    // Employees state
+    showEmployeesModal: false,
+    employeesData: [],
+    employeesSaving: false,
+    employeesError: '',
+    employeesFilter: '',
 
     // Upload state
     uploadStatus: '',
@@ -866,6 +937,51 @@ function efficiencyPage() {
       this.constantsSaving = false;
     },
 
+    // ─── Employees Modal ────────────────────────
+    filteredEmployees() {
+      if (!this.employeesFilter.trim()) return this.employeesData;
+      const q = this.employeesFilter.trim().toLowerCase();
+      return this.employeesData.filter(r =>
+        Object.values(r).some(v => String(v || '').toLowerCase().includes(q))
+      );
+    },
+
+    async openEmployeesModal() {
+      this.employeesError = '';
+      this.employeesSaving = false;
+      this.employeesFilter = '';
+      try {
+        const resp = await fetch('/efficiency/employees');
+        this.employeesData = await resp.json();
+      } catch (e) {
+        this.employeesData = [];
+        this.employeesError = 'Failed to load employees';
+      }
+      this.showEmployeesModal = true;
+    },
+
+    async saveEmployees() {
+      this.employeesSaving = true;
+      this.employeesError = '';
+      try {
+        const resp = await fetch('/efficiency/employees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.employeesData),
+        });
+        const data = await resp.json();
+        if (data.status === 'ok') {
+          this.showEmployeesModal = false;
+          setTimeout(() => window.location.reload(), 500);
+        } else {
+          this.employeesError = data.message || 'Save failed';
+        }
+      } catch (e) {
+        this.employeesError = 'Save failed — check console';
+      }
+      this.employeesSaving = false;
+    },
+
     // ─── Upload ──────────────────────────────────
     async uploadGusto(event) {
       const file = event.target.files[0];
@@ -1038,20 +1154,18 @@ function efficiencyPage() {
         // Teams summary (full-width)
         html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams Summary</p>`;
         const teamRows = this.mmTeamsSummary().map(ts => [ts.team, ...effCols.map(c => this._pdfMmEffCell(ts[c]))]);
-        html += this._pdfTable(headers, teamRows);
+        html += this._pdfMmTable(headers, teamRows);
 
-        // Per-team (2-column grid)
+        // Per-team (single column, full-width for many columns)
         const detailHeaders = ['Name', ...effCols.map(c => c.replace('Efficiency_','').replace(/_/g,' '))];
         const sections = this.mmTeamSections();
-        html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
         sections.forEach(sec => {
-          html += `<div style="page-break-inside:avoid;">`;
+          html += `<div style="margin-top:4px;">`;
           html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
           const rows = sec.rows.map(r => [r['MT Name'] || '', ...effCols.map(c => this._pdfMmEffCell(r[c]))]);
-          html += this._pdfTable(detailHeaders, rows);
+          html += this._pdfMmTable(detailHeaders, rows);
           html += `</div>`;
         });
-        html += `</div>`;
 
       } else {
         const isNoon = this.activeTab === 'noon';
@@ -1098,9 +1212,9 @@ function efficiencyPage() {
         margin: [5, 5, 5, 5],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: { scale: this.activeTab === 'mm' ? 1.5 : 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+        pagebreak: { mode: this.activeTab === 'mm' ? ['css', 'legacy'] : ['avoid-all', 'css', 'legacy'] },
       };
 
       const el = document.createElement('div');
@@ -1127,6 +1241,29 @@ function efficiencyPage() {
           const align = idx === 0 ? 'left' : 'center';
           const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
           h += `<td style="border:1px solid #999; padding:1px 2px; background:${bg}; font-size:7px; text-align:${align}; ${nowrap}">${c}</td>`;
+        });
+        h += `</tr>`;
+      });
+      h += `</tbody></table>`;
+      return h;
+    },
+
+    _pdfMmTable(headers, rows) {
+      let h = `<table style="width:100%; border-collapse:collapse; font-size:5px; margin-bottom:3px; table-layout:fixed;">`;
+      h += `<thead><tr>`;
+      headers.forEach((hdr, idx) => {
+        const align = idx === 0 ? 'left' : 'center';
+        const w = idx === 0 ? 'width:90px;' : '';
+        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:1px 1px; text-align:${align}; font-size:5px; overflow:hidden; ${w}">${hdr}</th>`;
+      });
+      h += `</tr></thead><tbody>`;
+      rows.forEach((cells, i) => {
+        const bg = i % 2 === 0 ? '#fff' : '#f2f2f2';
+        h += `<tr>`;
+        cells.forEach((c, idx) => {
+          const align = idx === 0 ? 'left' : 'center';
+          const nowrap = idx === 0 ? 'white-space:nowrap; overflow:hidden;' : '';
+          h += `<td style="border:1px solid #999; padding:1px 1px; background:${bg}; font-size:5px; text-align:${align}; ${nowrap}">${c}</td>`;
         });
         h += `</tr>`;
       });
