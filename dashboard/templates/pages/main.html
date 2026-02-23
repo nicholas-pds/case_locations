@@ -2,7 +2,7 @@
 {% block title %}Case Locations{% endblock %}
 
 {% block content %}
-<div x-data="{ activeFilter: null, selectedLocation: '', selectedCategory: '' }">
+<div x-data="{ activeFilter: null, selectedLocation: '', selectedCategory: '', selectedShipDate: '' }">
 
   <!-- Filter Bar -->
   <div class="page-header">
@@ -32,7 +32,7 @@
         View All
       </button>
 
-      <span style="display:inline-block; width:1px; height:28px; background:#ccc; margin:0 12px; vertical-align:middle;"></span>
+      <span style="display:inline-block; width:1px; height:28px; background:#e53935; margin:0 12px; vertical-align:middle;"></span>
 
       <select class="filter-select" style="height:36px; vertical-align:middle;"
               x-model="selectedCategory"
@@ -42,11 +42,33 @@
         <option value="{{ cat }}">{{ cat }}</option>
         {% endfor %}
       </select>
+
+      <span style="display:inline-block; width:1px; height:28px; background:#e53935; margin:0 12px; vertical-align:middle;"></span>
+
+      <select class="filter-select" style="height:36px; vertical-align:middle;"
+              x-model="selectedLocation"
+              @change="$nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })">
+        <option value="">All Locations</option>
+        {% for loc in all_locations %}
+        <option value="{{ loc }}">{{ loc }}</option>
+        {% endfor %}
+      </select>
+
+      <span style="display:inline-block; width:1px; height:28px; background:#e53935; margin:0 12px; vertical-align:middle;"></span>
+
+      <select class="filter-select" style="height:36px; vertical-align:middle;"
+              x-model="selectedShipDate"
+              @change="$nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })">
+        <option value="">All Ship Dates</option>
+        {% for sd in all_ship_dates %}
+        <option value="{{ sd }}">{{ sd }}</option>
+        {% endfor %}
+      </select>
     </div>
     <div class="total-badge"
          hx-get="/partials/total-cases-badge"
          hx-trigger="sse:data-refreshed, filter-changed from:body"
-         hx-include="[name='filter'],[name='location'],[name='category']"
+         hx-include="[name='filter'],[name='location'],[name='category'],[name='ship_date']"
          hx-swap="innerHTML">
       <span class="total-badge-count">{{ total_cases }}</span>
       <span class="total-badge-label">Total Cases</span>
@@ -60,7 +82,7 @@
       <div id="location-grid"
            hx-get="/partials/location-grid"
            hx-trigger="sse:data-refreshed, filter-changed"
-           hx-include="[name='filter'],[name='location'],[name='category']"
+           hx-include="[name='filter'],[name='location'],[name='category'],[name='ship_date']"
            hx-swap="innerHTML">
         {% include "partials/location_grid.html" %}
       </div>
@@ -75,23 +97,17 @@
                  hx-get="/partials/case-table"
                  hx-trigger="keyup changed delay:300ms"
                  hx-target="#case-table-content"
-                 hx-include="[name='filter'],[name='location'],[name='category']">
-          <select name="location" class="filter-select"
-                  x-model="selectedLocation"
-                  @change="$nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })">
-            <option value="">All Locations</option>
-            {% for loc in all_locations %}
-            <option value="{{ loc }}">{{ loc }}</option>
-            {% endfor %}
-          </select>
+                 hx-include="[name='filter'],[name='location'],[name='category'],[name='ship_date']">
           <input type="hidden" name="filter" :value="activeFilter || ''">
           <input type="hidden" name="category" :value="selectedCategory || ''">
+          <input type="hidden" name="location" :value="selectedLocation || ''">
+          <input type="hidden" name="ship_date" :value="selectedShipDate || ''">
         </div>
 
         <div id="case-table-content"
              hx-get="/partials/case-table"
              hx-trigger="sse:data-refreshed, filter-changed"
-             hx-include="[name='filter'],[name='search'],[name='location'],[name='category']"
+             hx-include="[name='filter'],[name='search'],[name='location'],[name='category'],[name='ship_date']"
              hx-swap="innerHTML">
           {% include "partials/case_table.html" %}
         </div>

@@ -88,7 +88,7 @@ def add_filter_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def filter_cases(df: pd.DataFrame, filter_type: str = None,
                  search: str = None, location: str = None,
-                 category: str = None) -> pd.DataFrame:
+                 category: str = None, ship_date: str = None) -> pd.DataFrame:
     """Apply filters to case location data."""
     if df.empty:
         return df
@@ -115,10 +115,30 @@ def filter_cases(df: pd.DataFrame, filter_type: str = None,
         result = result[mask]
 
     if location:
-        result = result[result['Last Location'] == location]
+        if location == 'No Location':
+            result = result[
+                result['Last Location'].isna() |
+                (result['Last Location'].astype(str).str.strip() == '')
+            ]
+        else:
+            result = result[result['Last Location'] == location]
 
     if category:
         result = result[result['Category'] == category]
+
+    if ship_date:
+        def _matches_ship_date(val):
+            if pd.isna(val) or val is None:
+                return False
+            try:
+                if isinstance(val, str):
+                    val = pd.to_datetime(val)
+                if hasattr(val, 'strftime'):
+                    return val.strftime(_DATE_FMT) == ship_date
+            except Exception:
+                pass
+            return False
+        result = result[result['Ship Date'].apply(_matches_ship_date)]
 
     return result
 
@@ -162,7 +182,7 @@ def aggregate_by_location(df: pd.DataFrame) -> list[dict]:
     if not null_cases.empty:
         cats = null_cases['Category'].value_counts().to_dict()
         result.append({
-            'name': 'Unknown',
+            'name': 'No Location',
             'total': len(null_cases),
             'categories': cats,
         })

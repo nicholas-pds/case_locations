@@ -23,10 +23,11 @@ async def location_grid(
     search: str = None,
     location: str = None,
     category: str = None,
+    ship_date: str = None,
 ):
     df = await cache.get("case_locations")
     if df is not None and not df.empty:
-        df = filter_cases(df, filter, search, location, category)
+        df = filter_cases(df, filter, search, location, category, ship_date=ship_date)
         locations = aggregate_by_location(df)
     else:
         locations = []
@@ -46,12 +47,13 @@ async def case_table(
     search: str = None,
     location: str = None,
     category: str = None,
+    ship_date: str = None,
     page: int = 1,
     page_size: int = 50,
 ):
     df = await cache.get("case_locations")
     if df is not None and not df.empty:
-        df = filter_cases(df, filter, search, location, category)
+        df = filter_cases(df, filter, search, location, category, ship_date=ship_date)
         total_cases = len(df)
         start = (page - 1) * page_size
         end = start + page_size
@@ -91,11 +93,12 @@ async def total_cases_badge(
     filter: str = None,
     location: str = None,
     category: str = None,
+    ship_date: str = None,
 ):
     df = await cache.get("case_locations")
     if df is not None and not df.empty:
-        if filter or location or category:
-            df = filter_cases(df, filter, location=location, category=category)
+        if filter or location or category or ship_date:
+            df = filter_cases(df, filter, location=location, category=category, ship_date=ship_date)
         total_cases = len(df)
     else:
         total_cases = 0
