@@ -150,7 +150,8 @@ function exportTilesPDF() {
 
   // Create a wrapper div for PDF content
   var wrapper = document.createElement('div');
-  wrapper.style.cssText = 'background:#fff; padding:24px; width:900px;';
+  wrapper.id = 'pdf-export-wrapper';
+  wrapper.style.cssText = 'background:#fff; padding:24px; width:900px; position:absolute; left:0; top:0; z-index:99999;';
 
   // Logo
   var logo = document.createElement('img');
@@ -173,40 +174,38 @@ function exportTilesPDF() {
   // Clone the location grid
   var grid = document.getElementById('location-grid');
   var gridClone = grid.cloneNode(true);
-  gridClone.style.cssText = '';
-  // Remove Alpine click handlers from clone
-  gridClone.querySelectorAll('[\\@click], [\\@click\\.stop]').forEach(function(el) {
-    el.removeAttribute('@click');
-    el.removeAttribute('@click.stop');
-    el.style.cursor = 'default';
-  });
+  gridClone.removeAttribute('id');
+  gridClone.removeAttribute('hx-get');
+  gridClone.removeAttribute('hx-trigger');
+  gridClone.removeAttribute('hx-include');
+  gridClone.removeAttribute('hx-swap');
   wrapper.appendChild(gridClone);
 
-  // Temporarily add to DOM (offscreen) for html2pdf to render
-  wrapper.style.position = 'fixed';
-  wrapper.style.left = '-9999px';
-  wrapper.style.top = '0';
   document.body.appendChild(wrapper);
 
-  // Wait for logo to load, then generate PDF
-  logo.onload = function() { generatePDF(); };
-  logo.onerror = function() { generatePDF(); };
-  if (logo.complete) generatePDF();
+  // Preload logo then generate
+  var logoImg = new Image();
+  logoImg.src = '/static/logo.png';
+  logoImg.onload = doGenerate;
+  logoImg.onerror = doGenerate;
+  if (logoImg.complete) doGenerate();
 
-  var generated = false;
-  function generatePDF() {
-    if (generated) return;
-    generated = true;
+  var done = false;
+  function doGenerate() {
+    if (done) return;
+    done = true;
 
     html2pdf().set({
       margin: [10, 10, 10, 10],
       filename: 'case_locations_tiles.pdf',
       image: {type: 'png', quality: 1},
-      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff'},
+      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0},
       jsPDF: {unit: 'mm', format: 'letter', orientation: 'portrait'},
       pagebreak: {mode: ['avoid-all']}
     }).from(wrapper).save().then(function() {
       document.body.removeChild(wrapper);
+    }).catch(function() {
+      if (wrapper.parentNode) document.body.removeChild(wrapper);
     });
   }
 }
