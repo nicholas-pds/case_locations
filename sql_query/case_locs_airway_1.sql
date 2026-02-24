@@ -1,4 +1,6 @@
 SELECT 
+    CustomerID,        -- Added to outer SELECT
+    DoctorName,          -- Added to outer SELECT
     LastLocation,
     CAST(ShipDate AS DATE) AS ShipDate,
     CaseNumber,
@@ -9,6 +11,8 @@ SELECT
     LastScanTime
 FROM (
     SELECT
+        ca.CustomerID, -- Added to inner subquery
+        ca.DoctorName,   -- Added to inner subquery
         ca.CaseNumber,
         ca.PanNumber,
         ca.ShipDate,
@@ -40,3 +44,5 @@ WHERE rn = 1
     'Zoom Waiting Approval'
   )
 ORDER BY LastLocation, ShipDate ASC;
+
+
