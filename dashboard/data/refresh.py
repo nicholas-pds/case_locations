@@ -83,7 +83,11 @@ async def refresh_all_queries():
 
         # Add filter columns to case_locations
         if name == "case_locations" and not result.empty:
-            result = add_filter_columns(result)
+            try:
+                result = add_filter_columns(result)
+            except Exception as e:
+                logger.error(f"Transform '{name}' failed: {e}")
+                continue
 
         await cache.set(name, result)
         logger.info(f"Cache updated: {name} ({len(result)} rows)")
@@ -118,6 +122,7 @@ async def _run_midday_job(window: str) -> None:
 async def refresh_loop():
     """Main background refresh loop. Runs every REFRESH_INTERVAL_SECONDS."""
     logger.info("Background refresh task started")
+    _consecutive_failures = 0
 
     while True:
         now = datetime.now()
@@ -129,8 +134,17 @@ async def refresh_loop():
                 logger.info("Refreshing data...")
                 await refresh_all_queries()
                 logger.info("Refresh complete")
+                if _consecutive_failures > 0:
+                    logger.info(f"Database connection restored after {_consecutive_failures} failure(s)")
+                _consecutive_failures = 0
+            except asyncio.CancelledError:
+                logger.info("Refresh loop cancelled — shutting down")
+                raise
             except Exception as e:
-                logger.error(f"Refresh failed: {e}")
+                _consecutive_failures += 1
+                # Log at ERROR on first failure, then WARN every 5 to avoid log spam
+                if _consecutive_failures == 1 or _consecutive_failures % 5 == 0:
+                    logger.error(f"Refresh failed (attempt {_consecutive_failures}): {e}")
                 await cache.set_error(str(e))
         else:
             await cache.set_paused(True)
