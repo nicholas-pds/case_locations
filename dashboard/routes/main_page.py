@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from dashboard.data.cache import cache
 from dashboard.data.transforms import (
     aggregate_by_location, filter_cases, add_filter_columns,
@@ -12,6 +12,11 @@ router = APIRouter()
 
 
 @router.get("/", response_class=HTMLResponse)
+async def root_redirect():
+    return RedirectResponse(url="/daily-summary", status_code=302)
+
+
+@router.get("/case-locations", response_class=HTMLResponse)
 async def main_page(request: Request):
     df = await cache.get("case_locations")
     metadata = await cache.get_metadata()

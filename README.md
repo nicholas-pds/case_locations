@@ -197,7 +197,7 @@ Both the dashboard and the Cloudflare tunnel run as Windows services via [NSSM](
 | Service Name | What it runs |
 |---|---|
 | `PartnersDashboard` | The Dash web app on port 8050 |
-| `CloudflaredTunnel` | Cloudflare tunnel → `dashboard.partnersds.live` |
+| `CloudflaredTunnel` | Cloudflare tunnel → `partnersds.live` |
 
 **Check status (Admin PowerShell):**
 ```powershell
@@ -281,7 +281,7 @@ Look for the **IPv4 Address** under your active network adapter (e.g., `192.168.
 
 The dashboard is publicly accessible at:
 
-**https://dashboard.partnersds.live**
+**https://partnersds.live**
 
 This works via a Cloudflare Tunnel — no VPN, no firewall port-forwarding needed. The `CloudflaredTunnel` Windows service maintains a persistent outbound connection to Cloudflare's network.
 
