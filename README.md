@@ -190,17 +190,43 @@ DASHBOARD_SECRET_KEY=your-secret-key-here
 | `DASHBOARD_PORT` | `8050` | Port number the dashboard runs on |
 | `DASHBOARD_SECRET_KEY` | (auto) | Secret key for session cookies |
 
-### Setting Up Auto-Start (Optional)
+### Auto-Start Services (NSSM)
 
-To have the dashboard start automatically at 6 AM every day:
+Both the dashboard and the Cloudflare tunnel run as Windows services via [NSSM](https://nssm.cc) and start automatically on boot. No manual action needed after a reboot.
 
-1. Open Windows Task Scheduler
-2. Create a new task:
-   - **Trigger:** Daily at 6:00 AM
-   - **Action:** Start a program: `C:\Users\Partners\Desktop\repos\case_locations\run_dashboard.bat`
-   - **Settings:** Check "Run whether user is logged on or not"
+| Service Name | What it runs |
+|---|---|
+| `PartnersDashboard` | The Dash web app on port 8050 |
+| `CloudflaredTunnel` | Cloudflare tunnel → `dashboard.partnersds.live` |
 
-The dashboard will automatically pause data queries outside of 6 AM - 6 PM.
+**Check status (Admin PowerShell):**
+```powershell
+Get-Service PartnersDashboard, CloudflaredTunnel
+```
+
+**Start a service:**
+```powershell
+Start-Service PartnersDashboard
+Start-Service CloudflaredTunnel
+```
+
+**Stop a service:**
+```powershell
+Stop-Service PartnersDashboard
+Stop-Service CloudflaredTunnel
+```
+
+**If a service hangs on stop, force-kill it:**
+```powershell
+Stop-Process -Name python -Force       # for PartnersDashboard
+Stop-Process -Name cloudflared -Force  # for CloudflaredTunnel
+```
+
+NSSM is installed at `C:\nssm\nssm.exe`. To edit a service's settings:
+```powershell
+C:\nssm\nssm.exe edit PartnersDashboard
+C:\nssm\nssm.exe edit CloudflaredTunnel
+```
 
 ### Filters
 
@@ -250,6 +276,22 @@ To find the server's IP address, run in PowerShell:
 ipconfig
 ```
 Look for the **IPv4 Address** under your active network adapter (e.g., `192.168.10.x`).
+
+### Remote Access (Cloudflare Tunnel)
+
+The dashboard is publicly accessible at:
+
+**https://dashboard.partnersds.live**
+
+This works via a Cloudflare Tunnel — no VPN, no firewall port-forwarding needed. The `CloudflaredTunnel` Windows service maintains a persistent outbound connection to Cloudflare's network.
+
+Tunnel config: `C:\Users\MagicTouch\.cloudflared\config.yml`
+
+**If the public URL is not loading:**
+1. Check both services are running: `Get-Service PartnersDashboard, CloudflaredTunnel`
+2. Test the app locally on the server: open `http://localhost:8050` in a browser
+3. If local works but public doesn't, restart the tunnel: `Restart-Service CloudflaredTunnel`
+4. If the service hangs on restart: `Stop-Process -Name cloudflared -Force` then `Start-Service CloudflaredTunnel`
 
 ### Troubleshooting
 
