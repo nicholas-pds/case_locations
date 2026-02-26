@@ -531,6 +531,14 @@
   background: var(--eff-surface2);
 }
 
+/* Override global styles.css light-theme table row rules for dark theme */
+.eff-page-wrapper tbody tr:nth-child(even) {
+  background: transparent;
+}
+.eff-page-wrapper tbody tr:hover {
+  background: transparent;
+}
+
 .eff-cell {
   font-weight: 600 !important;
 }
