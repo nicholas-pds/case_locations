@@ -1,0 +1,977 @@
+/* ═══════════════════════════════════════════════════════════════
+   EFFICIENCY PAGE - MODERN DARK THEME
+   Based on ex1.html design with expanded components
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── FONTS ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── CSS VARIABLES ── */
+:root {
+  /* Dark theme colors */
+  --eff-bg: #0f1117;
+  --eff-surface: #161b27;
+  --eff-surface2: #1e2535;
+  --eff-border: #252d3d;
+  --eff-text: #e8eaf0;
+  --eff-muted: #6b7694;
+  --eff-accent: #c8d4f0;
+  --eff-red-brand: #cc2222;
+
+  /* 5-tier efficiency colors */
+  --eff-green: #4ade80;        /* ≥120% great */
+  --eff-green-light: #86efac;  /* 100-119% good */
+  --eff-yellow: #facc15;       /* 85-99% ok */
+  --eff-orange: #fb923c;       /* 70-84% low */
+  --eff-red: #f87171;          /* <70% poor */
+
+  /* Tier background colors (for badges/pills) */
+  --eff-green-dim: #0f2e1a;
+  --eff-green-light-dim: #1a3a28;
+  --eff-yellow-dim: #2e2a10;
+  --eff-orange-dim: #2e1f10;
+  --eff-red-dim: #2e1414;
+}
+
+/* ── PRINT / LIGHT THEME ── */
+@media print {
+  :root {
+    --eff-bg: #ffffff;
+    --eff-surface: #f5f5f5;
+    --eff-surface2: #ebebeb;
+    --eff-border: #dddddd;
+    --eff-text: #111111;
+    --eff-muted: #666666;
+    --eff-accent: #222222;
+    --eff-red-brand: #cc2222;
+
+    --eff-green: #16a34a;
+    --eff-green-light: #22c55e;
+    --eff-yellow: #eab308;
+    --eff-orange: #f97316;
+    --eff-red: #ef4444;
+
+    --eff-green-dim: #dcfce7;
+    --eff-green-light-dim: #bbf7d0;
+    --eff-yellow-dim: #fef9c3;
+    --eff-orange-dim: #ffedd5;
+    --eff-red-dim: #fee2e2;
+  }
+}
+
+/* ── GLOBAL RESET ── */
+* { box-sizing: border-box; }
+
+/* ── PAGE WRAPPER ── */
+.eff-page-wrapper {
+  background: var(--eff-bg);
+  color: var(--eff-text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 24px 32px 40px;
+}
+
+/* ── HEADER ── */
+.eff-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--eff-red-brand);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.eff-logo-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.eff-logo {
+  max-height: 60px;
+  width: auto;
+}
+
+.eff-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--eff-text);
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.eff-subtitle {
+  font-size: 13px;
+  color: var(--eff-muted);
+  margin-top: 4px;
+  font-family: 'DM Mono', monospace;
+}
+
+.eff-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.eff-target-box {
+  text-align: right;
+}
+
+.eff-target-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--eff-muted);
+  font-weight: 500;
+}
+
+.eff-target-value {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--eff-muted);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+/* ── STATUS MESSAGES ── */
+.eff-error {
+  color: var(--eff-red);
+  font-size: 13px;
+}
+
+.eff-success {
+  color: var(--eff-green);
+  font-size: 13px;
+}
+
+/* ── BUTTONS ── */
+.eff-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.eff-btn-primary {
+  background: var(--eff-red-brand);
+  color: white;
+}
+
+.eff-btn-primary:hover {
+  background: #b01f1f;
+  transform: translateY(-1px);
+}
+
+.eff-btn-secondary {
+  background: var(--eff-surface);
+  color: var(--eff-accent);
+  border: 1px solid var(--eff-border);
+}
+
+.eff-btn-secondary:hover {
+  background: var(--eff-surface2);
+}
+
+.eff-btn-upload {
+  background: var(--eff-surface);
+  color: var(--eff-accent);
+  border: 1px solid var(--eff-border);
+  cursor: pointer;
+}
+
+.eff-btn-upload:hover {
+  background: var(--eff-surface2);
+}
+
+.eff-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ── TABS ── */
+.eff-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--eff-border);
+}
+
+.eff-tab {
+  background: transparent;
+  border: none;
+  color: var(--eff-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+  top: 1px;
+}
+
+.eff-tab:hover {
+  color: var(--eff-accent);
+  background: var(--eff-surface2);
+}
+
+.eff-tab.active {
+  color: var(--eff-red-brand);
+  border-bottom-color: var(--eff-red-brand);
+}
+
+/* ── FILTERS ── */
+.eff-filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.eff-filter-select,
+.eff-filter-input {
+  background: var(--eff-surface);
+  border: 1px solid var(--eff-border);
+  color: var(--eff-text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+
+.eff-filter-select:focus,
+.eff-filter-input:focus {
+  outline: none;
+  border-color: var(--eff-red-brand);
+}
+
+.eff-filter-input {
+  flex: 1;
+  max-width: 280px;
+}
+
+.eff-filter-input::placeholder {
+  color: var(--eff-muted);
+}
+
+.eff-clear-btn {
+  background: var(--eff-surface);
+  color: var(--eff-muted);
+  border: 1px solid var(--eff-border);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.eff-clear-btn:hover {
+  background: var(--eff-surface2);
+  color: var(--eff-accent);
+}
+
+/* ── SECTION TITLE ── */
+.eff-section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--eff-muted);
+  margin-bottom: 12px;
+  margin-top: 26px;
+  font-weight: 500;
+}
+
+.eff-section {
+  margin-bottom: 28px;
+}
+
+/* ── KPI CARDS ── */
+.eff-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.eff-kpi-card {
+  background: var(--eff-surface);
+  border: 1px solid var(--eff-border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  transition: transform 0.2s;
+}
+
+.eff-kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+.eff-kpi-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--eff-muted);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.eff-kpi-value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.eff-kpi-sub {
+  font-size: 11px;
+  color: var(--eff-muted);
+}
+
+/* 4-column variant for Noon/3PM tabs */
+.eff-kpi-row-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* ── TEAM BAR CHART ── */
+.eff-teams-chart {
+  background: var(--eff-surface);
+  border: 1px solid var(--eff-border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 4px;
+}
+
+.eff-bar-header {
+  display: grid;
+  grid-template-columns: 150px 1fr 58px 72px 72px 72px;
+  gap: 12px;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--eff-border);
+}
+
+.eff-bar-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 58px 72px 72px 72px;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--eff-border);
+}
+
+.eff-bar-row:last-child {
+  border-bottom: none;
+}
+
+.eff-col-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--eff-muted);
+  font-weight: 500;
+  text-align: right;
+}
+
+.eff-col-label.left {
+  text-align: left;
+}
+
+.eff-team-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--eff-accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eff-bar-track {
+  background: var(--eff-surface2);
+  border-radius: 3px;
+  height: 7px;
+  overflow: hidden;
+}
+
+.eff-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.eff-team-eff {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.eff-team-stat {
+  font-size: 11px;
+  color: var(--eff-muted);
+  text-align: right;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── TEAM CARDS GRID ── */
+.eff-teams-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .eff-teams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .eff-teams-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .eff-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .eff-header {
+    flex-direction: column;
+  }
+}
+
+.eff-team-card {
+  background: var(--eff-surface);
+  border: 1px solid var(--eff-border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.eff-team-card:hover {
+  transform: translateY(-2px);
+}
+
+.eff-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--eff-border);
+  background: var(--eff-surface2);
+}
+
+.eff-card-name {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--eff-accent);
+}
+
+.eff-card-eff {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── PERSON TABLE ── */
+.eff-person-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.eff-person-table thead {
+  background: var(--eff-surface);
+}
+
+.eff-person-table th {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--eff-muted);
+  text-align: right;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--eff-border);
+  font-weight: 500;
+}
+
+.eff-person-table th:first-child {
+  text-align: left;
+}
+
+.eff-person-table td {
+  padding: 6px 10px;
+  font-size: 11.5px;
+  text-align: right;
+  font-family: 'DM Mono', monospace;
+  border-bottom: 1px solid var(--eff-border);
+  color: var(--eff-muted);
+}
+
+.eff-person-table tr:last-child td {
+  border-bottom: none;
+}
+
+.eff-person-table td:first-child {
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--eff-text);
+  font-size: 12px;
+}
+
+.eff-person-table tbody tr:hover td {
+  background: var(--eff-surface2);
+}
+
+.eff-cell {
+  font-weight: 600 !important;
+}
+
+/* ── EFFICIENCY TIER COLORS (5-tier system) ── */
+.eff-great {
+  color: var(--eff-green) !important;
+}
+
+.eff-good {
+  color: var(--eff-green-light) !important;
+}
+
+.eff-ok {
+  color: var(--eff-yellow) !important;
+}
+
+.eff-low {
+  color: var(--eff-orange) !important;
+}
+
+.eff-poor {
+  color: var(--eff-red) !important;
+}
+
+.eff-muted-text {
+  color: var(--eff-muted) !important;
+}
+
+/* ── BAR FILL COLORS ── */
+.bar-great {
+  background: var(--eff-green);
+}
+
+.bar-good {
+  background: var(--eff-green-light);
+}
+
+.bar-ok {
+  background: var(--eff-yellow);
+}
+
+.bar-low {
+  background: var(--eff-orange);
+}
+
+.bar-poor {
+  background: var(--eff-red);
+}
+
+/* ── TRAINING BADGE ── */
+.eff-training-badge {
+  font-size: 8px;
+  background: #1e2a4a;
+  color: #93b4f0;
+  border: 1px solid #2d3f6a;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-left: 5px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+@media print {
+  .eff-training-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+  }
+}
+
+/* ── TRAINING SECTION ── */
+.eff-training-card {
+  background: var(--eff-surface);
+  border: 1px solid var(--eff-border);
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 600px;
+}
+
+.eff-training-header {
+  background: var(--eff-surface2);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--eff-border);
+}
+
+.eff-training-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--eff-accent);
+}
+
+.eff-training-note {
+  font-size: 10px;
+  color: var(--eff-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+/* ── MM EFF TABLE (Horizontal Scroll) ── */
+.eff-mm-wrap {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 70vh;
+  background: var(--eff-surface);
+  border: 1px solid var(--eff-border);
+  border-radius: 8px;
+}
+
+.eff-mm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.eff-mm-table thead th {
+  background: var(--eff-surface2);
+  color: var(--eff-accent);
+  padding: 10px 12px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--eff-border);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.eff-mm-table thead th:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: var(--eff-surface2);
+}
+
+.eff-mm-table tbody td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--eff-border);
+  font-size: 12px;
+  text-align: right;
+  font-family: 'DM Mono', monospace;
+  color: var(--eff-muted);
+}
+
+.eff-mm-table tbody td:first-child {
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  color: var(--eff-text);
+  position: sticky;
+  left: 0;
+  background: var(--eff-surface);
+  z-index: 1;
+}
+
+.eff-mm-table tbody tr:hover td {
+  background: var(--eff-surface2);
+}
+
+.eff-mm-table tbody tr:hover td:first-child {
+  background: var(--eff-surface2);
+}
+
+.eff-mm-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── MODALS ── */
+.eff-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.eff-modal {
+  background: var(--eff-surface);
+  border: 1px solid var(--eff-border);
+  border-radius: 12px;
+  padding: 28px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.eff-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--eff-border);
+}
+
+.eff-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--eff-text);
+  margin: 0;
+}
+
+.eff-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--eff-muted);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.eff-modal-close:hover {
+  background: var(--eff-surface2);
+  color: var(--eff-text);
+}
+
+.eff-modal-input,
+.eff-modal-select {
+  background: var(--eff-bg);
+  border: 1px solid var(--eff-border);
+  color: var(--eff-text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.eff-modal-input:focus,
+.eff-modal-select:focus {
+  outline: none;
+  border-color: var(--eff-red-brand);
+}
+
+.eff-modal-input::placeholder {
+  color: var(--eff-muted);
+}
+
+.eff-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.eff-modal-table th {
+  background: var(--eff-surface2);
+  color: var(--eff-accent);
+  padding: 10px;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  border-bottom: 1px solid var(--eff-border);
+}
+
+.eff-modal-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--eff-border);
+}
+
+.eff-modal-table tbody tr:hover {
+  background: var(--eff-surface2);
+}
+
+.eff-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--eff-border);
+}
+
+.eff-modal-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.eff-modal-btn-primary {
+  background: var(--eff-red-brand);
+  color: white;
+}
+
+.eff-modal-btn-primary:hover {
+  background: #b01f1f;
+}
+
+.eff-modal-btn-primary:disabled {
+  background: var(--eff-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.eff-modal-btn-secondary {
+  background: var(--eff-surface2);
+  color: var(--eff-accent);
+  border: 1px solid var(--eff-border);
+}
+
+.eff-modal-btn-secondary:hover {
+  background: var(--eff-bg);
+}
+
+.eff-modal-error {
+  color: var(--eff-red);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.eff-modal-success {
+  color: var(--eff-green);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* ── FOOTER ── */
+.eff-footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--eff-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--eff-muted);
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.eff-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.eff-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+}
+
+.eff-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── EMPTY STATE ── */
+.eff-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--eff-muted);
+}
+
+.eff-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.eff-empty-text {
+  font-size: 14px;
+}
+
+/* ── ALPINE.JS CLOAK ── */
+[x-cloak] {
+  display: none !important;
+}
+
+/* ── PRINT STYLES ── */
+@media print {
+  .eff-page-wrapper {
+    background: white;
+    padding: 20px;
+  }
+
+  .eff-btn,
+  .eff-filter-bar,
+  .eff-tabs {
+    display: none !important;
+  }
+
+  .eff-header {
+    border-bottom-color: #cccccc;
+  }
+
+  .eff-teams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .eff-team-card {
+    page-break-inside: avoid;
+  }
+}

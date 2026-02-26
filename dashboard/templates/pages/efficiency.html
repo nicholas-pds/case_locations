@@ -1,37 +1,52 @@
 {% extends "base.html" %}
 {% block title %}Efficiency{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/efficiency.css?v=2">
+{% endblock %}
+
 {% block content %}
-<div x-data="efficiencyPage()" x-init="init()">
+<div class="eff-page-wrapper" x-data="efficiencyPage()" x-init="init()">
 
   <!-- Page Header -->
-  <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
-    <h1 class="page-title">Efficiency Report</h1>
-    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-      {% if latest_date %}
-      <span style="font-size:12px; color:#888;">Latest data: {{ latest_date }}</span>
-      {% endif %}
+  <div class="eff-header">
+    <div class="eff-logo-area">
+      <img src="/static/logo.png" alt="Partners Dental Solutions" class="eff-logo">
+      <div>
+        <h1 class="eff-title">Efficiency Report</h1>
+        <div class="eff-subtitle" x-text="getSubtitleDate()"></div>
+      </div>
+    </div>
+    <div class="eff-header-actions">
       <span x-show="uploadStatus" x-text="uploadStatus"
-            :style="uploadError ? 'color:#e74c3c; font-size:13px;' : 'color:#27ae60; font-size:13px;'"></span>
-      <label class="export-btn" x-show="activeTab === 'daily'" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+            :class="uploadError ? 'eff-error' : 'eff-success'"></span>
+      <label class="eff-btn eff-btn-upload" x-show="activeTab === 'daily'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Upload Gusto CSV
         <input type="file" accept=".csv" style="display:none;" @change="uploadGusto($event)">
       </label>
-      <button class="export-btn" @click="exportPdf()">Export PDF</button>
-      <button class="export-btn" @click="export3dDesignPdf()" x-show="activeTab === 'noon' || activeTab === '3pm'">Export 3D Design PDF</button>
-      <button class="export-btn" @click="openConstantsModal()" x-show="activeTab === 'noon' || activeTab === '3pm'">Edit Constants</button>
-      <button class="export-btn" @click="openEmployeesModal()" x-show="activeTab === 'daily'">Edit Employees</button>
-      <a class="export-btn" href="/efficiency/export/mm" x-show="activeTab === 'mm'" style="text-decoration:none;">Download CSV</a>
+      <button class="eff-btn eff-btn-primary" @click="exportPdf()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
+        Export PDF
+      </button>
+      <button class="eff-btn eff-btn-primary" @click="export3dDesignPdf()" x-show="activeTab === 'noon' || activeTab === '3pm'">Export 3D Design PDF</button>
+      <button class="eff-btn eff-btn-secondary" @click="openConstantsModal()" x-show="activeTab === 'noon' || activeTab === '3pm'">Edit Constants</button>
+      <button class="eff-btn eff-btn-secondary" @click="openEmployeesModal()" x-show="activeTab === 'daily'">Edit Employees</button>
+      <button class="eff-btn eff-btn-secondary" @click="refreshMidday()" x-show="activeTab === 'noon' || activeTab === '3pm'">Refresh Data</button>
+      <a class="eff-btn eff-btn-secondary" href="/efficiency/export/mm" x-show="activeTab === 'mm'">Download CSV</a>
+    </div>
+    <div class="eff-target-box">
+      <div class="eff-target-label">Target</div>
+      <div class="eff-target-value">100%</div>
     </div>
   </div>
 
   <!-- Tabs -->
-  <div class="customer-tabs">
-    <button class="customer-tab" :class="{ active: activeTab === 'daily' }" @click="activeTab = 'daily'">Daily EFF</button>
-    <button class="customer-tab" :class="{ active: activeTab === 'mm' }" @click="activeTab = 'mm'">MM EFF</button>
-    <button class="customer-tab" :class="{ active: activeTab === 'noon' }" @click="activeTab = 'noon'">Noon EFF</button>
-    <button class="customer-tab" :class="{ active: activeTab === '3pm' }" @click="activeTab = '3pm'">3PM EFF</button>
+  <div class="eff-tabs">
+    <button class="eff-tab" :class="{ active: activeTab === 'daily' }" @click="activeTab = 'daily'">Daily EFF</button>
+    <button class="eff-tab" :class="{ active: activeTab === 'mm' }" @click="activeTab = 'mm'">MM EFF</button>
+    <button class="eff-tab" :class="{ active: activeTab === 'noon' }" @click="activeTab = 'noon'">Noon EFF</button>
+    <button class="eff-tab" :class="{ active: activeTab === '3pm' }" @click="activeTab = '3pm'">3PM EFF</button>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
@@ -39,196 +54,232 @@
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === 'daily'">
     <!-- Filters -->
-    <div class="customer-filters">
-      <select class="filter-select" x-model="dailyDate">
+    <div class="eff-filter-bar">
+      <select class="eff-filter-select" x-model="dailyDate">
         <option value="">All Dates</option>
         {% for d in available_dates %}
         <option value="{{ d }}">{{ d }}</option>
         {% endfor %}
       </select>
-      <input type="text" class="search-input" placeholder="Search name, team..." x-model="dailySearch" style="flex:1; max-width:280px;">
-      <select class="filter-select" x-model="dailyTeam">
+      <input type="text" class="eff-filter-input" placeholder="Search name, team..." x-model="dailySearch">
+      <select class="eff-filter-select" x-model="dailyTeam">
         <option value="">All Teams</option>
         {% for team in teams %}
         <option value="{{ team }}">{{ team }}</option>
         {% endfor %}
       </select>
-      <button class="clear-filters-btn" @click="clearDailyFilters()"
+      <button class="eff-clear-btn" @click="clearDailyFilters()"
               x-show="dailySearch || dailyTeam || dailyDate !== {{ latest_date | tojson }}">Clear</button>
     </div>
 
-    <!-- ALL Summary -->
+    <!-- KPI Cards -->
     <template x-if="filteredDailyRows().length > 0">
-      <div style="margin-bottom:20px;">
-        <div class="eff-section-label">ALL</div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th style="text-align:right;">Num of People</th>
-              <th style="text-align:center;">EFF</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-              <th style="text-align:right;">Work Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td x-text="dailySummaryAll().date"></td>
-              <td style="text-align:right;" x-text="dailySummaryAll().people"></td>
-              <td style="text-align:center; font-weight:600;" :style="effColor(dailySummaryAll().eff)" x-text="dailySummaryAll().eff.toFixed(0) + '%'"></td>
-              <td style="text-align:right;" x-text="dailySummaryAll().cases"></td>
-              <td style="text-align:right;" x-text="dailySummaryAll().tasks"></td>
-              <td style="text-align:right;" x-text="dailySummaryAll().duration.toFixed(1)"></td>
-              <td style="text-align:right;" x-text="dailySummaryAll().hours.toFixed(1)"></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="eff-section">
+        <div class="eff-section-title">Overview</div>
+        <div class="eff-kpi-row">
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Overall EFF</div>
+            <div class="eff-kpi-value" :class="'eff-' + effTierClass(dailySummaryAll().eff)" x-text="dailySummaryAll().eff.toFixed(0) + '%'"></div>
+            <div class="eff-kpi-sub">vs. 100% target</div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">People</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="dailySummaryAll().people"></div>
+            <div class="eff-kpi-sub" x-text="'across ' + dailySummaryTeams().length + ' teams'"></div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Cases</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="dailySummaryAll().cases.toLocaleString()"></div>
+            <div class="eff-kpi-sub">total processed</div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Tasks</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="dailySummaryAll().tasks.toLocaleString()"></div>
+            <div class="eff-kpi-sub">total completed</div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Work Hours</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="dailySummaryAll().hours.toFixed(1)"></div>
+            <div class="eff-kpi-sub" x-text="dailySummaryAll().duration.toFixed(1) + ' hrs duration'"></div>
+          </div>
+        </div>
       </div>
     </template>
 
-    <!-- Teams Summary -->
+    <!-- Team Performance Bar Chart -->
     <template x-if="filteredDailyRows().length > 0">
-      <div style="margin-bottom:20px;">
-        <div class="eff-section-label">Teams</div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th style="text-align:right;">Num of People</th>
-              <th style="text-align:center;">EFF</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-              <th style="text-align:right;">Work Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="ts in dailySummaryTeams()" :key="'ts-'+ts.team">
-              <tr>
-                <td style="font-weight:600;" x-text="ts.team"></td>
-                <td style="text-align:right;" x-text="ts.people"></td>
-                <td style="text-align:center; font-weight:600;" :style="effColor(ts.eff)" x-text="ts.eff > 0 ? ts.eff.toFixed(0) + '%' : ''"></td>
-                <td style="text-align:right;" x-text="ts.cases"></td>
-                <td style="text-align:right;" x-text="ts.tasks"></td>
-                <td style="text-align:right;" x-text="ts.duration.toFixed(1)"></td>
-                <td style="text-align:right;" x-text="ts.hours.toFixed(1)"></td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
+      <div class="eff-section">
+        <div class="eff-section-title">Team Performance</div>
+        <div class="eff-teams-chart">
+          <div class="eff-bar-header">
+            <div class="eff-col-label left">Team</div>
+            <div class="eff-col-label">Efficiency</div>
+            <div class="eff-col-label">EFF%</div>
+            <div class="eff-col-label">Cases</div>
+            <div class="eff-col-label">Tasks</div>
+            <div class="eff-col-label">Work Hrs</div>
+          </div>
+          <template x-for="ts in dailySummaryTeamsSorted()" :key="'bar-'+ts.team">
+            <div class="eff-bar-row">
+              <div class="eff-team-name" x-text="ts.team"></div>
+              <div class="eff-bar-track">
+                <div class="eff-bar-fill" :class="'bar-' + effTierClass(ts.eff)"
+                     :style="'width:' + Math.min((ts.eff / 150) * 100, 100) + '%'"></div>
+              </div>
+              <div class="eff-team-eff" :class="'eff-' + effTierClass(ts.eff)" x-text="ts.eff.toFixed(0) + '%'"></div>
+              <div class="eff-team-stat" x-text="ts.cases.toLocaleString()"></div>
+              <div class="eff-team-stat" x-text="ts.tasks.toLocaleString()"></div>
+              <div class="eff-team-stat" x-text="ts.hours.toFixed(1)"></div>
+            </div>
+          </template>
+        </div>
       </div>
     </template>
 
-    <!-- Per-Team Detail Sections (2-column grid) -->
-    <div class="eff-team-grid">
-      <template x-for="section in dailyTeamSections()" :key="'sec-'+section.team">
-        <div style="margin-bottom:24px;">
-          <div class="eff-section-label" x-text="section.team"></div>
-          <table class="eff-table">
+    <!-- Individual Team Breakdowns (3-column card grid) -->
+    <template x-if="filteredDailyRows().length > 0">
+      <div class="eff-section">
+        <div class="eff-section-title">Individual Breakdowns</div>
+        <div class="eff-teams-grid">
+          <template x-for="section in dailyTeamSections()" :key="'card-'+section.team">
+            <div class="eff-team-card">
+              <div class="eff-card-header">
+                <div class="eff-card-name" x-text="section.team"></div>
+                <div class="eff-card-eff" :class="'eff-' + effTierClass(teamAvgEff(section.rows))">
+                  <span x-text="teamAvgEff(section.rows).toFixed(0) + '%'"></span>
+                  <span style="color:var(--eff-muted);font-size:11px;"> · </span>
+                  <span style="color:var(--eff-muted);font-size:11px;" x-text="section.rows.length + ' ppl'"></span>
+                </div>
+              </div>
+              <table class="eff-person-table">
+                <thead>
+                  <tr><th>Name</th><th>EFF</th><th>Cases</th><th>Tasks</th><th>Hrs</th></tr>
+                </thead>
+                <tbody>
+                  <template x-for="row in section.rows" :key="'p-'+row.EmployeeID">
+                    <tr>
+                      <td x-text="shortName(row['MT Name'])"></td>
+                      <td class="eff-cell" :class="'eff-' + effTierClass(row.Efficiency)"
+                          x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
+                      <td x-text="row.Cases_Worked_On || 0"></td>
+                      <td x-text="row.Tasks_Completed || 0"></td>
+                      <td x-text="(row['Work Hours'] || 0).toFixed(1)"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <!-- Training Section -->
+    <template x-if="dailyTrainingRows().length > 0">
+      <div class="eff-section">
+        <div class="eff-section-title">
+          Training
+          <span class="eff-training-note">(excluded from team EFF calculations)</span>
+        </div>
+        <div class="eff-training-card">
+          <div class="eff-training-header">
+            <div class="eff-training-title">Training</div>
+          </div>
+          <table class="eff-person-table">
             <thead>
-              <tr>
-                <th>Group</th>
-                <th>Name</th>
-                <th style="text-align:center;">EFF</th>
-                <th style="text-align:right;">Cases Worked On</th>
-                <th style="text-align:right;">Tasks Completed</th>
-                <th style="text-align:right;">Tasks Duration</th>
-                <th style="text-align:right;">Work Hours</th>
-              </tr>
+              <tr><th>Name</th><th>EFF</th><th>Cases</th><th>Tasks</th><th>Work Hrs</th></tr>
             </thead>
             <tbody>
-              <template x-for="row in section.rows" :key="'d-'+row.EmployeeID">
+              <template x-for="row in dailyTrainingRows()" :key="'tr-'+row.EmployeeID">
                 <tr>
-                  <td x-text="row.Team || ''"></td>
-                  <td x-text="shortName(row['MT Name'])" style="white-space:nowrap;"></td>
-                  <td style="text-align:center; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
-                  <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
-                  <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
-                  <td style="text-align:right;" x-text="(row.Tasks_Duration_Hours || 0).toFixed(1)"></td>
-                  <td style="text-align:right;" x-text="(row['Work Hours'] || 0).toFixed(1)"></td>
+                  <td>
+                    <span x-text="shortName(row['MT Name'])"></span>
+                    <span class="eff-training-badge">Training</span>
+                  </td>
+                  <td class="eff-cell" :class="'eff-' + effTierClass(row.Efficiency)"
+                      x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
+                  <td x-text="row.Cases_Worked_On || 0"></td>
+                  <td x-text="row.Tasks_Completed || 0"></td>
+                  <td x-text="(row['Work Hours'] || 0).toFixed(1)"></td>
                 </tr>
               </template>
             </tbody>
           </table>
         </div>
-      </template>
-    </div>
-
-    <!-- Training Section -->
-    <template x-if="dailyTrainingRows().length > 0">
-      <div style="margin-bottom:24px;">
-        <div class="eff-section-label">Training</div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Name</th>
-              <th style="text-align:center;">EFF</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-              <th style="text-align:right;">Work Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="row in dailyTrainingRows()" :key="'tr-'+row.EmployeeID">
-              <tr>
-                <td x-text="row.Team || ''"></td>
-                <td x-text="shortName(row['MT Name'])" style="white-space:nowrap;"></td>
-                <td style="text-align:center; font-weight:600;" :style="effColor(row.Efficiency)" x-text="row.Efficiency > 0 ? row.Efficiency.toFixed(0) + '%' : ''"></td>
-                <td style="text-align:right;" x-text="row.Cases_Worked_On || 0"></td>
-                <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
-                <td style="text-align:right;" x-text="(row.Tasks_Duration_Hours || 0).toFixed(1)"></td>
-                <td style="text-align:right;" x-text="(row['Work Hours'] || 0).toFixed(1)"></td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
       </div>
     </template>
 
-    <div x-show="filteredDailyRows().length === 0" style="text-align:center; padding:24px; color:#888;">
-      No data — upload a Gusto CSV to get started
+    <!-- Empty State -->
+    <div x-show="filteredDailyRows().length === 0" class="eff-empty">
+      <div class="eff-empty-icon">📊</div>
+      <div class="eff-empty-text">No data — upload a Gusto CSV to get started</div>
     </div>
+
+    <!-- Footer -->
+    <template x-if="filteredDailyRows().length > 0">
+      <div class="eff-footer">
+        <div>Partners Dental Solutions — Internal Use Only</div>
+        <div class="eff-legend">
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-green)"></span>
+            ≥120%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-green-light)"></span>
+            100-119%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-yellow)"></span>
+            85-99%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-orange)"></span>
+            70-84%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
+            &lt;70%
+          </span>
+        </div>
+        <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
+      </div>
+    </template>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
   <!-- MM EFF TAB                                  -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === 'mm'">
-    <div class="customer-filters">
-      <select class="filter-select" x-model="mmTeam">
+    <div class="eff-filter-bar">
+      <select class="eff-filter-select" x-model="mmTeam">
         <option value="">All Teams</option>
         {% for team in teams %}
         <option value="{{ team }}">{{ team }}</option>
         {% endfor %}
       </select>
-      <button class="clear-filters-btn" @click="mmTeam=''" x-show="mmTeam">Clear</button>
+      <button class="eff-clear-btn" @click="mmTeam=''" x-show="mmTeam">Clear</button>
     </div>
 
     <!-- Teams Summary Grid -->
     <template x-if="filteredMMRows().length > 0">
-      <div style="margin-bottom:20px;">
-        <div class="eff-section-label" x-text="dailyDate ? dailyDate : 'Multi-Period'"></div>
-        <div class="mm-eff-wrap">
-          <table class="eff-table">
+      <div class="eff-section">
+        <div class="eff-section-title">Multi-Period Efficiency</div>
+        <div class="eff-mm-wrap">
+          <table class="eff-mm-table">
             <thead>
               <tr>
-                <th style="position:sticky; left:0; z-index:2; background:#2C2C2C;">Teams</th>
+                <th>Teams</th>
                 {% for col in mm_eff_cols %}
-                <th style="white-space:nowrap; text-align:right; font-size:11px;">{{ col | replace('Efficiency_','') | replace('_',' ') }}</th>
+                <th>{{ col | replace('Efficiency_','') | replace('_',' ') }}</th>
                 {% endfor %}
               </tr>
             </thead>
             <tbody>
               <template x-for="ts in mmTeamsSummary()" :key="'mmts-'+ts.team">
                 <tr>
-                  <td style="font-weight:600; white-space:nowrap; position:sticky; left:0; z-index:1; background:inherit;" x-text="ts.team"></td>
+                  <td x-text="ts.team"></td>
                   {% for col in mm_eff_cols %}
-                  <td style="text-align:right; font-size:12px; font-weight:600;"
-                      :style="mmEffColor(ts['{{ col }}'])"
+                  <td :class="'eff-' + mmEffTierClass(ts['{{ col }}'])"
                       x-text="formatMmEff(ts['{{ col }}'])"></td>
                   {% endfor %}
                 </tr>
@@ -241,27 +292,24 @@
 
     <!-- Per-Team Detail Sections -->
     <template x-for="section in mmTeamSections()" :key="'mmsec-'+section.team">
-      <div style="margin-bottom:24px;">
-        <div class="eff-section-label" x-text="section.team"></div>
-        <div class="mm-eff-wrap">
-          <table class="eff-table">
+      <div class="eff-section">
+        <div class="eff-section-title" x-text="section.team"></div>
+        <div class="eff-mm-wrap">
+          <table class="eff-mm-table">
             <thead>
               <tr>
-                <th style="position:sticky; left:0; z-index:2; background:#2C2C2C; min-width:80px;">Team</th>
-                <th style="position:sticky; left:80px; z-index:2; background:#2C2C2C; min-width:120px;">Name</th>
+                <th>Name</th>
                 {% for col in mm_eff_cols %}
-                <th style="white-space:nowrap; text-align:right; font-size:11px;">{{ col | replace('Efficiency_','') | replace('_',' ') }}</th>
+                <th>{{ col | replace('Efficiency_','') | replace('_',' ') }}</th>
                 {% endfor %}
               </tr>
             </thead>
             <tbody>
               <template x-for="row in section.rows" :key="'mm-'+row['MT Name']">
                 <tr>
-                  <td x-text="row.Team || ''" style="white-space:nowrap; position:sticky; left:0; z-index:1; background:inherit;"></td>
-                  <td x-text="shortName(row['MT Name'])" style="white-space:nowrap; position:sticky; left:80px; z-index:1; background:inherit;"></td>
+                  <td x-text="shortName(row['MT Name'])"></td>
                   {% for col in mm_eff_cols %}
-                  <td style="text-align:right; font-size:12px; font-weight:600;"
-                      :style="mmEffColor(row['{{ col }}'])"
+                  <td :class="'eff-' + mmEffTierClass(row['{{ col }}'])"
                       x-text="formatMmEff(row['{{ col }}'])"></td>
                   {% endfor %}
                 </tr>
@@ -272,9 +320,41 @@
       </div>
     </template>
 
-    <div x-show="filteredMMRows().length === 0" style="text-align:center; padding:24px; color:#888;">
-      No aggregated data — upload a Gusto CSV to get started
+    <!-- Empty State -->
+    <div x-show="filteredMMRows().length === 0" class="eff-empty">
+      <div class="eff-empty-icon">📊</div>
+      <div class="eff-empty-text">No aggregated data — upload a Gusto CSV to get started</div>
     </div>
+
+    <!-- Footer -->
+    <template x-if="filteredMMRows().length > 0">
+      <div class="eff-footer">
+        <div>Partners Dental Solutions — Internal Use Only</div>
+        <div class="eff-legend">
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-green)"></span>
+            ≥120%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-green-light)"></span>
+            100-119%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-yellow)"></span>
+            85-99%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-orange)"></span>
+            70-84%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
+            &lt;70%
+          </span>
+        </div>
+        <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
+      </div>
+    </template>
   </div>
 
 
@@ -282,214 +362,206 @@
   <!-- NOON EFF TAB                                -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === 'noon'">
-    <div style="padding:8px 0 12px; color:#888; font-size:13px;">
+    <div style="padding:8px 0 16px; color:var(--eff-muted); font-size:13px;">
       Snapshot: today 3:00 AM – 12:00 PM · Updated automatically at noon on business days
     </div>
 
-    <!-- ALL Summary -->
+    <!-- KPI Cards -->
     <template x-if="noonRows.length > 0">
-      <div style="margin-bottom:20px;">
-        <div class="eff-section-label">ALL</div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th style="text-align:right;">Num of People</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td x-text="middaySummaryAll(noonRows).date"></td>
-              <td style="text-align:right;" x-text="middaySummaryAll(noonRows).people"></td>
-              <td style="text-align:right;" x-text="middaySummaryAll(noonRows).cases"></td>
-              <td style="text-align:right;" x-text="middaySummaryAll(noonRows).tasks"></td>
-              <td style="text-align:right;" x-text="middaySummaryAll(noonRows).duration.toFixed(1)"></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </template>
-
-    <!-- Teams Summary -->
-    <template x-if="noonRows.length > 0">
-      <div style="margin-bottom:20px;">
-        <div class="eff-section-label">Teams</div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Team/Group</th>
-              <th style="text-align:right;">Num of People</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="ts in middaySummaryTeams(noonRows)" :key="'nts-'+ts.team">
-              <tr>
-                <td style="font-weight:600;" x-text="ts.team"></td>
-                <td style="text-align:right;" x-text="ts.people"></td>
-                <td style="text-align:right;" x-text="ts.cases"></td>
-                <td style="text-align:right;" x-text="ts.tasks"></td>
-                <td style="text-align:right;" x-text="ts.duration.toFixed(1)"></td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </template>
-
-    <!-- Per-Team Details (2-column grid) -->
-    <div class="eff-team-grid">
-      <template x-for="section in middayTeamSections(noonRows)" :key="'nsec-'+section.team">
-        <div style="margin-bottom:24px;">
-          <div class="eff-section-label" x-text="section.team"></div>
-          <table class="eff-table">
-            <thead>
-              <tr>
-                <th>Group</th>
-                <th>Name</th>
-                <th style="text-align:right;">Cases Worked On</th>
-                <th style="text-align:right;">Tasks Completed</th>
-                <th style="text-align:right;">Tasks Duration</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="row in section.rows" :key="'n-'+row.Name">
-                <tr>
-                  <td x-text="row.Team || ''"></td>
-                  <td x-text="shortName(row.Name)" style="white-space:nowrap;"></td>
-                  <td style="text-align:right;" :style="caseGoalColor(row.Cases, row.Noon_Goal)" x-text="row.Cases || 0"></td>
-                  <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
-                  <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
+      <div class="eff-section">
+        <div class="eff-section-title">Overview</div>
+        <div class="eff-kpi-row eff-kpi-row-4">
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">People</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(noonRows).people"></div>
+            <div class="eff-kpi-sub" x-text="'across ' + middaySummaryTeams(noonRows).length + ' teams'"></div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Cases</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(noonRows).cases.toLocaleString()"></div>
+            <div class="eff-kpi-sub">total worked on</div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Tasks</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(noonRows).tasks.toLocaleString()"></div>
+            <div class="eff-kpi-sub">total completed</div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Duration</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(noonRows).duration.toFixed(1)"></div>
+            <div class="eff-kpi-sub">hours</div>
+          </div>
         </div>
-      </template>
+      </div>
+    </template>
+
+    <!-- Team Cards -->
+    <template x-if="noonRows.length > 0">
+      <div class="eff-section">
+        <div class="eff-section-title">Team Breakdowns</div>
+        <div class="eff-teams-grid">
+          <template x-for="section in middayTeamSections(noonRows)" :key="'ncard-'+section.team">
+            <div class="eff-team-card">
+              <div class="eff-card-header">
+                <div class="eff-card-name" x-text="section.team"></div>
+                <div class="eff-card-eff" style="color:var(--eff-muted)">
+                  <span x-text="section.rows.length + ' people'"></span>
+                </div>
+              </div>
+              <table class="eff-person-table">
+                <thead>
+                  <tr><th>Name</th><th>Cases</th><th>Goal</th><th>Tasks</th><th>Hrs</th></tr>
+                </thead>
+                <tbody>
+                  <template x-for="row in section.rows" :key="'np-'+row.Name">
+                    <tr>
+                      <td x-text="shortName(row.Name)"></td>
+                      <td :class="caseGoalClass(row.Cases, row.Noon_Goal)" x-text="row.Cases || 0"></td>
+                      <td x-text="row.Noon_Goal || ''"></td>
+                      <td x-text="row.Tasks_Completed || 0"></td>
+                      <td x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <!-- Empty State -->
+    <div x-show="noonRows.length === 0" class="eff-empty">
+      <div class="eff-empty-icon">🕛</div>
+      <div class="eff-empty-text">No noon data yet — updates automatically at 12:00 PM on business days</div>
     </div>
 
-    <div x-show="noonRows.length === 0" style="text-align:center; padding:24px; color:#888;">
-      No noon data yet — updates automatically at 12:00 PM on business days
-    </div>
+    <!-- Footer -->
+    <template x-if="noonRows.length > 0">
+      <div class="eff-footer">
+        <div>Partners Dental Solutions — Internal Use Only</div>
+        <div class="eff-legend">
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-green)"></span>
+            Met Goal
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
+            Below Goal
+          </span>
+        </div>
+        <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
+      </div>
+    </template>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
   <!-- 3PM EFF TAB                                 -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === '3pm'">
-    <div style="padding:8px 0 12px; color:#888; font-size:13px;">
+    <div style="padding:8px 0 16px; color:var(--eff-muted); font-size:13px;">
       Snapshot: today 3:00 AM – 3:00 PM · Updated automatically at 3:00 PM on business days
     </div>
 
-    <!-- ALL Summary -->
+    <!-- KPI Cards -->
     <template x-if="pm3Rows.length > 0">
-      <div style="margin-bottom:20px;">
-        <div class="eff-section-label">ALL</div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th style="text-align:right;">Num of People</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td x-text="middaySummaryAll(pm3Rows).date"></td>
-              <td style="text-align:right;" x-text="middaySummaryAll(pm3Rows).people"></td>
-              <td style="text-align:right;" x-text="middaySummaryAll(pm3Rows).cases"></td>
-              <td style="text-align:right;" x-text="middaySummaryAll(pm3Rows).tasks"></td>
-              <td style="text-align:right;" x-text="middaySummaryAll(pm3Rows).duration.toFixed(1)"></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </template>
-
-    <!-- Teams Summary -->
-    <template x-if="pm3Rows.length > 0">
-      <div style="margin-bottom:20px;">
-        <div class="eff-section-label">Teams</div>
-        <table class="eff-table">
-          <thead>
-            <tr>
-              <th>Team/Group</th>
-              <th style="text-align:right;">Num of People</th>
-              <th style="text-align:right;">Cases Worked On</th>
-              <th style="text-align:right;">Tasks Completed</th>
-              <th style="text-align:right;">Tasks Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="ts in middaySummaryTeams(pm3Rows)" :key="'pts-'+ts.team">
-              <tr>
-                <td style="font-weight:600;" x-text="ts.team"></td>
-                <td style="text-align:right;" x-text="ts.people"></td>
-                <td style="text-align:right;" x-text="ts.cases"></td>
-                <td style="text-align:right;" x-text="ts.tasks"></td>
-                <td style="text-align:right;" x-text="ts.duration.toFixed(1)"></td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </template>
-
-    <!-- Per-Team Details (2-column grid) -->
-    <div class="eff-team-grid">
-      <template x-for="section in middayTeamSections(pm3Rows)" :key="'psec-'+section.team">
-        <div style="margin-bottom:24px;">
-          <div class="eff-section-label" x-text="section.team"></div>
-          <table class="eff-table">
-            <thead>
-              <tr>
-                <th>Group</th>
-                <th>Name</th>
-                <th style="text-align:right;">Cases Worked On</th>
-                <th style="text-align:right;">Tasks Completed</th>
-                <th style="text-align:right;">Tasks Duration</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="row in section.rows" :key="'p-'+row.Name">
-                <tr>
-                  <td x-text="row.Team || ''"></td>
-                  <td x-text="shortName(row.Name)" style="white-space:nowrap;"></td>
-                  <td style="text-align:right;" :style="caseGoalColor(row.Cases, row.PM3_Goal)" x-text="row.Cases || 0"></td>
-                  <td style="text-align:right;" x-text="row.Tasks_Completed || 0"></td>
-                  <td style="text-align:right;" x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
+      <div class="eff-section">
+        <div class="eff-section-title">Overview</div>
+        <div class="eff-kpi-row eff-kpi-row-4">
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">People</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(pm3Rows).people"></div>
+            <div class="eff-kpi-sub" x-text="'across ' + middaySummaryTeams(pm3Rows).length + ' teams'"></div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Cases</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(pm3Rows).cases.toLocaleString()"></div>
+            <div class="eff-kpi-sub">total worked on</div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Tasks</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(pm3Rows).tasks.toLocaleString()"></div>
+            <div class="eff-kpi-sub">total completed</div>
+          </div>
+          <div class="eff-kpi-card">
+            <div class="eff-kpi-label">Duration</div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(pm3Rows).duration.toFixed(1)"></div>
+            <div class="eff-kpi-sub">hours</div>
+          </div>
         </div>
-      </template>
+      </div>
+    </template>
+
+    <!-- Team Cards -->
+    <template x-if="pm3Rows.length > 0">
+      <div class="eff-section">
+        <div class="eff-section-title">Team Breakdowns</div>
+        <div class="eff-teams-grid">
+          <template x-for="section in middayTeamSections(pm3Rows)" :key="'pcard-'+section.team">
+            <div class="eff-team-card">
+              <div class="eff-card-header">
+                <div class="eff-card-name" x-text="section.team"></div>
+                <div class="eff-card-eff" style="color:var(--eff-muted)">
+                  <span x-text="section.rows.length + ' people'"></span>
+                </div>
+              </div>
+              <table class="eff-person-table">
+                <thead>
+                  <tr><th>Name</th><th>Cases</th><th>Goal</th><th>Tasks</th><th>Hrs</th></tr>
+                </thead>
+                <tbody>
+                  <template x-for="row in section.rows" :key="'pp-'+row.Name">
+                    <tr>
+                      <td x-text="shortName(row.Name)"></td>
+                      <td :class="caseGoalClass(row.Cases, row.PM3_Goal)" x-text="row.Cases || 0"></td>
+                      <td x-text="row.PM3_Goal || ''"></td>
+                      <td x-text="row.Tasks_Completed || 0"></td>
+                      <td x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <!-- Empty State -->
+    <div x-show="pm3Rows.length === 0" class="eff-empty">
+      <div class="eff-empty-icon">🕒</div>
+      <div class="eff-empty-text">No 3PM data yet — updates automatically at 3:00 PM on business days</div>
     </div>
 
-    <div x-show="pm3Rows.length === 0" style="text-align:center; padding:24px; color:#888;">
-      No 3PM data yet — updates automatically at 3:00 PM on business days
-    </div>
+    <!-- Footer -->
+    <template x-if="pm3Rows.length > 0">
+      <div class="eff-footer">
+        <div>Partners Dental Solutions — Internal Use Only</div>
+        <div class="eff-legend">
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-green)"></span>
+            Met Goal
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
+            Below Goal
+          </span>
+        </div>
+        <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
+      </div>
+    </template>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
   <!-- EDIT CONSTANTS MODAL                       -->
   <!-- ═══════════════════════════════════════════ -->
-  <div x-show="showConstantsModal" x-cloak
-       style="position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5);"
-       @click.self="showConstantsModal = false">
-    <div style="background:#fff; border-radius:8px; padding:24px; max-width:800px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h3 style="margin:0; color:#1A1A1A;">Edit Tech Constants</h3>
-        <button @click="showConstantsModal = false" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">&times;</button>
+  <div x-show="showConstantsModal" x-cloak class="eff-modal-overlay" @click.self="showConstantsModal = false">
+    <div class="eff-modal">
+      <div class="eff-modal-header">
+        <h3 class="eff-modal-title">Edit Tech Constants</h3>
+        <button @click="showConstantsModal = false" class="eff-modal-close">&times;</button>
       </div>
-      <table class="eff-table" style="font-size:12px;">
+      <table class="eff-modal-table" style="font-size:12px;">
         <thead>
           <tr>
             <th>Name</th>
@@ -503,56 +575,54 @@
         <tbody>
           <template x-for="(row, idx) in constantsData" :key="'ce-'+idx">
             <tr>
-              <td><input type="text" x-model="row.Name" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px;"></td>
-              <td><input type="text" x-model="row.Noon" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px; text-align:center;"></td>
-              <td><input type="text" x-model="row['3PM']" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px; text-align:center;"></td>
+              <td><input type="text" x-model="row.Name" class="eff-modal-input"></td>
+              <td><input type="text" x-model="row.Noon" class="eff-modal-input" style="text-align:center;"></td>
+              <td><input type="text" x-model="row['3PM']" class="eff-modal-input" style="text-align:center;"></td>
               <td>
-                <select x-model="row.ShiftType" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px;">
+                <select x-model="row.ShiftType" class="eff-modal-select">
                   <option value="Morning">Morning</option>
                   <option value="Evening">Evening</option>
                   <option value="Outsource">Outsource</option>
                 </select>
               </td>
               <td>
-                <select x-model="row.DesignType" style="width:100%; border:1px solid #ddd; padding:2px 4px; font-size:12px;">
+                <select x-model="row.DesignType" class="eff-modal-select">
                   <option value="Regular">Regular</option>
                   <option value="Marpe">Marpe</option>
                 </select>
               </td>
               <td style="text-align:center;">
-                <button @click="constantsData.splice(idx, 1)" style="background:none; border:none; color:#C0392B; cursor:pointer; font-size:14px;" title="Remove">&times;</button>
+                <button @click="constantsData.splice(idx, 1)" style="background:none; border:none; color:var(--eff-red); cursor:pointer; font-size:16px;" title="Remove">&times;</button>
               </td>
             </tr>
           </template>
         </tbody>
       </table>
-      <div style="display:flex; gap:12px; margin-top:12px;">
+      <div class="eff-modal-footer">
         <button @click="constantsData.push({Name:'', Noon:'0', '3PM':'0', ShiftType:'Morning', DesignType:'Regular'})"
-                class="export-btn" style="background:#2196F3;">+ Add Row</button>
-        <button @click="saveConstants()" class="export-btn" :disabled="constantsSaving"
+                class="eff-modal-btn eff-modal-btn-secondary">+ Add Row</button>
+        <button @click="saveConstants()" class="eff-modal-btn eff-modal-btn-primary" :disabled="constantsSaving"
                 x-text="constantsSaving ? 'Saving...' : 'Save Constants'"></button>
-        <button @click="showConstantsModal = false" class="export-btn" style="background:#999;">Cancel</button>
+        <button @click="showConstantsModal = false" class="eff-modal-btn eff-modal-btn-secondary">Cancel</button>
       </div>
-      <p x-show="constantsError" x-text="constantsError" style="color:#C0392B; margin-top:8px; font-size:13px;"></p>
+      <p x-show="constantsError" x-text="constantsError" class="eff-modal-error"></p>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
   <!-- EDIT EMPLOYEES MODAL                       -->
   <!-- ═══════════════════════════════════════════ -->
-  <div x-show="showEmployeesModal" x-cloak
-       style="position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5);"
-       @click.self="showEmployeesModal = false">
-    <div style="background:#fff; border-radius:8px; padding:24px; max-width:1100px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0; color:#1A1A1A;">Edit Employees</h3>
-        <button @click="showEmployeesModal = false" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">&times;</button>
+  <div x-show="showEmployeesModal" x-cloak class="eff-modal-overlay" @click.self="showEmployeesModal = false">
+    <div class="eff-modal" style="max-width:1100px;">
+      <div class="eff-modal-header">
+        <h3 class="eff-modal-title">Edit Employees</h3>
+        <button @click="showEmployeesModal = false" class="eff-modal-close">&times;</button>
       </div>
-      <div style="margin-bottom:10px;">
+      <div style="margin-bottom:14px;">
         <input type="text" x-model="employeesFilter" placeholder="Filter by name, team, department..."
-               style="width:300px; padding:6px 10px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
+               class="eff-modal-input" style="max-width:300px;">
       </div>
-      <table class="eff-table" style="font-size:11px;">
+      <table class="eff-modal-table" style="font-size:11px;">
         <thead>
           <tr>
             <th style="width:55px;">Emp ID</th>
@@ -569,14 +639,14 @@
         <tbody>
           <template x-for="(row, idx) in filteredEmployees()" :key="'emp-'+idx">
             <tr>
-              <td><input type="text" x-model="row['Employee ID']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px; text-align:center;"></td>
-              <td><input type="text" x-model="row['Last Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
-              <td><input type="text" x-model="row['First Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
-              <td><input type="text" x-model="row['MT Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
-              <td><input type="text" x-model="row.Department" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
-              <td><input type="text" x-model="row['Gusto Name']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;"></td>
+              <td><input type="text" x-model="row['Employee ID']" class="eff-modal-input" style="text-align:center;"></td>
+              <td><input type="text" x-model="row['Last Name']" class="eff-modal-input"></td>
+              <td><input type="text" x-model="row['First Name']" class="eff-modal-input"></td>
+              <td><input type="text" x-model="row['MT Name']" class="eff-modal-input"></td>
+              <td><input type="text" x-model="row.Department" class="eff-modal-input"></td>
+              <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input"></td>
               <td>
-                <select x-model="row.Team" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;">
+                <select x-model="row.Team" class="eff-modal-select">
                   <option value="">—</option>
                   <option value="3D Design">3D Design</option>
                   <option value="3D Manufacturing">3D Manufacturing</option>
@@ -593,97 +663,30 @@
                 </select>
               </td>
               <td>
-                <select x-model="row['Training Plan']" style="width:100%; border:1px solid #ddd; padding:2px 3px; font-size:11px;">
+                <select x-model="row['Training Plan']" class="eff-modal-select">
                   <option value="0">0</option>
                   <option value="1">1</option>
                 </select>
               </td>
               <td style="text-align:center;">
-                <button @click="employeesData.splice(employeesData.indexOf(row), 1)" style="background:none; border:none; color:#C0392B; cursor:pointer; font-size:14px;" title="Remove">&times;</button>
+                <button @click="employeesData.splice(employeesData.indexOf(row), 1)" style="background:none; border:none; color:var(--eff-red); cursor:pointer; font-size:16px;" title="Remove">&times;</button>
               </td>
             </tr>
           </template>
         </tbody>
       </table>
-      <div style="display:flex; gap:12px; margin-top:12px;">
-        <button @click="employeesData.push({'Employee ID':'', 'Last Name':'', 'First Name':'', 'MT Name':'', Department:'', 'Gusto Name':'', Team:'z_Not On Report', 'Training Plan':'0'})"
-                class="export-btn" style="background:#2196F3;">+ Add Row</button>
-        <button @click="saveEmployees()" class="export-btn" :disabled="employeesSaving"
+      <div class="eff-modal-footer">
+        <button @click="employeesData.push({'Employee ID':'', 'Last Name':'', 'First Name':'', 'MT Name':'', Department:'', 'Gusto Name':'', Team':'z_Not On Report', 'Training Plan':'0'})"
+                class="eff-modal-btn eff-modal-btn-secondary">+ Add Row</button>
+        <button @click="saveEmployees()" class="eff-modal-btn eff-modal-btn-primary" :disabled="employeesSaving"
                 x-text="employeesSaving ? 'Saving...' : 'Save Employees'"></button>
-        <button @click="showEmployeesModal = false" class="export-btn" style="background:#999;">Cancel</button>
+        <button @click="showEmployeesModal = false" class="eff-modal-btn eff-modal-btn-secondary">Cancel</button>
       </div>
-      <p x-show="employeesError" x-text="employeesError" style="color:#C0392B; margin-top:8px; font-size:13px;"></p>
+      <p x-show="employeesError" x-text="employeesError" class="eff-modal-error"></p>
     </div>
   </div>
 
 </div><!-- end x-data -->
-
-<style>
-  .eff-section-label {
-    font-size: 14px;
-    font-weight: 700;
-    color: #C0392B;
-    padding: 8px 0 4px;
-    letter-spacing: 0.03em;
-  }
-  .eff-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    margin-bottom: 4px;
-  }
-  .eff-table thead th {
-    background: #2C2C2C;
-    color: #FFFFFF;
-    padding: 6px 10px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 12px;
-    white-space: nowrap;
-    border-bottom: 1px solid #E0E0E0;
-  }
-  .eff-table tbody td {
-    padding: 4px 10px;
-    border-bottom: 1px solid #E0E0E0;
-    font-size: 13px;
-    color: #1A1A1A;
-  }
-  .eff-table tbody tr {
-    background: #FFFFFF;
-  }
-  .eff-table tbody tr:nth-child(even) {
-    background: #FAFAFA;
-  }
-  .eff-table tbody tr:hover {
-    background: #F0F0F0;
-  }
-  .eff-team-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-  @media (max-width: 900px) {
-    .eff-team-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-  .mm-eff-wrap {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 70vh;
-    background: #FFFFFF;
-  }
-  .mm-eff-wrap table {
-    width: 100%;
-    min-width: unset;
-  }
-  .mm-eff-wrap th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-  }
-  [x-cloak] { display: none !important; }
-</style>
 
 <script>
 function efficiencyPage() {
@@ -732,6 +735,66 @@ function efficiencyPage() {
       const parts = name.trim().split(/\s+/);
       if (parts.length < 2) return name;
       return parts[0] + ' ' + parts[parts.length - 1][0] + '.';
+    },
+
+    // ─── NEW HELPER FUNCTIONS ────────────────────
+
+    // Dynamic subtitle for header
+    getSubtitleDate() {
+      if (this.activeTab === 'daily') {
+        return this.dailyDate || 'All Dates';
+      } else if (this.activeTab === 'noon') {
+        const d = this.noonRows[0]?.Data_Date || new Date().toISOString().slice(0,10);
+        return 'Snapshot: ' + d + ' (12:00 PM)';
+      } else if (this.activeTab === '3pm') {
+        const d = this.pm3Rows[0]?.Data_Date || new Date().toISOString().slice(0,10);
+        return 'Snapshot: ' + d + ' (3:00 PM)';
+      } else {
+        return 'Multi-Period View';
+      }
+    },
+
+    // 5-tier efficiency classification
+    effTierClass(eff) {
+      const n = Number(eff) || 0;
+      if (n >= 120) return 'great';
+      if (n >= 100) return 'good';
+      if (n >= 85) return 'ok';
+      if (n >= 70) return 'low';
+      return 'poor';
+    },
+
+    // Sorted teams for bar chart (descending by eff)
+    dailySummaryTeamsSorted() {
+      return this.dailySummaryTeams().sort((a, b) => b.eff - a.eff);
+    },
+
+    // Team average efficiency
+    teamAvgEff(rows) {
+      if (!rows || rows.length === 0) return 0;
+      const sum = rows.reduce((s, r) => s + (Number(r.Efficiency) || 0), 0);
+      return sum / rows.length;
+    },
+
+    // MM EFF 5-tier color class
+    mmEffTierClass(val) {
+      if (val === 'x' || val === null || val === undefined) return 'muted-text';
+      const n = Number(val);
+      if (isNaN(n) || n === 0) return 'muted-text';
+      const pct = n * 100;
+      if (pct >= 120) return 'great';
+      if (pct >= 100) return 'good';
+      if (pct >= 85) return 'ok';
+      if (pct >= 70) return 'low';
+      return 'poor';
+    },
+
+    // Case goal comparison (returns class name)
+    caseGoalClass(actual, goal) {
+      if (goal === null || goal === undefined || goal === 'NA' || goal === '') return '';
+      const g = Number(goal);
+      if (isNaN(g) || g === 0) return '';
+      return Number(actual) >= g ? 'eff-great' : 'eff-poor';
     },
 
     // ─── Daily EFF ───────────────────────────────
