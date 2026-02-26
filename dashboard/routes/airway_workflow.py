@@ -9,6 +9,8 @@ router = APIRouter()
 @router.get("/airway", response_class=HTMLResponse)
 async def airway_workflow_page(request: Request):
     df = await cache.get("airway_workflow")
+    if df is not None and not df.empty and 'Status' in df.columns:
+        df = df[df['Status'].isin(['In Production', 'On Hold'])]
     metadata = await cache.get_metadata()
 
     stages = aggregate_airway_stages(df) if df is not None else {}

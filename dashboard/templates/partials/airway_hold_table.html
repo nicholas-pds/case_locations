@@ -12,28 +12,31 @@
           Doctor <span x-text="indicator(2)"></span>
         </th>
         <th @click="sort(3)" class="sortable-th">
-          Patient <span x-text="indicator(3)"></span>
+          Practice <span x-text="indicator(3)"></span>
         </th>
         <th @click="sort(4)" class="sortable-th">
-          Create Date <span x-text="indicator(4)"></span>
+          Patient <span x-text="indicator(4)"></span>
         </th>
         <th @click="sort(5)" class="sortable-th">
-          Ship Date <span x-text="indicator(5)"></span>
+          Create Date <span x-text="indicator(5)"></span>
         </th>
         <th @click="sort(6)" class="sortable-th">
-          Hold Date <span x-text="indicator(6)"></span>
+          Ship Date <span x-text="indicator(6)"></span>
         </th>
         <th @click="sort(7)" class="sortable-th">
-          Hold Status <span x-text="indicator(7)"></span>
+          Hold Date <span x-text="indicator(7)"></span>
         </th>
         <th @click="sort(8)" class="sortable-th">
-          Hold Reason <span x-text="indicator(8)"></span>
+          Hold Status <span x-text="indicator(8)"></span>
         </th>
         <th @click="sort(9)" class="sortable-th">
-          Type <span x-text="indicator(9)"></span>
+          Hold Reason <span x-text="indicator(9)"></span>
         </th>
         <th @click="sort(10)" class="sortable-th">
-          Follow-Up Date <span x-text="indicator(10)"></span>
+          Type <span x-text="indicator(10)"></span>
+        </th>
+        <th @click="sort(11)" class="sortable-th">
+          Follow-Up Date <span x-text="indicator(11)"></span>
         </th>
       </tr>
     </thead>
@@ -43,6 +46,7 @@
         <td class="mono">{{ case.get('CaseNumber', '') }}</td>
         <td class="mono">{{ case.get('PanNumber', '') }}</td>
         <td>{{ case.get('DoctorName', '') }}</td>
+        <td>{{ case.get('PracticeName', '') }}</td>
         <td>{{ case.get('PatientName', '') }}</td>
         <td>{{ case.get('CreateDate', '') | fmt_date }}</td>
         <td>{{ case.get('ShipDate', '') | fmt_date }}</td>

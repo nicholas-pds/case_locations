@@ -252,6 +252,8 @@ async def workload_category_pace(request: Request):
 @router.get("/airway-grid", response_class=HTMLResponse)
 async def airway_grid(request: Request):
     df = await cache.get("airway_workflow")
+    if df is not None and not df.empty and 'Status' in df.columns:
+        df = df[df['Status'].isin(['In Production', 'On Hold'])]
     stages = aggregate_airway_stages(df) if df is not None else {}
     templates = request.app.state.templates
     return templates.TemplateResponse("partials/airway_grid.html", {
@@ -263,6 +265,8 @@ async def airway_grid(request: Request):
 @router.get("/airway-table", response_class=HTMLResponse)
 async def airway_table(request: Request, location: str = None, ship_date: str = None):
     df = await cache.get("airway_workflow")
+    if df is not None and not df.empty and 'Status' in df.columns:
+        df = df[df['Status'].isin(['In Production', 'On Hold'])]
     if df is not None and not df.empty:
         if location:
             df = df[df['LastLocation'] == location]

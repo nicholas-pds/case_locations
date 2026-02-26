@@ -1,6 +1,7 @@
-SELECT 
+SELECT
     CustomerID,        -- Added to outer SELECT
     DoctorName,          -- Added to outer SELECT
+    PracticeName,
     LastLocation,
     CAST(ShipDate AS DATE) AS ShipDate,
     CaseNumber,
@@ -13,6 +14,7 @@ FROM (
     SELECT
         ca.CustomerID, -- Added to inner subquery
         ca.DoctorName,   -- Added to inner subquery
+        cu.PracticeName,
         ca.CaseNumber,
         ca.PanNumber,
         ca.ShipDate,
@@ -22,14 +24,16 @@ FROM (
         ct.Task AS LastTaskCompleted,
         ct.CompleteDate AS LastScanTime,
         ROW_NUMBER() OVER (
-            PARTITION BY ca.CaseNumber 
+            PARTITION BY ca.CaseNumber
             ORDER BY ct.CompleteDate DESC, ct.CaseID DESC
         ) AS rn
     FROM dbo.Cases AS ca
-    LEFT JOIN dbo.CaseTasks AS ct 
+    LEFT JOIN dbo.CaseTasks AS ct
         ON ca.CaseID = ct.CaseID
-    LEFT JOIN dbo.CaseLogLocations AS cll 
+    LEFT JOIN dbo.CaseLogLocations AS cll
         ON ca.LastLocationID = cll.ID
+    LEFT JOIN dbo.Customers AS cu
+        ON ca.CustomerID = cu.CustomerID
 ) AS BaseData
 WHERE rn = 1 
   AND LastLocation IN (
