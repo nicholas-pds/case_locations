@@ -119,26 +119,6 @@
   flex-wrap: wrap;
 }
 
-.eff-target-box {
-  text-align: right;
-}
-
-.eff-target-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--eff-muted);
-  font-weight: 500;
-}
-
-.eff-target-value {
-  font-size: 26px;
-  font-weight: 600;
-  color: var(--eff-muted);
-  letter-spacing: -0.03em;
-  line-height: 1.2;
-}
-
 /* ── STATUS MESSAGES ── */
 .eff-error {
   color: var(--eff-red);
@@ -718,10 +698,6 @@
 
 .eff-mm-table tbody tr:hover td:first-child {
   background: var(--eff-surface2);
-}
-
-.eff-mm-table tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
 }
 
 /* ── MODALS ── */

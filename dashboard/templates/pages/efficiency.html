@@ -35,10 +35,6 @@
       <button class="eff-btn eff-btn-secondary" @click="refreshMidday()" x-show="activeTab === 'noon' || activeTab === '3pm'">Refresh Data</button>
       <a class="eff-btn eff-btn-secondary" href="/efficiency/export/mm" x-show="activeTab === 'mm'">Download CSV</a>
     </div>
-    <div class="eff-target-box">
-      <div class="eff-target-label">Target</div>
-      <div class="eff-target-value">100%</div>
-    </div>
   </div>
 
   <!-- Tabs -->
@@ -80,7 +76,6 @@
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">Overall EFF</div>
             <div class="eff-kpi-value" :class="'eff-' + effTierClass(dailySummaryAll().eff)" x-text="dailySummaryAll().eff.toFixed(0) + '%'"></div>
-            <div class="eff-kpi-sub">vs. 100% target</div>
           </div>
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">People</div>
@@ -1119,19 +1114,19 @@ function efficiencyPage() {
     // ─── PDF Helpers ──────────────────────────────
     _pdfEffStyle(val) {
       const n = Number(val) || 0;
-      if (n >= 80) return 'color:#27AE60; font-weight:600;';
-      if (n >= 50) return 'font-weight:600;';
-      if (n > 0) return 'color:#C0392B; font-weight:600;';
-      return 'color:#999;';
+      const tier = this.effTierClass(n);
+      const color = this._pdfColorForTier(tier);
+      return `color:${color}; font-weight:600;`;
     },
 
     _pdfMmEffStyle(val) {
       if (val === 'x' || val === null || val === undefined) return 'color:#999;';
       const n = Number(val);
       if (isNaN(n) || n === 0) return 'color:#999;';
-      if (n >= 0.80) return 'color:#27AE60; font-weight:600;';
-      if (n >= 0.50) return 'font-weight:600;';
-      return 'color:#C0392B; font-weight:600;';
+      const pct = n * 100;
+      const tier = this.effTierClass(pct);
+      const color = this._pdfColorForTier(tier);
+      return `color:${color}; font-weight:600;`;
     },
 
     _pdfEffCell(val) {
@@ -1190,14 +1185,14 @@ function efficiencyPage() {
         const summary = this.dailySummaryAll();
 
         // ALL table (full-width)
-        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">ALL</p>`;
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#333;">ALL</p>`;
         html += this._pdfTable(
           ['Date','People','EFF','Cases','Tasks','Duration','Work Hrs'],
           [[summary.date, summary.people, this._pdfEffCell(summary.eff), summary.cases, summary.tasks, summary.duration.toFixed(1), summary.hours.toFixed(1)]]
         );
 
         // Teams table (full-width)
-        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams</p>`;
+        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#333;">Teams</p>`;
         const teamRows = this.dailySummaryTeams().map(ts => [
           ts.team, ts.people, this._pdfEffCell(ts.eff), ts.cases, ts.tasks, ts.duration.toFixed(1), ts.hours.toFixed(1)
         ]);
@@ -1208,7 +1203,7 @@ function efficiencyPage() {
         html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
         sections.forEach(sec => {
           html += `<div style="page-break-inside:avoid;">`;
-          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#333;">${sec.team}</p>`;
           const rows = sec.rows.map(r => [
             this.shortName(r['MT Name']), this._pdfEffCell(r.Efficiency),
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
@@ -1223,7 +1218,7 @@ function efficiencyPage() {
         const trainRows = this.dailyTrainingRows();
         if (trainRows.length) {
           html += `<div style="max-width:50%; margin-top:6px;">`;
-          html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Training</p>`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#333;">Training</p>`;
           const rows = trainRows.map(r => [
             this.shortName(r['MT Name']), this._pdfEffCell(r.Efficiency),
             r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
@@ -1238,7 +1233,7 @@ function efficiencyPage() {
         const headers = ['Teams', ...effCols.map(c => c.replace('Efficiency_','').replace(/_/g,' '))];
 
         // Teams summary (full-width)
-        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams Summary</p>`;
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#333;">Teams Summary</p>`;
         const teamRows = this.mmTeamsSummary().map(ts => [ts.team, ...effCols.map(c => this._pdfMmEffCell(ts[c]))]);
         html += this._pdfMmTable(headers, teamRows);
 
@@ -1247,7 +1242,7 @@ function efficiencyPage() {
         const sections = this.mmTeamSections();
         sections.forEach(sec => {
           html += `<div style="margin-top:4px;">`;
-          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#333;">${sec.team}</p>`;
           const rows = sec.rows.map(r => [this.shortName(r['MT Name']), ...effCols.map(c => this._pdfMmEffCell(r[c]))]);
           html += this._pdfMmTable(detailHeaders, rows);
           html += `</div>`;
@@ -1259,13 +1254,13 @@ function efficiencyPage() {
         const label = isNoon ? '12:00 PM' : '3:00 PM';
 
         const summary = this.middaySummaryAll(src);
-        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">ALL — ${label} Snapshot</p>`;
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#333;">ALL — ${label} Snapshot</p>`;
         html += this._pdfTable(
           ['Date','People','Cases','Tasks','Duration'],
           [[summary.date, summary.people, summary.cases, summary.tasks, summary.duration.toFixed(1)]]
         );
 
-        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams</p>`;
+        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#333;">Teams</p>`;
         const teamRows = this.middaySummaryTeams(src).map(ts => [ts.team, ts.people, ts.cases, ts.tasks, ts.duration.toFixed(1)]);
         html += this._pdfTable(['Team/Group','People','Cases','Tasks','Duration'], teamRows);
 
@@ -1275,7 +1270,7 @@ function efficiencyPage() {
         html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
         sections.forEach(sec => {
           html += `<div style="page-break-inside:avoid;">`;
-          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#333;">${sec.team}</p>`;
           const rows = sec.rows.map(r => {
             const cases = r.Cases || 0;
             const goal = r[goalKey];
@@ -1311,22 +1306,32 @@ function efficiencyPage() {
       });
     },
 
+    _pdfColorForTier(tier) {
+      const colors = {
+        'great': '#22c55e',      // ≥120% - green
+        'good': '#86efac',       // 100-119% - light green
+        'ok': '#eab308',         // 85-99% - yellow
+        'low': '#f97316',        // 70-84% - orange
+        'poor': '#ef4444',       // <70% - red
+      };
+      return colors[tier] || '#000';
+    },
+
     _pdfTable(headers, rows) {
       let h = `<table style="width:100%; border-collapse:collapse; font-size:7px; margin-bottom:3px; page-break-inside:avoid;">`;
       h += `<thead><tr>`;
       headers.forEach((hdr, idx) => {
         const align = idx === 0 ? 'left' : 'center';
         const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
-        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:1px 2px; text-align:${align}; ${nowrap} font-size:6px;">${hdr}</th>`;
+        h += `<th style="border:1px solid #999; background:#f5f5f5; color:#000; padding:1px 2px; text-align:${align}; ${nowrap} font-size:6px; font-weight:600;">${hdr}</th>`;
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
-        const bg = i % 2 === 0 ? '#fff' : '#f2f2f2';
         h += `<tr>`;
         cells.forEach((c, idx) => {
           const align = idx === 0 ? 'left' : 'center';
           const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
-          h += `<td style="border:1px solid #999; padding:1px 2px; background:${bg}; font-size:7px; text-align:${align}; ${nowrap}">${c}</td>`;
+          h += `<td style="border:1px solid #ddd; padding:1px 2px; background:#fff; font-size:7px; text-align:${align}; ${nowrap}">${c}</td>`;
         });
         h += `</tr>`;
       });
@@ -1340,16 +1345,15 @@ function efficiencyPage() {
       headers.forEach((hdr, idx) => {
         const align = idx === 0 ? 'left' : 'center';
         const w = idx === 0 ? 'width:90px;' : '';
-        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:1px 1px; text-align:${align}; font-size:5px; overflow:hidden; ${w}">${hdr}</th>`;
+        h += `<th style="border:1px solid #999; background:#f5f5f5; color:#000; padding:1px 1px; text-align:${align}; font-size:5px; overflow:hidden; font-weight:600; ${w}">${hdr}</th>`;
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
-        const bg = i % 2 === 0 ? '#fff' : '#f2f2f2';
         h += `<tr>`;
         cells.forEach((c, idx) => {
           const align = idx === 0 ? 'left' : 'center';
           const nowrap = idx === 0 ? 'white-space:nowrap; overflow:hidden;' : '';
-          h += `<td style="border:1px solid #999; padding:1px 1px; background:${bg}; font-size:5px; text-align:${align}; ${nowrap}">${c}</td>`;
+          h += `<td style="border:1px solid #ddd; padding:1px 1px; background:#fff; font-size:5px; text-align:${align}; ${nowrap}">${c}</td>`;
         });
         h += `</tr>`;
       });
@@ -1378,13 +1382,12 @@ function efficiencyPage() {
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
-        const bg = i % 2 === 0 ? '#fff' : '#f5f5f5';
         const isTotalRow = opts.totalRowIdx === i;
         h += `<tr>`;
         cells.forEach((c, idx) => {
           const align = idx === 0 ? 'left' : 'center';
           const fw = isTotalRow ? 'font-weight:700;' : '';
-          h += `<td style="border:1px solid #999; padding:2px 6px; background:${bg}; font-size:10px; text-align:${align}; ${fw}">${c}</td>`;
+          h += `<td style="border:1px solid #ddd; padding:2px 6px; background:#fff; font-size:10px; text-align:${align}; ${fw}">${c}</td>`;
         });
         h += `</tr>`;
       });
