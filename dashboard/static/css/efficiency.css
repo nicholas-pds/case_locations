@@ -532,11 +532,8 @@
 }
 
 /* Override global styles.css light-theme table row rules for dark theme */
-.eff-page-wrapper tbody tr:nth-child(even) {
-  background: transparent;
-}
-.eff-page-wrapper tbody tr:hover {
-  background: transparent;
+.eff-page-wrapper tbody tr {
+  background: transparent !important;
 }
 
 .eff-cell {
