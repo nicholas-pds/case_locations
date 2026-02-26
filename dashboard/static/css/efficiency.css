@@ -523,6 +523,10 @@
   font-size: 12px;
 }
 
+.eff-person-table tbody td {
+  background: transparent;
+}
+
 .eff-person-table tbody tr:hover td {
   background: var(--eff-surface2);
 }
