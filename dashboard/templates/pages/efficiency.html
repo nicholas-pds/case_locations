@@ -1184,145 +1184,48 @@ function efficiencyPage() {
       if (this.activeTab === 'daily') {
         const summary = this.dailySummaryAll();
 
-        // KPI Cards Section (5 cards in horizontal row)
-        html += `<div style="display:flex; gap:8px; margin-bottom:12px;">`;
+        // ALL table (full-width)
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">ALL</p>`;
+        html += this._pdfTable(
+          ['Date','People','EFF','Cases','Tasks','Duration','Work Hrs'],
+          [[summary.date, summary.people, this._pdfEffCell(summary.eff), summary.cases, summary.tasks, summary.duration.toFixed(1), summary.hours.toFixed(1)]]
+        );
 
-        // Overall EFF card
-        const effTier = this.effTierClass(summary.eff);
-        const effColor = this._pdfColorForTier(effTier);
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">Overall EFF</div>
-          <div style="font-size:18px; font-weight:700; color:${effColor};">${summary.eff.toFixed(0)}%</div>
-        </div>`;
+        // Teams table (full-width)
+        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams</p>`;
+        const teamRows = this.dailySummaryTeams().map(ts => [
+          ts.team, ts.people, this._pdfEffCell(ts.eff), ts.cases, ts.tasks, ts.duration.toFixed(1), ts.hours.toFixed(1)
+        ]);
+        html += this._pdfTable(['Group','People','EFF','Cases','Tasks','Duration','Work Hrs'], teamRows);
 
-        // People card
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">People</div>
-          <div style="font-size:18px; font-weight:700; color:#333;">${summary.people}</div>
-          <div style="font-size:7px; color:#999;">across ${this.dailySummaryTeams().length} teams</div>
-        </div>`;
-
-        // Cases card
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">Cases</div>
-          <div style="font-size:18px; font-weight:700; color:#333;">${summary.cases}</div>
-        </div>`;
-
-        // Tasks card
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">Tasks</div>
-          <div style="font-size:18px; font-weight:700; color:#333;">${summary.tasks}</div>
-        </div>`;
-
-        // Work Hours card
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">Work Hours</div>
-          <div style="font-size:18px; font-weight:700; color:#333;">${summary.hours.toFixed(1)}</div>
-        </div>`;
-
-        html += `</div>`;
-
-        // Team Performance Section
-        html += `<div style="margin-bottom:12px;">`;
-        html += `<div style="font-size:10px; font-weight:700; color:#333; margin-bottom:4px;">Team Performance</div>`;
-        html += `<table style="width:100%; border-collapse:collapse; font-size:8px;">`;
-        html += `<thead><tr style="background:#f5f5f5;">
-          <th style="border:1px solid #ddd; padding:4px; text-align:left; font-weight:600;">Team</th>
-          <th style="border:1px solid #ddd; padding:4px; text-align:center; font-weight:600;">People</th>
-          <th style="border:1px solid #ddd; padding:4px; text-align:center; font-weight:600;">EFF</th>
-          <th style="border:1px solid #ddd; padding:4px; text-align:center; font-weight:600;">Cases</th>
-          <th style="border:1px solid #ddd; padding:4px; text-align:center; font-weight:600;">Tasks</th>
-        </tr></thead><tbody>`;
-
-        this.dailySummaryTeamsSorted().forEach(ts => {
-          const tierClass = this.effTierClass(ts.eff);
-          const color = this._pdfColorForTier(tierClass);
-          html += `<tr>
-            <td style="border:1px solid #ddd; padding:4px; background:#fff;">${ts.team}</td>
-            <td style="border:1px solid #ddd; padding:4px; text-align:center; background:#fff;">${ts.people}</td>
-            <td style="border:1px solid #ddd; padding:4px; text-align:center; color:${color}; font-weight:600; background:#fff;">${ts.eff.toFixed(0)}%</td>
-            <td style="border:1px solid #ddd; padding:4px; text-align:center; background:#fff;">${ts.cases}</td>
-            <td style="border:1px solid #ddd; padding:4px; text-align:center; background:#fff;">${ts.tasks}</td>
-          </tr>`;
-        });
-        html += `</tbody></table></div>`;
-
-        // Individual Team Cards (3-column grid)
+        // Per-team (2-column grid)
         const sections = this.dailyTeamSections();
-        html += `<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:12px;">`;
-
+        html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
         sections.forEach(sec => {
-          const avgEff = this.teamAvgEff(sec.rows);
-          const avgTier = this.effTierClass(avgEff);
-          const avgColor = this._pdfColorForTier(avgTier);
-
-          html += `<div style="border:1px solid #ddd; background:#fff; page-break-inside:avoid;">`;
-
-          // Card header
-          html += `<div style="background:#f5f5f5; padding:6px; border-bottom:1px solid #ddd;">
-            <span style="font-size:9px; font-weight:700; color:#333;">${sec.team}</span>
-            <span style="font-size:9px; font-weight:600; color:${avgColor}; margin-left:6px;">${avgEff.toFixed(0)}%</span>
-          </div>`;
-
-          // Person table inside card
-          html += `<table style="width:100%; border-collapse:collapse; font-size:7px;">`;
-          html += `<thead><tr style="background:#fafafa;">
-            <th style="padding:3px 6px; text-align:left; font-size:6px; font-weight:600;">NAME</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">EFF</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">CASES</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">TASKS</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">HRS</th>
-          </tr></thead><tbody>`;
-
-          sec.rows.forEach(r => {
-            const eff = Number(r.Efficiency) || 0;
-            const tier = this.effTierClass(eff);
-            const color = this._pdfColorForTier(tier);
-
-            html += `<tr>
-              <td style="padding:3px 6px; border-top:1px solid #eee;">${this.shortName(r['MT Name'])}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center; color:${color}; font-weight:600;">${eff.toFixed(0)}%</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center;">${r.Cases_Worked_On || 0}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center;">${r.Tasks_Completed || 0}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center;">${(r['Work Hours'] || 0).toFixed(1)}</td>
-            </tr>`;
-          });
-
-          html += `</tbody></table></div>`;
+          html += `<div style="page-break-inside:avoid;">`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
+          const rows = sec.rows.map(r => [
+            this.shortName(r['MT Name']), this._pdfEffCell(r.Efficiency),
+            r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
+            (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
+          ]);
+          html += this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows);
+          html += `</div>`;
         });
-
         html += `</div>`;
 
-        // Training Section (if any)
+        // Training (half-width)
         const trainRows = this.dailyTrainingRows();
-        if (trainRows.length > 0) {
-          html += `<div style="margin-top:12px; max-width:50%;">`;
-          html += `<div style="font-size:10px; font-weight:700; color:#333; margin-bottom:4px;">Training</div>`;
-          html += `<div style="border:1px solid #ddd; background:#fff;">`;
-          html += `<table style="width:100%; border-collapse:collapse; font-size:7px;">`;
-          html += `<thead><tr style="background:#fafafa;">
-            <th style="padding:3px 6px; text-align:left; font-size:6px; font-weight:600;">NAME</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">EFF</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">CASES</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">TASKS</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">HRS</th>
-          </tr></thead><tbody>`;
-
-          trainRows.forEach(r => {
-            const eff = Number(r.Efficiency) || 0;
-            const tier = this.effTierClass(eff);
-            const color = this._pdfColorForTier(tier);
-
-            html += `<tr>
-              <td style="padding:3px 6px; border-top:1px solid #eee;">${this.shortName(r['MT Name'])}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center; color:${color}; font-weight:600;">${eff.toFixed(0)}%</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center;">${r.Cases_Worked_On || 0}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center;">${r.Tasks_Completed || 0}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center;">${(r['Work Hours'] || 0).toFixed(1)}</td>
-            </tr>`;
-          });
-
-          html += `</tbody></table></div></div>`;
+        if (trainRows.length) {
+          html += `<div style="max-width:50%; margin-top:6px;">`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Training</p>`;
+          const rows = trainRows.map(r => [
+            this.shortName(r['MT Name']), this._pdfEffCell(r.Efficiency),
+            r.Cases_Worked_On || 0, r.Tasks_Completed || 0,
+            (r.Tasks_Duration_Hours || 0).toFixed(1), (r['Work Hours'] || 0).toFixed(1)
+          ]);
+          html += this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows);
+          html += `</div>`;
         }
 
       } else if (this.activeTab === 'mm') {
@@ -1330,7 +1233,7 @@ function efficiencyPage() {
         const headers = ['Teams', ...effCols.map(c => c.replace('Efficiency_','').replace(/_/g,' '))];
 
         // Teams summary (full-width)
-        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#333;">Teams Summary</p>`;
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams Summary</p>`;
         const teamRows = this.mmTeamsSummary().map(ts => [ts.team, ...effCols.map(c => this._pdfMmEffCell(ts[c]))]);
         html += this._pdfMmTable(headers, teamRows);
 
@@ -1339,7 +1242,7 @@ function efficiencyPage() {
         const sections = this.mmTeamSections();
         sections.forEach(sec => {
           html += `<div style="margin-top:4px;">`;
-          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#333;">${sec.team}</p>`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
           const rows = sec.rows.map(r => [this.shortName(r['MT Name']), ...effCols.map(c => this._pdfMmEffCell(r[c]))]);
           html += this._pdfMmTable(detailHeaders, rows);
           html += `</div>`;
@@ -1353,100 +1256,37 @@ function efficiencyPage() {
 
         const summary = this.middaySummaryAll(src);
 
-        // KPI Cards Section (4 cards in horizontal row - no Overall EFF for midday)
-        html += `<div style="display:flex; gap:8px; margin-bottom:12px;">`;
+        // ALL table (full-width)
+        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">ALL — ${label} Snapshot</p>`;
+        html += this._pdfTable(
+          ['Date','People','Cases','Tasks','Duration'],
+          [[summary.date, summary.people, summary.cases, summary.tasks, summary.duration.toFixed(1)]]
+        );
 
-        // People card
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">People</div>
-          <div style="font-size:18px; font-weight:700; color:#333;">${summary.people}</div>
-          <div style="font-size:7px; color:#999;">across ${this.middaySummaryTeams(src).length} teams</div>
-        </div>`;
+        // Teams table (full-width)
+        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams</p>`;
+        const teamRows = this.middaySummaryTeams(src).map(ts => [ts.team, ts.people, ts.cases, ts.tasks, ts.duration.toFixed(1)]);
+        html += this._pdfTable(['Team/Group','People','Cases','Tasks','Duration'], teamRows);
 
-        // Cases card
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">Cases</div>
-          <div style="font-size:18px; font-weight:700; color:#333;">${summary.cases}</div>
-        </div>`;
-
-        // Tasks card
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">Tasks</div>
-          <div style="font-size:18px; font-weight:700; color:#333;">${summary.tasks}</div>
-        </div>`;
-
-        // Duration card
-        html += `<div style="flex:1; border:1px solid #ddd; padding:8px; background:#fff;">
-          <div style="font-size:8px; color:#666; margin-bottom:2px;">Duration</div>
-          <div style="font-size:18px; font-weight:700; color:#333;">${summary.duration.toFixed(1)}</div>
-          <div style="font-size:7px; color:#999;">hours</div>
-        </div>`;
-
-        html += `</div>`;
-
-        // Team Performance Section
-        html += `<div style="margin-bottom:12px;">`;
-        html += `<div style="font-size:10px; font-weight:700; color:#333; margin-bottom:4px;">Team Performance — ${label} Snapshot</div>`;
-        html += `<table style="width:100%; border-collapse:collapse; font-size:8px;">`;
-        html += `<thead><tr style="background:#f5f5f5;">
-          <th style="border:1px solid #ddd; padding:4px; text-align:left; font-weight:600;">Team</th>
-          <th style="border:1px solid #ddd; padding:4px; text-align:center; font-weight:600;">People</th>
-          <th style="border:1px solid #ddd; padding:4px; text-align:center; font-weight:600;">Cases</th>
-          <th style="border:1px solid #ddd; padding:4px; text-align:center; font-weight:600;">Tasks</th>
-          <th style="border:1px solid #ddd; padding:4px; text-align:center; font-weight:600;">Duration</th>
-        </tr></thead><tbody>`;
-
-        this.middaySummaryTeams(src).forEach(ts => {
-          html += `<tr>
-            <td style="border:1px solid #ddd; padding:4px; background:#fff;">${ts.team}</td>
-            <td style="border:1px solid #ddd; padding:4px; text-align:center; background:#fff;">${ts.people}</td>
-            <td style="border:1px solid #ddd; padding:4px; text-align:center; background:#fff;">${ts.cases}</td>
-            <td style="border:1px solid #ddd; padding:4px; text-align:center; background:#fff;">${ts.tasks}</td>
-            <td style="border:1px solid #ddd; padding:4px; text-align:center; background:#fff;">${ts.duration.toFixed(1)}</td>
-          </tr>`;
-        });
-        html += `</tbody></table></div>`;
-
-        // Individual Team Cards (3-column grid)
+        // Per-team (2-column grid)
         const sections = this.middayTeamSections(src);
-        html += `<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:12px;">`;
-
+        html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
         sections.forEach(sec => {
-          html += `<div style="border:1px solid #ddd; background:#fff; page-break-inside:avoid;">`;
-
-          // Card header
-          html += `<div style="background:#f5f5f5; padding:6px; border-bottom:1px solid #ddd;">
-            <span style="font-size:9px; font-weight:700; color:#333;">${sec.team}</span>
-          </div>`;
-
-          // Person table inside card
-          html += `<table style="width:100%; border-collapse:collapse; font-size:7px;">`;
-          html += `<thead><tr style="background:#fafafa;">
-            <th style="padding:3px 6px; text-align:left; font-size:6px; font-weight:600;">NAME</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">CASES</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">TASKS</th>
-            <th style="padding:3px 6px; text-align:center; font-size:6px; font-weight:600;">DURATION</th>
-          </tr></thead><tbody>`;
-
-          sec.rows.forEach(r => {
+          html += `<div style="page-break-inside:avoid;">`;
+          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
+          const rows = sec.rows.map(r => {
             const cases = r.Cases || 0;
             const goal = r[goalKey];
-            let casesColor = '#333';
+            let casesCell = String(cases);
             if (goal !== null && goal !== undefined && goal !== 'NA' && goal !== '' && !isNaN(Number(goal)) && Number(goal) > 0) {
-              casesColor = Number(cases) >= Number(goal) ? '#22c55e' : '#ef4444';
+              const color = Number(cases) >= Number(goal) ? '#27AE60' : '#C0392B';
+              casesCell = `<span style="color:${color}; font-weight:600;">${cases}</span>`;
             }
-
-            html += `<tr>
-              <td style="padding:3px 6px; border-top:1px solid #eee;">${this.shortName(r.Name)}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center; color:${casesColor}; font-weight:600;">${cases}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center;">${r.Tasks_Completed || 0}</td>
-              <td style="padding:3px 6px; border-top:1px solid #eee; text-align:center;">${(r.Total_Duration_Hours || 0).toFixed(1)}</td>
-            </tr>`;
+            return [this.shortName(r.Name), casesCell, r.Tasks_Completed || 0, (r.Total_Duration_Hours || 0).toFixed(1)];
           });
-
-          html += `</tbody></table></div>`;
+          html += this._pdfTable(['Name','Cases','Tasks','Duration'], rows);
+          html += `</div>`;
         });
-
         html += `</div>`;
       }
 
@@ -1486,15 +1326,16 @@ function efficiencyPage() {
       headers.forEach((hdr, idx) => {
         const align = idx === 0 ? 'left' : 'center';
         const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
-        h += `<th style="border:1px solid #999; background:#f5f5f5; color:#000; padding:1px 2px; text-align:${align}; ${nowrap} font-size:6px; font-weight:600;">${hdr}</th>`;
+        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:1px 2px; text-align:${align}; ${nowrap} font-size:6px;">${hdr}</th>`;
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
+        const bg = i % 2 === 0 ? '#fff' : '#f2f2f2';
         h += `<tr>`;
         cells.forEach((c, idx) => {
           const align = idx === 0 ? 'left' : 'center';
           const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
-          h += `<td style="border:1px solid #ddd; padding:1px 2px; background:#fff; font-size:7px; text-align:${align}; ${nowrap}">${c}</td>`;
+          h += `<td style="border:1px solid #999; padding:1px 2px; background:${bg}; font-size:7px; text-align:${align}; ${nowrap}">${c}</td>`;
         });
         h += `</tr>`;
       });
@@ -1508,15 +1349,16 @@ function efficiencyPage() {
       headers.forEach((hdr, idx) => {
         const align = idx === 0 ? 'left' : 'center';
         const w = idx === 0 ? 'width:90px;' : '';
-        h += `<th style="border:1px solid #999; background:#f5f5f5; color:#000; padding:1px 1px; text-align:${align}; font-size:5px; overflow:hidden; font-weight:600; ${w}">${hdr}</th>`;
+        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:1px 1px; text-align:${align}; font-size:5px; overflow:hidden; ${w}">${hdr}</th>`;
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
+        const bg = i % 2 === 0 ? '#fff' : '#f2f2f2';
         h += `<tr>`;
         cells.forEach((c, idx) => {
           const align = idx === 0 ? 'left' : 'center';
           const nowrap = idx === 0 ? 'white-space:nowrap; overflow:hidden;' : '';
-          h += `<td style="border:1px solid #ddd; padding:1px 1px; background:#fff; font-size:5px; text-align:${align}; ${nowrap}">${c}</td>`;
+          h += `<td style="border:1px solid #999; padding:1px 1px; background:${bg}; font-size:5px; text-align:${align}; ${nowrap}">${c}</td>`;
         });
         h += `</tr>`;
       });
