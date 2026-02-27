@@ -221,19 +221,19 @@
           </span>
           <span class="eff-legend-item">
             <span class="eff-legend-dot" style="background:var(--eff-green-light)"></span>
-            100-119%
+            80–119%
           </span>
           <span class="eff-legend-item">
             <span class="eff-legend-dot" style="background:var(--eff-yellow)"></span>
-            85-99%
+            65–79%
           </span>
           <span class="eff-legend-item">
             <span class="eff-legend-dot" style="background:var(--eff-orange)"></span>
-            70-84%
+            50–64%
           </span>
           <span class="eff-legend-item">
             <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
-            &lt;70%
+            &lt;50%
           </span>
         </div>
         <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
@@ -332,19 +332,19 @@
           </span>
           <span class="eff-legend-item">
             <span class="eff-legend-dot" style="background:var(--eff-green-light)"></span>
-            100-119%
+            80–119%
           </span>
           <span class="eff-legend-item">
             <span class="eff-legend-dot" style="background:var(--eff-yellow)"></span>
-            85-99%
+            65–79%
           </span>
           <span class="eff-legend-item">
             <span class="eff-legend-dot" style="background:var(--eff-orange)"></span>
-            70-84%
+            50–64%
           </span>
           <span class="eff-legend-item">
             <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
-            &lt;70%
+            &lt;50%
           </span>
         </div>
         <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
@@ -753,9 +753,9 @@ function efficiencyPage() {
     effTierClass(eff) {
       const n = Number(eff) || 0;
       if (n >= 120) return 'great';
-      if (n >= 100) return 'good';
-      if (n >= 85) return 'ok';
-      if (n >= 70) return 'low';
+      if (n >= 80)  return 'good';
+      if (n >= 65)  return 'ok';
+      if (n >= 50)  return 'low';
       return 'poor';
     },
 
@@ -778,9 +778,9 @@ function efficiencyPage() {
       if (isNaN(n) || n === 0) return 'muted-text';
       const pct = n * 100;
       if (pct >= 120) return 'great';
-      if (pct >= 100) return 'good';
-      if (pct >= 85) return 'ok';
-      if (pct >= 70) return 'low';
+      if (pct >= 80)  return 'good';
+      if (pct >= 65)  return 'ok';
+      if (pct >= 50)  return 'low';
       return 'poor';
     },
 
