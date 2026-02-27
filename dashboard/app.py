@@ -114,6 +114,7 @@ def create_app() -> FastAPI:
     from dashboard.routes.partials import router as partials_router
     from dashboard.routes.sse import router as sse_router
     from dashboard.routes.login import router as login_router
+    from dashboard.routes.status import router as status_router
 
     app.include_router(login_router)
     app.include_router(main_router)
@@ -127,6 +128,7 @@ def create_app() -> FastAPI:
     app.include_router(efficiency_router)
     app.include_router(partials_router)
     app.include_router(sse_router)
+    app.include_router(status_router)
 
     return app
 
