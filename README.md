@@ -293,6 +293,28 @@ Tunnel config: `C:\Users\MagicTouch\.cloudflared\config.yml`
 3. If local works but public doesn't, restart the tunnel: `Restart-Service CloudflaredTunnel`
 4. If the service hangs on restart: `Stop-Process -Name cloudflared -Force` then `Start-Service CloudflaredTunnel`
 
+### Manually Triggering a One-Time Data Pull
+
+The dashboard only auto-refreshes during business hours (6 AM – 6 PM). If the server was restarted outside those hours and pages show no data, you can force an immediate pull:
+
+1. Open the dashboard in Chrome (`http://192.168.10.5:8050` or `https://partnersds.live`)
+2. Log in if prompted
+3. Press **F12** (or right-click anywhere → **Inspect**)
+4. Click the **Console** tab
+5. Paste the following and press Enter:
+
+```js
+fetch('/api/refresh', {method: 'POST'}).then(r => r.json()).then(console.log)
+```
+
+You should see a response like `{ok: true, datasets: {...}}` with row counts for each dataset. The dashboard will update immediately.
+
+To check the current cache state (row counts, last refresh time):
+
+```js
+fetch('/api/status').then(r => r.json()).then(console.log)
+```
+
 ### Troubleshooting
 
 - **"Can't connect" / page won't load:** Check that the server is running. Check Windows Firewall allows port 8050 (see Network Access above).
