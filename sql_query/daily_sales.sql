@@ -1,4 +1,4 @@
--- Daily sales for the last 14 calendar days (to capture 5+ business days)
+-- Daily sales for the last 35 calendar days (to capture 30+ calendar days for Chart B)
 -- Based on dbo.DailySales view pattern: Invoice ('I') + Sales ('S') rows
 
 -- Invoice data: cases invoiced per day
@@ -17,7 +17,7 @@ FROM dbo.Cases c WITH (NOLOCK)
 WHERE c.Deleted = 0
   AND c.Type = 'D'
   AND COALESCE(c.IsAdjustment, 0) = 0
-  AND CAST(c.InvoiceDate AS DATE) >= CAST(DATEADD(day, -14, GETDATE()) AS DATE)
+  AND CAST(c.InvoiceDate AS DATE) >= CAST(DATEADD(day, -35, GETDATE()) AS DATE)
   AND CAST(c.InvoiceDate AS DATE) <= CAST(GETDATE() AS DATE)
 GROUP BY CAST(c.InvoiceDate AS DATE), c.LabName
 
@@ -40,7 +40,7 @@ LEFT JOIN dbo.Cases c ON c.CaseID = cp.CaseID
 LEFT JOIN dbo.Products p ON p.ProductID = cp.ProductID
 WHERE c.Type = 'D'
   AND c.Deleted = 0
-  AND CAST(c.DateIn AS DATE) >= CAST(DATEADD(day, -14, GETDATE()) AS DATE)
+  AND CAST(c.DateIn AS DATE) >= CAST(DATEADD(day, -35, GETDATE()) AS DATE)
   AND CAST(c.DateIn AS DATE) <= CAST(GETDATE() AS DATE)
   AND c.Status NOT IN ('Cancelled', 'Submitted', 'Sent for TryIn')
 GROUP BY CAST(c.DateIn AS DATE), c.LabName

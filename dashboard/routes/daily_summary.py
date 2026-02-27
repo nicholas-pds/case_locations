@@ -1,10 +1,33 @@
+import logging
+import pandas as pd
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from dashboard.data.cache import cache
-from dashboard.data.transforms import build_workload_chart_data, build_workload_pace_data, build_sales_history, aggregate_airway_stages
+from dashboard.data.transforms import (
+    build_workload_chart_data,
+    build_workload_pace_data,
+    build_sales_history,
+    aggregate_airway_stages,
+    build_monthly_sales_chart,
+    build_daily_sales_chart,
+    build_monthly_goals_chart,
+    build_annual_goals_chart,
+)
+from dashboard.data.revenue_goals_store import load_revenue_goals, save_revenue_goals
 import json
 
+logger = logging.getLogger("dashboard.daily_summary")
+
 router = APIRouter()
+
+_EMPTY_CHART = {'labels': [], 'data': [], 'trend': [], 'is_current': []}
+_EMPTY_DAILY_CHART = {'labels': [], 'data': [], 'trend': [], 'is_today': []}
+_EMPTY_GOALS_CHART = {
+    'labels': [], 'goals': [], 'actuals': [], 'colors': [], 'pct_of_goals': [], 'year': ''
+}
+_EMPTY_ANNUAL_CHART = {
+    'labels': [], 'goals': [], 'actuals': [], 'colors': [], 'pct_of_goals': []
+}
 
 
 @router.get("/daily-summary", response_class=HTMLResponse)
@@ -32,6 +55,18 @@ async def daily_summary_page(request: Request):
     stages = aggregate_airway_stages(airway_df) if airway_df is not None else {}
     airway_planning_count = sum(s['total'] for group in stages.values() for s in group)
 
+    # New charts: monthly sales + goals
+    monthly_df = await cache.get("monthly_sales")
+    goals_df = load_revenue_goals()
+
+    monthly_chart = build_monthly_sales_chart(monthly_df) if monthly_df is not None else _EMPTY_CHART
+    daily_chart = build_daily_sales_chart(history_df) if history_df is not None else _EMPTY_DAILY_CHART
+    monthly_goals_chart = (
+        build_monthly_goals_chart(monthly_df, goals_df) if monthly_df is not None
+        else _EMPTY_GOALS_CHART
+    )
+    annual_goals_chart = build_annual_goals_chart(monthly_df, goals_df)
+
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/daily_summary.html", {
         "request": request,
@@ -44,4 +79,40 @@ async def daily_summary_page(request: Request):
         "airway_planning_count": airway_planning_count,
         "pace_data": pace_data,
         "workload_chart_json": json.dumps(chart_data),
+        "monthly_chart_json": json.dumps(monthly_chart),
+        "daily_chart_json": json.dumps(daily_chart),
+        "monthly_goals_json": json.dumps(monthly_goals_chart),
+        "annual_goals_json": json.dumps(annual_goals_chart),
+        "monthly_goals_year": monthly_goals_chart.get("year", ""),
     })
+
+
+# ─────────────────────────────────────────────
+# Revenue Goals CRUD
+# ─────────────────────────────────────────────
+
+@router.get("/daily-summary/revenue-goals")
+async def get_revenue_goals():
+    """Return revenue goals as JSON array."""
+    df = load_revenue_goals()
+    records = df.to_dict(orient='records')
+    return JSONResponse(content=records)
+
+
+@router.post("/daily-summary/revenue-goals")
+async def save_revenue_goals_endpoint(request: Request):
+    """Save revenue goals from JSON array."""
+    try:
+        data = await request.json()
+        df = pd.DataFrame(data)
+        for col in ["Year", "Month", "RevenueGoal"]:
+            if col not in df.columns:
+                return JSONResponse(
+                    content={"status": "error", "message": f"Missing column: {col}"},
+                    status_code=400,
+                )
+        save_revenue_goals(df)
+        return JSONResponse(content={"status": "ok", "rows": len(df)})
+    except Exception as e:
+        logger.error(f"Save revenue goals failed: {e}")
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)

@@ -12,6 +12,7 @@ from .queries import (
     fetch_submitted_cases,
     fetch_daily_sales,
     fetch_customers,
+    fetch_monthly_sales,
 )
 from .transforms import add_filter_columns
 from dashboard.config import REFRESH_INTERVAL_SECONDS, BUSINESS_HOURS_START, BUSINESS_HOURS_END
@@ -62,6 +63,7 @@ async def refresh_all_queries():
         loop.run_in_executor(None, fetch_submitted_cases),
         loop.run_in_executor(None, fetch_daily_sales),
         loop.run_in_executor(None, fetch_customers),
+        loop.run_in_executor(None, fetch_monthly_sales),
         return_exceptions=True,
     )
 
@@ -74,6 +76,7 @@ async def refresh_all_queries():
         "submitted_cases",
         "daily_sales",
         "customers",
+        "monthly_sales",
     ]
 
     for name, result in zip(names, results):

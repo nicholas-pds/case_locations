@@ -483,6 +483,245 @@ def build_category_pace_data(df: pd.DataFrame) -> list[dict]:
     return result
 
 
+_MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+
+def _goals_color(pct: float | None) -> str:
+    """Return hex color for a % of goal value."""
+    if pct is None:
+        return '#95A5A6'  # gray — no data
+    if pct >= 110:
+        return '#1B5E20'  # dark green
+    if pct >= 100:
+        return '#27AE60'  # green
+    if pct >= 90:
+        return '#F39C12'  # amber
+    return '#C0392B'  # red
+
+
+def build_monthly_sales_chart(df: pd.DataFrame, num_months: int = 18) -> dict:
+    """Build last N months of invoice revenue for Chart A.
+
+    Returns {labels, data, trend, is_current} where:
+    - labels: list of "Mon 'YY" strings
+    - data: list of SubTotal floats
+    - trend: 3-month rolling average (None where not enough data)
+    - is_current: list of bools (True for the partial current month)
+    """
+    if df is None or df.empty:
+        return {'labels': [], 'data': [], 'trend': [], 'is_current': []}
+
+    df = df.copy().sort_values(['SalesYear', 'SalesMonth']).reset_index(drop=True)
+
+    today = date.today()
+    current_year = today.year
+    current_month = today.month
+
+    # Take last num_months+1 rows (the extra row feeds the rolling avg for month 1)
+    window_df = df.tail(num_months + 1).reset_index(drop=True)
+
+    # Compute 3-month rolling average across the full window
+    subtotals = window_df['SubTotal'].tolist()
+    rolling = []
+    for i in range(len(subtotals)):
+        if i < 2:
+            rolling.append(None)
+        else:
+            rolling.append(round((subtotals[i] + subtotals[i-1] + subtotals[i-2]) / 3, 2))
+
+    # Trim to last num_months rows
+    display_df = window_df.tail(num_months).reset_index(drop=True)
+    display_rolling = rolling[-num_months:]
+
+    labels = []
+    data = []
+    trend = []
+    is_current = []
+
+    for i, row in display_df.iterrows():
+        yr = int(row['SalesYear'])
+        mo = int(row['SalesMonth'])
+        labels.append(f"{_MONTH_ABBR[mo - 1]} '{str(yr)[2:]}")
+        data.append(round(float(row['SubTotal']), 2))
+        trend.append(display_rolling[i])
+        is_current.append(yr == current_year and mo == current_month)
+
+    return {'labels': labels, 'data': data, 'trend': trend, 'is_current': is_current}
+
+
+def build_daily_sales_chart(df: pd.DataFrame, num_days: int = 30) -> dict:
+    """Build last N calendar days of invoice revenue for Chart B.
+
+    Returns {labels, data, trend, is_today} where:
+    - labels: list of "DD Mon YY" strings
+    - data: list of SubTotal floats
+    - trend: 7-day rolling average (None where not enough data)
+    - is_today: list of bools (True for today's partial bar)
+    """
+    if df is None or df.empty:
+        return {'labels': [], 'data': [], 'trend': [], 'is_today': []}
+
+    df = df.copy()
+    df = df[df['Type'] == 'I']
+    if df.empty:
+        return {'labels': [], 'data': [], 'trend': [], 'is_today': []}
+
+    daily = df.groupby('SalesDate').agg(subtotal=('SubTotal', 'sum')).reset_index()
+    daily = daily.sort_values('SalesDate').reset_index(drop=True)
+
+    today = date.today()
+    cutoff = today - timedelta(days=num_days - 1)
+    daily = daily[daily['SalesDate'] >= cutoff].reset_index(drop=True)
+
+    # Fill missing calendar days with 0
+    if not daily.empty:
+        all_dates = pd.date_range(start=cutoff, end=today, freq='D').date
+        date_index = {r['SalesDate']: r['subtotal'] for _, r in daily.iterrows()}
+        full_dates = []
+        full_vals = []
+        for d in all_dates:
+            full_dates.append(d)
+            full_vals.append(float(date_index.get(d, 0)))
+    else:
+        full_dates = []
+        full_vals = []
+
+    # 7-day rolling average
+    rolling = []
+    for i in range(len(full_vals)):
+        if i < 6:
+            rolling.append(None)
+        else:
+            rolling.append(round(sum(full_vals[i-6:i+1]) / 7, 2))
+
+    labels = []
+    is_today = []
+    for d in full_dates:
+        dt = d if isinstance(d, date) else d.date()
+        labels.append(dt.strftime('%d %b %y'))
+        is_today.append(dt == today)
+
+    return {
+        'labels': labels,
+        'data': [round(v, 2) for v in full_vals],
+        'trend': rolling,
+        'is_today': is_today,
+    }
+
+
+def build_monthly_goals_chart(df_sales: pd.DataFrame, df_goals: pd.DataFrame) -> dict:
+    """Build current-year monthly revenue vs goals for Chart C.
+
+    Returns {labels, goals, actuals, colors, pct_of_goals, year}.
+    """
+    today = date.today()
+    current_year = today.year
+    current_month = today.month
+
+    labels = [_MONTH_ABBR[m - 1] for m in range(1, 13)]
+
+    # Build goals lookup for current year
+    if df_goals is not None and not df_goals.empty:
+        yr_goals = df_goals[df_goals['Year'] == current_year]
+        goal_lookup = {int(r['Month']): float(r['RevenueGoal']) for _, r in yr_goals.iterrows()}
+    else:
+        goal_lookup = {}
+
+    # Build actuals lookup for current year
+    if df_sales is not None and not df_sales.empty:
+        yr_sales = df_sales[df_sales['SalesYear'] == current_year]
+        actual_lookup = {int(r['SalesMonth']): float(r['SubTotal']) for _, r in yr_sales.iterrows()}
+    else:
+        actual_lookup = {}
+
+    goals = []
+    actuals = []
+    colors = []
+    pct_of_goals = []
+
+    for mo in range(1, 13):
+        goal = goal_lookup.get(mo)
+        actual = actual_lookup.get(mo) if mo <= current_month else None
+
+        goals.append(goal if goal is not None else 0)
+        actuals.append(actual if actual is not None else None)
+
+        if actual is not None and goal and goal > 0:
+            pct = actual / goal * 100
+            pct_of_goals.append(round(pct, 1))
+            colors.append(_goals_color(pct))
+        elif mo > current_month:
+            pct_of_goals.append(None)
+            colors.append('#95A5A6')
+        else:
+            pct_of_goals.append(None)
+            colors.append('#95A5A6')
+
+    return {
+        'labels': labels,
+        'goals': goals,
+        'actuals': actuals,
+        'colors': colors,
+        'pct_of_goals': pct_of_goals,
+        'year': current_year,
+    }
+
+
+def build_annual_goals_chart(df_sales: pd.DataFrame, df_goals: pd.DataFrame,
+                              num_years: int = 5) -> dict:
+    """Build annual revenue vs goals for Chart D (last N years).
+
+    Returns {labels, goals, actuals, colors, pct_of_goals}.
+    """
+    today = date.today()
+    current_year = today.year
+    start_year = current_year - num_years + 1
+
+    years = list(range(start_year, current_year + 1))
+    labels = [str(y) if y != current_year else f"{y} (YTD)" for y in years]
+
+    # Aggregate goals by year
+    if df_goals is not None and not df_goals.empty:
+        goals_by_year = df_goals.groupby('Year')['RevenueGoal'].sum().to_dict()
+    else:
+        goals_by_year = {}
+
+    # Aggregate sales by year
+    if df_sales is not None and not df_sales.empty:
+        sales_by_year = df_sales.groupby('SalesYear')['SubTotal'].sum().to_dict()
+    else:
+        sales_by_year = {}
+
+    goals = []
+    actuals = []
+    colors = []
+    pct_of_goals = []
+
+    for yr in years:
+        goal = float(goals_by_year.get(yr, 0))
+        actual = float(sales_by_year.get(yr, 0))
+
+        goals.append(goal)
+        actuals.append(actual)
+
+        if goal > 0:
+            pct = actual / goal * 100
+            pct_of_goals.append(round(pct, 1))
+            colors.append(_goals_color(pct))
+        else:
+            pct_of_goals.append(None)
+            colors.append('#95A5A6')
+
+    return {
+        'labels': labels,
+        'goals': goals,
+        'actuals': actuals,
+        'colors': colors,
+        'pct_of_goals': pct_of_goals,
+    }
+
+
 def build_sales_history(df: pd.DataFrame, num_days: int = 5) -> list[dict]:
     """Build last N business days of sales from daily_sales data.
 

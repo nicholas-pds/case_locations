@@ -156,6 +156,17 @@ def fetch_daily_sales() -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
+def fetch_monthly_sales() -> pd.DataFrame:
+    """Fetch monthly invoice revenue aggregation for the last 19 months."""
+    df = execute_sql_to_dataframe(str(SQL_DIR / "monthly_sales.sql"))
+    if df.empty:
+        return df
+    df['SalesYear'] = df['SalesYear'].astype(int)
+    df['SalesMonth'] = df['SalesMonth'].astype(int)
+    df['SubTotal'] = pd.to_numeric(df['SubTotal'], errors='coerce').fillna(0)
+    return df.reset_index(drop=True)
+
+
 def fetch_customers() -> pd.DataFrame:
     """Fetch all active customers joined with sales summary data."""
     df = execute_sql_to_dataframe(str(SQL_DIR / "AM_customers_all.sql"))

@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Daily Summary{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/efficiency.css?v=4">
+<link rel="stylesheet" href="/static/css/daily_summary.css?v=1">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -9,10 +15,18 @@
     Chart.register(ChartDataLabels);
   }
 
+  // ─── Shared helpers ──────────────────────────────────────────
+  function fmtMillions(v) {
+    if (v == null) return '';
+    if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
+    return '$' + Math.round(v).toLocaleString();
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     const salesData = {{ sales_history_json | safe }};
 
-    // Revenue Chart
+    // ─── Existing: Revenue Chart ──────────────────────────────
     const revenueCtx = document.getElementById('salesRevenueChart');
     if (revenueCtx && salesData.length) {
       new Chart(revenueCtx, {
@@ -59,7 +73,7 @@
       });
     }
 
-    // Case Count Chart
+    // ─── Existing: Case Count Chart ───────────────────────────
     const countCtx = document.getElementById('salesCountChart');
     if (countCtx && salesData.length) {
       new Chart(countCtx, {
@@ -96,7 +110,7 @@
       });
     }
 
-    // Total Cases by Day (stacked bar)
+    // ─── Existing: Total Cases by Day ─────────────────────────
     const workloadData = {{ workload_chart_json | safe }};
     const totalCtx = document.getElementById('totalCasesChart');
     if (totalCtx && workloadData.labels && workloadData.labels.length) {
@@ -146,28 +160,365 @@
       });
     }
 
+    // ─── Chart A: Monthly Sales — last 18 months ──────────────
+    const monthlyData = {{ monthly_chart_json | safe }};
+    const monthlyCtx = document.getElementById('monthlySalesChart');
+    if (monthlyCtx && monthlyData.labels && monthlyData.labels.length) {
+      const barColors = monthlyData.is_current.map(c => c ? '#95A5A6' : '#1C1C1E');
+      new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+          labels: monthlyData.labels,
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Revenue',
+              data: monthlyData.data,
+              backgroundColor: barColors,
+              borderRadius: 3,
+              order: 2,
+              datalabels: { display: false },
+            },
+            {
+              type: 'line',
+              label: '3-Mo Avg',
+              data: monthlyData.trend,
+              borderColor: '#C0392B',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointBackgroundColor: '#C0392B',
+              tension: 0.3,
+              order: 1,
+              spanGaps: true,
+              datalabels: { display: false },
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top', labels: { font: { size: 11 }, usePointStyle: true } },
+            datalabels: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtMillions(ctx.raw);
+                  if (ctx.raw == null) return null;
+                  return '3-Mo Avg: ' + fmtMillions(ctx.raw);
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45 } },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F0F0F0' },
+              ticks: { font: { size: 11 }, callback: v => fmtMillions(v) }
+            }
+          }
+        }
+      });
+    }
+
+    // ─── Chart B: Daily Sales — last 30 days ──────────────────
+    const dailyData = {{ daily_chart_json | safe }};
+    const dailyCtx = document.getElementById('dailySalesChart');
+    if (dailyCtx && dailyData.labels && dailyData.labels.length) {
+      const dailyBarColors = dailyData.is_today.map(t => t ? '#95A5A6' : '#1C1C1E');
+      new Chart(dailyCtx, {
+        type: 'bar',
+        data: {
+          labels: dailyData.labels,
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Revenue',
+              data: dailyData.data,
+              backgroundColor: dailyBarColors,
+              borderRadius: 3,
+              order: 2,
+              datalabels: { display: false },
+            },
+            {
+              type: 'line',
+              label: '7-Day Avg',
+              data: dailyData.trend,
+              borderColor: '#C0392B',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              pointRadius: 2,
+              pointBackgroundColor: '#C0392B',
+              tension: 0.3,
+              order: 1,
+              spanGaps: true,
+              datalabels: { display: false },
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top', labels: { font: { size: 11 }, usePointStyle: true } },
+            datalabels: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtMillions(ctx.raw);
+                  if (ctx.raw == null) return null;
+                  return '7-Day Avg: ' + fmtMillions(ctx.raw);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 10 }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F0F0F0' },
+              ticks: { font: { size: 11 }, callback: v => fmtMillions(v) }
+            }
+          }
+        }
+      });
+    }
+
+    // ─── Chart C: Monthly Revenue Goals ───────────────────────
+    const monthlyGoalsData = {{ monthly_goals_json | safe }};
+    const monthlyGoalsCtx = document.getElementById('monthlyGoalsChart');
+    if (monthlyGoalsCtx && monthlyGoalsData.labels && monthlyGoalsData.labels.length) {
+      new Chart(monthlyGoalsCtx, {
+        type: 'bar',
+        data: {
+          labels: monthlyGoalsData.labels,
+          datasets: [
+            {
+              label: 'Sales Goal',
+              data: monthlyGoalsData.goals,
+              backgroundColor: 'rgba(200,200,200,0.4)',
+              borderColor: 'rgba(180,180,180,0.6)',
+              borderWidth: 1,
+              borderRadius: 3,
+              barPercentage: 1.0,
+              categoryPercentage: 0.85,
+              order: 2,
+              datalabels: { display: false },
+            },
+            {
+              label: 'Actual Sales',
+              data: monthlyGoalsData.actuals,
+              backgroundColor: monthlyGoalsData.colors,
+              borderRadius: 3,
+              barPercentage: 0.65,
+              categoryPercentage: 0.85,
+              order: 1,
+              datalabels: { display: false },
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top', labels: { font: { size: 11 }, usePointStyle: true } },
+            datalabels: { display: false },
+            tooltip: {
+              callbacks: {
+                afterBody: function(items) {
+                  const idx = items[0].dataIndex;
+                  const goal = monthlyGoalsData.goals[idx];
+                  const actual = monthlyGoalsData.actuals[idx];
+                  const pct = monthlyGoalsData.pct_of_goals[idx];
+                  const lines = [];
+                  lines.push('Sales Goal: ' + fmtMillions(goal));
+                  lines.push('Actual: ' + (actual != null ? fmtMillions(actual) : 'N/A'));
+                  if (pct != null) {
+                    lines.push('% of Goal: ' + pct.toFixed(1) + '%');
+                    const status = pct >= 110 ? 'Excellent' : pct >= 100 ? 'On Target' : pct >= 90 ? 'Near Goal' : 'Below Goal';
+                    lines.push('Status: ' + status);
+                  }
+                  return lines;
+                },
+                label: function() { return null; }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F0F0F0' },
+              ticks: { font: { size: 11 }, callback: v => fmtMillions(v) }
+            }
+          }
+        }
+      });
+    }
+
+    // ─── Chart D: Annual Revenue Goals ────────────────────────
+    const annualGoalsData = {{ annual_goals_json | safe }};
+    const annualGoalsCtx = document.getElementById('annualGoalsChart');
+    if (annualGoalsCtx && annualGoalsData.labels && annualGoalsData.labels.length) {
+      new Chart(annualGoalsCtx, {
+        type: 'bar',
+        data: {
+          labels: annualGoalsData.labels,
+          datasets: [
+            {
+              label: 'Sales Goal',
+              data: annualGoalsData.goals,
+              backgroundColor: 'rgba(200,200,200,0.4)',
+              borderColor: 'rgba(180,180,180,0.6)',
+              borderWidth: 1,
+              borderRadius: 3,
+              barPercentage: 1.0,
+              categoryPercentage: 0.75,
+              order: 2,
+              datalabels: { display: false },
+            },
+            {
+              label: 'Actual Sales',
+              data: annualGoalsData.actuals,
+              backgroundColor: annualGoalsData.colors,
+              borderRadius: 3,
+              barPercentage: 0.65,
+              categoryPercentage: 0.75,
+              order: 1,
+              datalabels: { display: false },
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top', labels: { font: { size: 11 }, usePointStyle: true } },
+            datalabels: { display: false },
+            tooltip: {
+              callbacks: {
+                afterBody: function(items) {
+                  const idx = items[0].dataIndex;
+                  const goal = annualGoalsData.goals[idx];
+                  const actual = annualGoalsData.actuals[idx];
+                  const pct = annualGoalsData.pct_of_goals[idx];
+                  const lines = [];
+                  lines.push('Sales Goal: ' + fmtMillions(goal));
+                  lines.push('Actual: ' + fmtMillions(actual));
+                  if (pct != null) {
+                    lines.push('% of Goal: ' + pct.toFixed(1) + '%');
+                    const status = pct >= 110 ? 'Excellent' : pct >= 100 ? 'On Target' : pct >= 90 ? 'Near Goal' : 'Below Goal';
+                    lines.push('Status: ' + status);
+                  }
+                  return lines;
+                },
+                label: function() { return null; }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F0F0F0' },
+              ticks: { font: { size: 11 }, callback: v => fmtMillions(v) }
+            }
+          }
+        }
+      });
+    }
+
   });
+
+  // ─── Alpine component ─────────────────────────────────────
+  function dailySummaryPage() {
+    return {
+      showGoalsModal: false,
+      goalsData: [],
+      goalsSaving: false,
+      goalsError: '',
+
+      async openGoalsModal() {
+        this.goalsError = '';
+        this.goalsSaving = false;
+        try {
+          const resp = await fetch('/daily-summary/revenue-goals');
+          this.goalsData = await resp.json();
+        } catch (e) {
+          this.goalsData = [];
+          this.goalsError = 'Failed to load goals';
+        }
+        this.showGoalsModal = true;
+      },
+
+      async saveGoals() {
+        this.goalsSaving = true;
+        this.goalsError = '';
+        try {
+          const resp = await fetch('/daily-summary/revenue-goals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.goalsData),
+          });
+          const data = await resp.json();
+          if (data.status === 'ok') {
+            this.showGoalsModal = false;
+            setTimeout(() => window.location.reload(), 400);
+          } else {
+            this.goalsError = data.message || 'Save failed';
+          }
+        } catch (e) {
+          this.goalsError = 'Save failed — check console';
+        }
+        this.goalsSaving = false;
+      },
+
+      addGoalRow() {
+        const yr = new Date().getFullYear();
+        this.goalsData.push({ Year: yr, Month: 1, RevenueGoal: 0 });
+      },
+    };
+  }
 </script>
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <h1 class="page-title">Daily Summary</h1>
+<div x-data="dailySummaryPage()">
+
+<!-- Page header -->
+<div class="ds-page-header">
+  <div>
+    <h1 class="ds-page-title">Daily Summary</h1>
+  </div>
+  <div class="ds-header-right">
+    <span class="ds-page-date" id="ds-today-date"></span>
+    <button class="ds-goals-btn" @click="openGoalsModal()">Edit Revenue Goals</button>
+  </div>
 </div>
+<script>
+  document.getElementById('ds-today-date').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+</script>
 
 <!-- Top metric cards -->
-<div class="summary-cards">
-  <div class="summary-card summary-card-submitted">
-    <div class="summary-label">Cases Submitted</div>
-    <div class="summary-value">{{ submitted_count }}</div>
+<div class="ds-cards">
+  <div class="ds-card ds-card-submitted">
+    <div class="ds-card-label">Cases Submitted</div>
+    <div class="ds-card-value">{{ submitted_count }}</div>
   </div>
-  <div class="summary-card summary-card-production">
-    <div class="summary-label">In Production</div>
-    <div class="summary-value">{{ total_in_production }}</div>
+  <div class="ds-card ds-card-production">
+    <div class="ds-card-label">In Production</div>
+    <div class="ds-card-value">{{ total_in_production }}</div>
   </div>
-  <div class="summary-card summary-card-airway">
-    <div class="summary-label">Airway Planning</div>
-    <div class="summary-value">{{ airway_planning_count }}</div>
+  <div class="ds-card ds-card-airway">
+    <div class="ds-card-label">Airway Planning</div>
+    <div class="ds-card-value">{{ airway_planning_count }}</div>
   </div>
 </div>
 
@@ -208,4 +559,91 @@
     <canvas id="totalCasesChart" style="max-height:250px;"></canvas>
   </div>
 </div>
+
+<!-- Row 3: Monthly Summary | Daily Sales -->
+<div class="daily-row" style="margin-top: 20px;">
+  <div class="ds-chart-container">
+    <h3 class="ds-chart-title">Monthly Sales Summary</h3>
+    <p class="ds-chart-subtitle">Last 18 months &mdash; invoice revenue + 3-month trend</p>
+    <canvas id="monthlySalesChart" style="max-height:300px;"></canvas>
+  </div>
+  <div class="ds-chart-container">
+    <h3 class="ds-chart-title">Daily Sales</h3>
+    <p class="ds-chart-subtitle">Last 30 days &mdash; invoice revenue + 7-day trend</p>
+    <canvas id="dailySalesChart" style="max-height:300px;"></canvas>
+  </div>
+</div>
+
+<!-- Row 4: Monthly Goals | Annual Goals -->
+<div class="daily-row" style="margin-top: 20px;">
+  <div class="ds-chart-container">
+    <h3 class="ds-chart-title">Monthly Revenue Goals &mdash; {{ monthly_goals_year }}</h3>
+    <p class="ds-chart-subtitle">Gray = goal &nbsp;|&nbsp; Colored = actual</p>
+    <canvas id="monthlyGoalsChart" style="max-height:300px;"></canvas>
+    <div class="ds-legend">
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#1B5E20;"></span>&ge;110%</span>
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#27AE60;"></span>100–110%</span>
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#F39C12;"></span>90–100%</span>
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#C0392B;"></span>&lt;90%</span>
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#95A5A6;"></span>No data</span>
+    </div>
+  </div>
+  <div class="ds-chart-container">
+    <h3 class="ds-chart-title">Annual Revenue Goals</h3>
+    <p class="ds-chart-subtitle">Last 5 years &mdash; current year shown as YTD</p>
+    <canvas id="annualGoalsChart" style="max-height:300px;"></canvas>
+    <div class="ds-legend">
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#1B5E20;"></span>&ge;110%</span>
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#27AE60;"></span>100–110%</span>
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#F39C12;"></span>90–100%</span>
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#C0392B;"></span>&lt;90%</span>
+      <span class="ds-legend-item"><span class="ds-legend-dot" style="background:#95A5A6;"></span>No goal set</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- REVENUE GOALS MODAL                                    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div x-show="showGoalsModal" x-cloak class="ds-modal-overlay" @click.self="showGoalsModal = false">
+  <div class="ds-modal">
+    <div class="ds-modal-header">
+      <h3 class="ds-modal-title">Edit Revenue Goals</h3>
+      <button @click="showGoalsModal = false" class="ds-modal-close">&times;</button>
+    </div>
+    <div class="ds-modal-body">
+      <table class="ds-modal-table">
+        <thead>
+          <tr>
+            <th style="width:80px;">Year</th>
+            <th style="width:80px;">Month</th>
+            <th>Revenue Goal ($)</th>
+            <th style="width:36px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, idx) in goalsData" :key="'goal-'+idx">
+            <tr>
+              <td><input type="number" x-model.number="row.Year" class="ds-modal-input" min="2020" max="2040" style="text-align:center;"></td>
+              <td><input type="number" x-model.number="row.Month" class="ds-modal-input" min="1" max="12" style="text-align:center;"></td>
+              <td><input type="number" x-model.number="row.RevenueGoal" class="ds-modal-input" min="0" step="1000"></td>
+              <td style="text-align:center;">
+                <button @click="goalsData.splice(idx, 1)" class="ds-modal-btn-danger" title="Remove">&times;</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <div class="ds-modal-footer">
+      <button @click="addGoalRow()" class="ds-modal-btn ds-modal-btn-secondary">+ Add Row</button>
+      <button @click="saveGoals()" class="ds-modal-btn ds-modal-btn-primary" :disabled="goalsSaving"
+              x-text="goalsSaving ? 'Saving...' : 'Save Goals'"></button>
+      <button @click="showGoalsModal = false" class="ds-modal-btn ds-modal-btn-secondary">Cancel</button>
+    </div>
+    <p x-show="goalsError" x-text="goalsError" class="ds-modal-error"></p>
+  </div>
+</div>
+
+</div><!-- end x-data -->
 {% endblock %}
