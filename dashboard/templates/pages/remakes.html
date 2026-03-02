@@ -1148,14 +1148,15 @@ function remakesPage() {
     _taskMapData: {},
     _noteMapData: {},
     _charts: {},
+    _chartRaf: null,
     _noteSaveState: {},
     _tip: { show: false, type: '', items: [] },
 
     // ── Init ────────────────────────────────────────────────────
     init() {
-      this.$watch('allStart', () => { if (this.activeTab === 'all') this.$nextTick(() => requestAnimationFrame(() => this.renderCharts())); });
-      this.$watch('allEnd',   () => { if (this.activeTab === 'all') this.$nextTick(() => requestAnimationFrame(() => this.renderCharts())); });
-      this.$watch('activeTab', v => { if (v === 'all') this.$nextTick(() => requestAnimationFrame(() => this.renderCharts())); });
+      this.$watch('allStart', () => { if (this.activeTab === 'all') this._scheduleCharts(); });
+      this.$watch('allEnd',   () => { if (this.activeTab === 'all') this._scheduleCharts(); });
+      this.$watch('activeTab', v => { if (v === 'all') this._scheduleCharts(); });
 
       fetch('/remakes/all-details')
         .then(r => r.json())
@@ -1176,13 +1177,22 @@ function remakesPage() {
           this._noteMapData = nm;
 
           if (this.activeTab === 'all') {
-            this.$nextTick(() => requestAnimationFrame(() => this.renderCharts()));
+            this._scheduleCharts();
           }
         })
         .catch(e => console.warn('Failed to load case details:', e));
 
       // Render charts on initial load
-      this.$nextTick(() => requestAnimationFrame(() => this.renderCharts()));
+      this._scheduleCharts();
+    },
+
+    // ── Chart scheduler (debounces rapid calls into one rAF) ─────
+    _scheduleCharts() {
+      if (this._chartRaf) cancelAnimationFrame(this._chartRaf);
+      this._chartRaf = requestAnimationFrame(() => {
+        this._chartRaf = null;
+        this.renderCharts();
+      });
     },
 
     // ── Computed AM list ─────────────────────────────────────────
@@ -1380,12 +1390,12 @@ function remakesPage() {
       const days  = p === '1w' ? 7 : p === '4w' ? 28 : 56;
       this.allEnd   = today.toISOString().slice(0, 10);
       this.allStart = new Date(+today - days * 86400000).toISOString().slice(0, 10);
-      this.$nextTick(() => requestAnimationFrame(() => this.renderCharts()));
+      // watchers on allStart/allEnd call _scheduleCharts() automatically
     },
 
     switchToAll() {
       this.activeTab = 'all';
-      this.$nextTick(() => requestAnimationFrame(() => this.renderCharts()));
+      this._scheduleCharts();
     },
 
     // ── AM export ────────────────────────────────────────────────
@@ -1422,6 +1432,7 @@ function remakesPage() {
       const baseOpts = () => ({
         type: 'bar',
         options: {
+          animation: false,
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
