@@ -12,6 +12,9 @@ from dashboard.data.remakes_queries import (
     load_remake_notes,
     save_remake_note,
     get_current_week_bounds,
+    get_tasks_for_case,
+    get_notes_for_case,
+    _apply_employee_names,
 )
 from dashboard.data.cache import cache
 
@@ -70,8 +73,6 @@ async def remakes_page(request: Request):
         "last_refresh": cached["last_refresh"],
         "meeting_records": _df_to_records(meeting_df),
         "all_records": _df_to_records(all_df),
-        "task_records": _df_to_records(cached["tasks"]),
-        "call_note_records": _df_to_records(cached["notes_text"]),
         "revenue_records": _df_to_records(cached["revenue"]),
         "saved_notes": saved_notes,
         "week_start": str(week_start),
@@ -81,12 +82,28 @@ async def remakes_page(request: Request):
 
 @router.post("/remakes/refresh")
 async def remakes_refresh():
-    conn = get_db_connection()
     try:
-        result = await refresh_remakes_cache(conn)
+        result = await refresh_remakes_cache()
         return JSONResponse({"status": "ok", **result})
     except Exception as e:
         logger.error(f"Remakes refresh failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@router.get("/remakes/case-details")
+async def remakes_case_details(main_id: int, og_id: int):
+    conn = get_db_connection()
+    try:
+        tasks_df = get_tasks_for_case(conn, main_id, og_id)
+        notes_df = get_notes_for_case(conn, main_id, og_id)
+        tasks_df = _apply_employee_names(tasks_df, "CompletedBy", "CompletedByName")
+        notes_df = _apply_employee_names(notes_df, "UserID", "UserName")
+        return JSONResponse({
+            "tasks": _df_to_records(tasks_df),
+            "notes": _df_to_records(notes_df),
+        })
+    except Exception as e:
+        logger.error(f"Case details failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
     finally:
         conn.close()

@@ -491,7 +491,7 @@
           </thead>
           <tbody>
             <template x-for="row in filteredMeeting" :key="row.MainCaseNumber">
-              <tr>
+              <tr @mouseenter="loadCaseDetails(row.MainCaseID, row.OG_CaseID)">
                 <!-- Old Rx -->
                 <td>
                   <div class="case-num" x-text="row.OG_CaseNumber || '—'"></div>
@@ -526,12 +526,15 @@
                 </td>
                 <!-- Task List -->
                 <td>
-                  <template x-if="getTasksForCase(row.MainCaseID).length === 0">
+                  <template x-if="isLoadingDetails(row.MainCaseID, row.OG_CaseID)">
+                    <span style="color:var(--gray);font-style:italic;">Loading…</span>
+                  </template>
+                  <template x-if="!isLoadingDetails(row.MainCaseID, row.OG_CaseID) && getTasksForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
-                  <template x-if="getTasksForCase(row.MainCaseID).length > 0">
+                  <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <ul class="task-list">
-                      <template x-for="t in getTasksForCase(row.MainCaseID)" :key="t.Task + t.CompleteDate">
+                      <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID)" :key="t.Task + t.CompleteDate">
                         <li>
                           <span class="task-name" x-text="t.CompletedByName || t.CompletedBy"></span>
                           <span x-text="' – ' + (t.Task || '')"></span>
@@ -542,7 +545,10 @@
                 </td>
                 <!-- Call Notes -->
                 <td>
-                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                  <template x-if="isLoadingDetails(row.MainCaseID, row.OG_CaseID)">
+                    <span style="color:var(--gray);font-style:italic;">Loading…</span>
+                  </template>
+                  <template x-if="!isLoadingDetails(row.MainCaseID, row.OG_CaseID) && getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -749,7 +755,7 @@
           </thead>
           <tbody>
             <template x-for="row in filteredAll" :key="row.MainCaseNumber">
-              <tr>
+              <tr @mouseenter="loadCaseDetails(row.MainCaseID, row.OG_CaseID)">
                 <!-- Old Rx -->
                 <td>
                   <div class="case-num" x-text="row.OG_CaseNumber || '—'"></div>
@@ -784,12 +790,15 @@
                 </td>
                 <!-- Task List -->
                 <td>
-                  <template x-if="getTasksForCase(row.MainCaseID).length === 0">
+                  <template x-if="isLoadingDetails(row.MainCaseID, row.OG_CaseID)">
+                    <span style="color:var(--gray);font-style:italic;">Loading…</span>
+                  </template>
+                  <template x-if="!isLoadingDetails(row.MainCaseID, row.OG_CaseID) && getTasksForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
-                  <template x-if="getTasksForCase(row.MainCaseID).length > 0">
+                  <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <ul class="task-list">
-                      <template x-for="t in getTasksForCase(row.MainCaseID)" :key="t.Task + t.CompleteDate">
+                      <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID)" :key="t.Task + t.CompleteDate">
                         <li>
                           <span class="task-name" x-text="t.CompletedByName || t.CompletedBy"></span>
                           <span x-text="' – ' + (t.Task || '')"></span>
@@ -800,7 +809,10 @@
                 </td>
                 <!-- Call Notes -->
                 <td>
-                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                  <template x-if="isLoadingDetails(row.MainCaseID, row.OG_CaseID)">
+                    <span style="color:var(--gray);font-style:italic;">Loading…</span>
+                  </template>
+                  <template x-if="!isLoadingDetails(row.MainCaseID, row.OG_CaseID) && getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -848,13 +860,12 @@ function remakesPage() {
     allPreset: '4w',
     showBreakdowns: true,
 
-    allRecords:      {{ all_records | tojson }},
-    taskRecords:     {{ task_records | tojson }},
-    callNoteRecords: {{ call_note_records | tojson }},
-    revenueRecords:  {{ revenue_records | tojson }},
-    savedNotes:      {{ saved_notes | tojson }},
+    allRecords:     {{ all_records | tojson }},
+    revenueRecords: {{ revenue_records | tojson }},
+    savedNotes:     {{ saved_notes | tojson }},
 
     _charts: {},
+    _detailsCache: {},
 
     // ── Filtered views ──────────────────────────────────────────
     get filteredMeeting() {
@@ -968,19 +979,30 @@ function remakesPage() {
         .map(([name, count]) => ({ name, count, pct: ((count / total) * 100).toFixed(1) }));
     },
 
-    // ── Per-case detail helpers ──────────────────────────────────
-    getTasksForCase(caseId) {
-      return this.taskRecords
-        .filter(t => String(t.CaseID) === String(caseId))
-        .sort((a, b) => ((a.CompleteDate || '') > (b.CompleteDate || '') ? 1 : -1));
+    // ── Per-case detail helpers (lazy-loaded on demand) ─────────
+    async loadCaseDetails(mainId, ogId) {
+      const key = `${mainId}_${ogId}`;
+      if (this._detailsCache[key]) return;
+      this._detailsCache[key] = { tasks: [], notes: [], loading: true };
+      try {
+        const res  = await fetch(`/remakes/case-details?main_id=${mainId}&og_id=${ogId}`);
+        const data = await res.json();
+        this._detailsCache[key] = { tasks: data.tasks || [], notes: data.notes || [], loading: false };
+      } catch (e) {
+        this._detailsCache[key] = { tasks: [], notes: [], loading: false };
+      }
     },
 
-    getNotesForCase(mainCaseId, ogCaseId) {
-      const m = String(mainCaseId), o = String(ogCaseId);
-      return this.callNoteRecords.filter(n =>
-        String(n.AnchorCaseID) === m || String(n.LinkCaseID) === m ||
-        String(n.AnchorCaseID) === o || String(n.LinkCaseID) === o
-      );
+    getTasksForCase(mainId, ogId) {
+      return (this._detailsCache[`${mainId}_${ogId}`] || {}).tasks || [];
+    },
+
+    getNotesForCase(mainId, ogId) {
+      return (this._detailsCache[`${mainId}_${ogId}`] || {}).notes || [];
+    },
+
+    isLoadingDetails(mainId, ogId) {
+      return !!(this._detailsCache[`${mainId}_${ogId}`] || {}).loading;
     },
 
     // ── Formatting helpers ───────────────────────────────────────
@@ -1095,7 +1117,7 @@ function remakesPage() {
         const res  = await fetch('/remakes/refresh', { method: 'POST' });
         const data = await res.json();
         if (data.status === 'ok') {
-          this.message = `Loaded: ${data.all_rows} remakes · ${data.tasks_rows} tasks · ${data.notes_rows} call notes · ${data.revenue_rows} revenue rows`;
+          this.message = `Loaded: ${data.all_rows} remakes · ${data.revenue_rows} revenue rows`;
           setTimeout(() => window.location.reload(), 900);
         } else {
           this.message = 'Error: ' + (data.message || 'Unknown error');
