@@ -449,6 +449,75 @@
     .charts-grid { grid-template-columns: 1fr; }
     .breakdown-grid { grid-template-columns: 1fr; }
   }
+
+  /* ── Overflow button ── */
+  .overflow-btn {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.72rem;
+    color: var(--gray);
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.12s, color 0.12s;
+  }
+  .overflow-btn:hover { background: var(--dark); color: #fff; }
+
+  /* ── Tooltip overlay ── */
+  .tip-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    z-index: 1000;
+  }
+  .tip-card {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+    padding: 20px 24px;
+    max-width: 480px;
+    width: 90vw;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .tip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .tip-title { font-weight: 700; font-size: 0.95rem; color: var(--dark); }
+  .tip-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--gray);
+    line-height: 1;
+  }
+  .tip-close:hover { color: var(--dark); }
+  .tip-task-item {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.83rem;
+    color: var(--dark);
+  }
+  .tip-task-item:last-child { border-bottom: none; }
+  .tip-note-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tip-note-item:last-child { border-bottom: none; }
+  .tip-note-meta { font-size: 0.78rem; color: var(--gray); margin-bottom: 3px; }
+  .tip-note-text { font-size: 0.83rem; color: var(--dark); line-height: 1.45; }
 </style>
 {% endblock %}
 
@@ -474,14 +543,14 @@
 
   <!-- Tab navigation -->
   <div class="tab-nav">
-    <button class="tab-btn" :class="{active: activeTab==='meeting'}" @click="activeTab='meeting'">
-      Meeting Remakes
-    </button>
     <button class="tab-btn" :class="{active: activeTab==='all'}" @click="switchToAll()">
       All Remakes Tracking
     </button>
+    <button class="tab-btn" :class="{active: activeTab==='meeting'}" @click="activeTab='meeting'">
+      Meeting Remakes
+    </button>
     <template x-for="am in amList" :key="am">
-      <button class="tab-btn" :class="{active: activeTab===am}" @click="activeTab=am" x-text="am"></button>
+      <button class="tab-btn" :class="{active: activeTab===am}" @click="activeTab=am" x-text="fmtShortName(am)"></button>
     </template>
   </div>
 
@@ -565,35 +634,47 @@
                   </div>
                 </td>
                 <!-- Task List -->
-                <td class="col-task"
-                    :title="getTasksForCase(row.MainCaseID, row.OG_CaseID).map(t => fmtShortName(t.CompletedByName||t.CompletedBy) + ' – ' + t.Task).join('\n')">
+                <td class="col-task">
                   <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 0">
-                    <ul class="task-list">
-                      <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID)" :key="t.Task + t.CompleteDate">
-                        <li>
-                          <span class="task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
-                          <span x-text="' – ' + (t.Task || '')"></span>
-                        </li>
+                    <div>
+                      <ul class="task-list">
+                        <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="t.Task + t.CompleteDate">
+                          <li>
+                            <span class="task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
+                            <span x-text="' – ' + (t.Task || '')"></span>
+                          </li>
+                        </template>
+                      </ul>
+                      <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 10">
+                        <button class="overflow-btn"
+                          @click.stop="showTip('tasks', getTasksForCase(row.MainCaseID, row.OG_CaseID))"
+                          x-text="'+ ' + (getTasksForCase(row.MainCaseID, row.OG_CaseID).length - 10) + ' more'">
+                        </button>
                       </template>
-                    </ul>
+                    </div>
                   </template>
                 </td>
                 <!-- Call Notes -->
-                <td class="col-notes"
-                    :title="getNotesForCase(row.MainCaseID, row.OG_CaseID).map(n => (n.UserName||n.UserID) + ': ' + n.Note).join('\n')">
-                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                <td class="col-notes">
+                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
-                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <div>
-                      <template x-for="n in getNotesForCase(row.MainCaseID, row.OG_CaseID)" :key="n.Note">
+                      <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="n.Note + n.UserID">
                         <div class="call-note-item">
                           <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
                           <span x-text="n.Note"></span>
                         </div>
+                      </template>
+                      <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 10">
+                        <button class="overflow-btn"
+                          @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID))"
+                          x-text="'+ ' + (getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length - 10) + ' more'">
+                        </button>
                       </template>
                     </div>
                   </template>
@@ -861,35 +942,47 @@
                   </div>
                 </td>
                 <!-- Task List -->
-                <td class="col-task"
-                    :title="getTasksForCase(row.MainCaseID, row.OG_CaseID).map(t => fmtShortName(t.CompletedByName||t.CompletedBy) + ' – ' + t.Task).join('\n')">
+                <td class="col-task">
                   <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 0">
-                    <ul class="task-list">
-                      <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID)" :key="t.Task + t.CompleteDate">
-                        <li>
-                          <span class="task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
-                          <span x-text="' – ' + (t.Task || '')"></span>
-                        </li>
+                    <div>
+                      <ul class="task-list">
+                        <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="t.Task + t.CompleteDate">
+                          <li>
+                            <span class="task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
+                            <span x-text="' – ' + (t.Task || '')"></span>
+                          </li>
+                        </template>
+                      </ul>
+                      <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 10">
+                        <button class="overflow-btn"
+                          @click.stop="showTip('tasks', getTasksForCase(row.MainCaseID, row.OG_CaseID))"
+                          x-text="'+ ' + (getTasksForCase(row.MainCaseID, row.OG_CaseID).length - 10) + ' more'">
+                        </button>
                       </template>
-                    </ul>
+                    </div>
                   </template>
                 </td>
                 <!-- Call Notes -->
-                <td class="col-notes"
-                    :title="getNotesForCase(row.MainCaseID, row.OG_CaseID).map(n => (n.UserName||n.UserID) + ': ' + n.Note).join('\n')">
-                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                <td class="col-notes">
+                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
-                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <div>
-                      <template x-for="n in getNotesForCase(row.MainCaseID, row.OG_CaseID)" :key="n.Note">
+                      <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="n.Note + n.UserID">
                         <div class="call-note-item">
                           <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
                           <span x-text="n.Note"></span>
                         </div>
+                      </template>
+                      <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 10">
+                        <button class="overflow-btn"
+                          @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID))"
+                          x-text="'+ ' + (getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length - 10) + ' more'">
+                        </button>
                       </template>
                     </div>
                   </template>
@@ -991,6 +1084,41 @@
     </template>
   </div><!-- /AM tab -->
 
+  <!-- Tooltip overlay -->
+  <template x-if="_tip.show">
+    <div>
+      <div class="tip-backdrop" @click="hideTip()"></div>
+      <div class="tip-card">
+        <div class="tip-header">
+          <span class="tip-title" x-text="_tip.type === 'tasks' ? 'Task List (' + _tip.items.length + ')' : 'Call Notes (' + _tip.items.length + ')'"></span>
+          <button class="tip-close" @click="hideTip()">&#x2715;</button>
+        </div>
+        <!-- Tasks content -->
+        <template x-if="_tip.type === 'tasks'">
+          <ul style="list-style:none;margin:0;padding:0;">
+            <template x-for="t in _tip.items" :key="t.Task + t.CompleteDate">
+              <li class="tip-task-item">
+                <span style="font-weight:600;color:var(--gray);" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
+                <span x-text="' – ' + (t.Task || '')"></span>
+              </li>
+            </template>
+          </ul>
+        </template>
+        <!-- Notes content -->
+        <template x-if="_tip.type === 'notes'">
+          <div>
+            <template x-for="n in _tip.items" :key="n.Note + n.UserID">
+              <div class="tip-note-item">
+                <div class="tip-note-meta" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '')"></div>
+                <div class="tip-note-text" x-text="n.Note"></div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+  </template>
+
 </div><!-- /remakes-page -->
 {% endblock %}
 
@@ -1000,7 +1128,7 @@
 <script>
 function remakesPage() {
   return {
-    activeTab: 'meeting',
+    activeTab: 'all',
     loading: false,
     message: '',
     meetingStart: '{{ week_start }}',
@@ -1021,12 +1149,13 @@ function remakesPage() {
     _noteMapData: {},
     _charts: {},
     _noteSaveState: {},
+    _tip: { show: false, type: '', items: [] },
 
     // ── Init ────────────────────────────────────────────────────
     init() {
-      this.$watch('allStart', () => { if (this.activeTab === 'all') this.$nextTick(() => this.renderCharts()); });
-      this.$watch('allEnd',   () => { if (this.activeTab === 'all') this.$nextTick(() => this.renderCharts()); });
-      this.$watch('activeTab', v => { if (v === 'all') this.$nextTick(() => this.renderCharts()); });
+      this.$watch('allStart', () => { if (this.activeTab === 'all') this.$nextTick(() => requestAnimationFrame(() => this.renderCharts())); });
+      this.$watch('allEnd',   () => { if (this.activeTab === 'all') this.$nextTick(() => requestAnimationFrame(() => this.renderCharts())); });
+      this.$watch('activeTab', v => { if (v === 'all') this.$nextTick(() => requestAnimationFrame(() => this.renderCharts())); });
 
       fetch('/remakes/all-details')
         .then(r => r.json())
@@ -1045,8 +1174,15 @@ function remakesPage() {
             }
           }
           this._noteMapData = nm;
+
+          if (this.activeTab === 'all') {
+            this.$nextTick(() => requestAnimationFrame(() => this.renderCharts()));
+          }
         })
         .catch(e => console.warn('Failed to load case details:', e));
+
+      // Render charts on initial load
+      this.$nextTick(() => requestAnimationFrame(() => this.renderCharts()));
     },
 
     // ── Computed AM list ─────────────────────────────────────────
@@ -1210,6 +1346,20 @@ function remakesPage() {
       });
     },
 
+    getSortedNotesForCase(mainId, ogId) {
+      return this.getNotesForCase(mainId, ogId)
+        .slice()
+        .sort((a, b) => ((b.CallDate || '') > (a.CallDate || '') ? 1 : -1));
+    },
+
+    showTip(type, items) {
+      this._tip = { show: true, type, items };
+    },
+
+    hideTip() {
+      this._tip = { show: false, type: '', items: [] };
+    },
+
     // ── Formatting helpers ───────────────────────────────────────
     fmtCurrency(v) {
       return '$' + Math.round(v).toLocaleString('en-US');
@@ -1230,12 +1380,12 @@ function remakesPage() {
       const days  = p === '1w' ? 7 : p === '4w' ? 28 : 56;
       this.allEnd   = today.toISOString().slice(0, 10);
       this.allStart = new Date(+today - days * 86400000).toISOString().slice(0, 10);
-      this.$nextTick(() => this.renderCharts());
+      this.$nextTick(() => requestAnimationFrame(() => this.renderCharts()));
     },
 
     switchToAll() {
       this.activeTab = 'all';
-      this.$nextTick(() => this.renderCharts());
+      this.$nextTick(() => requestAnimationFrame(() => this.renderCharts()));
     },
 
     // ── AM export ────────────────────────────────────────────────
