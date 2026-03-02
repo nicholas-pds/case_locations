@@ -1,0 +1,1112 @@
+{% extends "base.html" %}
+{% block title %}Remakes{% endblock %}
+
+{% block extra_css %}
+<style>
+  [x-cloak] { display: none !important; }
+
+  :root {
+    --red: #C0182B;
+    --red-dark: #a01222;
+    --gray: #6B6B6B;
+    --dark: #1A1A1A;
+    --light: #F8F8F8;
+    --border: #E5E5E5;
+  }
+
+  .remakes-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 24px 40px;
+  }
+
+  /* ── Header ── */
+  .remakes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 0;
+  }
+  .remakes-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0 0 4px;
+  }
+  .remakes-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--gray);
+  }
+  .refresh-btn {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 18px;
+    cursor: pointer;
+    font-size: 0.87rem;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+  .refresh-btn:hover { background: var(--red-dark); }
+  .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .status-msg {
+    font-size: 0.8rem;
+    color: var(--gray);
+    font-style: italic;
+  }
+
+  /* ── Tabs ── */
+  .tab-nav {
+    display: flex;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 0;
+  }
+  .tab-btn {
+    padding: 12px 22px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    color: var(--gray);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--dark); }
+  .tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
+  .tab-content { padding: 18px 0; }
+
+  /* ── Controls ── */
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .controls-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--dark);
+  }
+  .date-input {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    color: var(--dark);
+  }
+  .date-sep { color: var(--gray); font-size: 0.82rem; }
+  .preset-btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 4px;
+    padding: 5px 13px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--dark);
+    transition: background 0.12s, color 0.12s;
+  }
+  .preset-btn:hover { background: var(--light); }
+  .preset-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+  /* ── KPI Cards ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--red);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .kpi-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1.1;
+  }
+  .kpi-sub {
+    font-size: 0.7rem;
+    color: var(--gray);
+    margin-top: 3px;
+  }
+
+  /* ── Charts ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .chart-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .chart-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 180px;
+  }
+
+  /* ── Breakdown ── */
+  .breakdown-section { margin-bottom: 20px; }
+  .breakdown-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+  }
+  .breakdown-toggle:hover { color: var(--red); }
+  .breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .breakdown-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .breakdown-card-title {
+    background: var(--dark);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 8px 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .breakdown-table th {
+    background: var(--light);
+    padding: 7px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--gray);
+    border-bottom: 2px solid var(--border);
+    font-size: 0.75rem;
+  }
+  .breakdown-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--dark);
+  }
+  .breakdown-table tr:last-child td { border-bottom: none; }
+  .breakdown-pct {
+    color: var(--gray);
+    font-size: 0.75rem;
+  }
+
+  /* ── Remakes Table ── */
+  .remakes-table-wrap {
+    overflow-x: auto;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .remakes-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    min-width: 1100px;
+  }
+  .remakes-table th {
+    background: var(--dark);
+    color: #fff;
+    padding: 10px 9px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .remakes-table th:first-child { border-radius: 6px 0 0 0; }
+  .remakes-table th:last-child  { border-radius: 0 6px 0 0; }
+  .remakes-table td {
+    padding: 9px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .remakes-table tbody tr:hover td { background: #FFF8F8; }
+  .remakes-table tbody tr:last-child td { border-bottom: none; }
+
+  .case-num {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 0.85rem;
+  }
+  .case-meta {
+    font-size: 0.74rem;
+    color: var(--gray);
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+  .case-meta span { display: block; }
+
+  .task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.77rem;
+  }
+  .task-list li {
+    padding: 2px 0;
+    color: var(--dark);
+    line-height: 1.4;
+    border-bottom: 1px dotted var(--border);
+  }
+  .task-list li:last-child { border-bottom: none; }
+  .task-name { font-weight: 600; color: var(--gray); }
+
+  .call-note-item {
+    font-size: 0.77rem;
+    padding: 2px 0;
+    color: var(--dark);
+    line-height: 1.4;
+    border-bottom: 1px dotted var(--border);
+  }
+  .call-note-item:last-child { border-bottom: none; }
+  .call-note-user { font-weight: 600; color: var(--gray); }
+
+  .note-textarea {
+    width: 100%;
+    min-height: 60px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 0.78rem;
+    resize: vertical;
+    font-family: inherit;
+    box-sizing: border-box;
+    color: var(--dark);
+    background: #fff;
+    transition: border-color 0.15s;
+  }
+  .note-textarea:focus {
+    border-color: var(--red);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(192,24,43,0.08);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--gray);
+    font-size: 0.9rem;
+  }
+  .empty-state-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    opacity: 0.4;
+  }
+
+  /* ── Status Badges ── */
+  .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .status-In-Production { background: #FFF3E0; color: #E65100; }
+  .status-Invoiced      { background: #E8F5E9; color: #2E7D32; }
+  .status-On-Hold       { background: #FCE4EC; color: #C62828; }
+
+  /* ── Remake type chip ── */
+  .remake-chip {
+    display: inline-block;
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.74rem;
+    color: var(--dark);
+    font-weight: 600;
+  }
+  .remake-chip.full-charge {
+    background: #FCE4EC;
+    border-color: #f8bbd0;
+    color: #C62828;
+  }
+
+  /* ── Loading Overlay ── */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: rmk-spin 0.8s linear infinite;
+  }
+  @keyframes rmk-spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ── Section header ── */
+  .section-header {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .breakdown-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="remakes-page"
+     x-data="remakesPage()"
+     x-init="
+       $watch('allStart', () => { if (activeTab === 'all') $nextTick(() => renderCharts()); });
+       $watch('allEnd',   () => { if (activeTab === 'all') $nextTick(() => renderCharts()); });
+     ">
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" x-show="loading" x-cloak>
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- Page header -->
+  <div class="remakes-header">
+    <div>
+      <h1 class="remakes-title">External Remakes</h1>
+      <div class="remakes-meta">
+        <span>Last refreshed: {{ last_refresh | fmt_datetime if last_refresh else "Not loaded" }}</span>
+        <span x-show="message" x-text="message" class="status-msg" x-cloak></span>
+      </div>
+    </div>
+    <button class="refresh-btn" @click="refresh()" :disabled="loading">Refresh Data</button>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn" :class="{active: activeTab==='meeting'}" @click="activeTab='meeting'">
+      Meeting Remakes
+    </button>
+    <button class="tab-btn" :class="{active: activeTab==='all'}" @click="switchToAll()">
+      All Remakes Tracking
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB: MEETING REMAKES
+       ══════════════════════════════════════════ -->
+  <div class="tab-content" x-show="activeTab==='meeting'">
+
+    <div class="controls-row">
+      <span class="controls-label">Date Range:</span>
+      <input type="date" class="date-input" x-model="meetingStart">
+      <span class="date-sep">to</span>
+      <input type="date" class="date-input" x-model="meetingEnd">
+      <span class="date-sep" style="margin-left:4px;">
+        (<span x-text="filteredMeeting.length"></span> cases)
+      </span>
+    </div>
+
+    <!-- Meeting table -->
+    <template x-if="filteredMeeting.length === 0">
+      <div class="empty-state">
+        <div class="empty-state-icon">&#9744;</div>
+        <div>No remake cases for this date range.</div>
+        <div style="margin-top:6px;font-size:0.8rem;">Click <strong>Refresh Data</strong> to load from the database.</div>
+      </div>
+    </template>
+
+    <template x-if="filteredMeeting.length > 0">
+      <div class="remakes-table-wrap">
+        <table class="remakes-table">
+          <thead>
+            <tr>
+              <th style="width:140px;">Old Rx</th>
+              <th style="width:120px;">Practice</th>
+              <th style="width:140px;">New Rx</th>
+              <th style="width:110px;">Remake Type</th>
+              <th style="width:160px;">Task List</th>
+              <th style="width:180px;">Call Notes / Reason</th>
+              <th style="width:160px;">Final Investigation Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="row in filteredMeeting" :key="row.MainCaseNumber">
+              <tr>
+                <!-- Old Rx -->
+                <td>
+                  <div class="case-num" x-text="row.OG_CaseNumber || '—'"></div>
+                  <div class="case-meta">
+                    <span x-show="row.OG_ShipDate">Ship: <span x-text="(row.OG_ShipDate||'').slice(0,10)"></span></span>
+                    <span x-show="row.OG_DueDate">Due: <span x-text="(row.OG_DueDate||'').slice(0,10)"></span></span>
+                    <span x-show="row.SalesPerson">Rep: <span x-text="row.SalesPerson"></span></span>
+                    <span>90d: <span x-text="row.TotalCases_90Days||0"></span> cases / <span x-text="row.TotalRemakes_90Days||0"></span> remakes</span>
+                  </div>
+                </td>
+                <!-- Practice -->
+                <td>
+                  <div x-text="row.PracticeName || '—'"></div>
+                </td>
+                <!-- New Rx -->
+                <td>
+                  <div class="case-num" x-text="row.MainCaseNumber || '—'"></div>
+                  <div class="case-meta">
+                    <span x-show="row.ShipDate">Ship: <span x-text="(row.ShipDate||'').slice(0,10)"></span></span>
+                    <span>
+                      <span :class="'status-badge status-' + (row.Status||'').replace(/ /g,'-')" x-text="row.Status"></span>
+                    </span>
+                    <span x-show="row.Product" x-text="row.Product"></span>
+                  </div>
+                </td>
+                <!-- Remake Type -->
+                <td>
+                  <span :class="'remake-chip' + (row.Remake === 'Remake Full Charge' ? ' full-charge' : '')" x-text="row.Remake || '—'"></span>
+                  <div class="case-meta" x-show="row.RemakeDiscount">
+                    <span x-text="'Disc: ' + row.RemakeDiscount + '%'"></span>
+                  </div>
+                </td>
+                <!-- Task List -->
+                <td>
+                  <template x-if="getTasksForCase(row.MainCaseID).length === 0">
+                    <span style="color:var(--gray)">—</span>
+                  </template>
+                  <template x-if="getTasksForCase(row.MainCaseID).length > 0">
+                    <ul class="task-list">
+                      <template x-for="t in getTasksForCase(row.MainCaseID)" :key="t.Task + t.CompletedDate">
+                        <li>
+                          <span class="task-name" x-text="t.CompletedByName || t.CompletedBy"></span>
+                          <span x-text="' – ' + (t.Task || '')"></span>
+                        </li>
+                      </template>
+                    </ul>
+                  </template>
+                </td>
+                <!-- Call Notes -->
+                <td>
+                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                    <span style="color:var(--gray)">—</span>
+                  </template>
+                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                    <div>
+                      <template x-for="n in getNotesForCase(row.MainCaseID, row.OG_CaseID)" :key="n.Note">
+                        <div class="call-note-item">
+                          <span class="call-note-user" x-text="(n.UserName || n.UserID) + ': '"></span>
+                          <span x-text="n.Note"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </td>
+                <!-- Final Investigation Notes -->
+                <td>
+                  <textarea class="note-textarea"
+                            :value="savedNotes[row.MainCaseNumber] || ''"
+                            @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                            placeholder="Add investigation notes…"></textarea>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </template>
+  </div><!-- /meeting tab -->
+
+  <!-- ══════════════════════════════════════════
+       TAB: ALL REMAKES TRACKING
+       ══════════════════════════════════════════ -->
+  <div class="tab-content" x-show="activeTab==='all'" x-cloak>
+
+    <!-- Date range controls -->
+    <div class="controls-row">
+      <button class="preset-btn" :class="{active: allPreset==='2w'}" @click="setPreset('2w')">2 Wks</button>
+      <button class="preset-btn" :class="{active: allPreset==='4w'}" @click="setPreset('4w')">4 Wks</button>
+      <button class="preset-btn" :class="{active: allPreset==='8w'}" @click="setPreset('8w')">8 Wks</button>
+      <button class="preset-btn" :class="{active: allPreset==='custom'}" @click="allPreset='custom'">Custom</button>
+      <span class="date-sep" style="margin-left:4px;">From</span>
+      <input type="date" class="date-input" x-model="allStart" @change="allPreset='custom'">
+      <span class="date-sep">to</span>
+      <input type="date" class="date-input" x-model="allEnd" @change="allPreset='custom'">
+      <span class="date-sep">
+        (<span x-text="filteredAll.length"></span> cases)
+      </span>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Remakes</div>
+        <div class="kpi-value" x-text="kpiTotalRemakes"></div>
+        <div class="kpi-sub">Excl. Full Charge · in selected range</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Remake %</div>
+        <div class="kpi-value" x-text="fmtPct(kpiRemakePct)"></div>
+        <div class="kpi-sub">~90-day rolling avg per practice</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Remake Loss ($)</div>
+        <div class="kpi-value" x-text="fmtCurrency(kpiRemakeLoss)"></div>
+        <div class="kpi-sub">Charge × (1 − discount%)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Loss / Remake</div>
+        <div class="kpi-value" x-text="fmtCurrency(kpiAvgLoss)"></div>
+        <div class="kpi-sub">Remake Loss ÷ Total Remakes</div>
+      </div>
+    </div>
+
+    <!-- Charts 2×2 -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Remakes Count by Week</div>
+        <div class="chart-wrap"><canvas id="chartRemakesCount"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Remake Count by Week (incl. Full Charge)</div>
+        <div class="chart-wrap"><canvas id="chartRemakesPct"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Total Revenue by Week</div>
+        <div class="chart-wrap"><canvas id="chartRevenue"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Remake Loss ($) by Week</div>
+        <div class="chart-wrap"><canvas id="chartRemakeLoss"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Breakdown Tables -->
+    <div class="breakdown-section">
+      <button class="breakdown-toggle" @click="showBreakdowns = !showBreakdowns">
+        <span x-text="showBreakdowns ? '▾' : '▸'"></span>
+        Breakdowns
+      </button>
+      <div x-show="showBreakdowns">
+        <div class="breakdown-grid">
+          <!-- Remake Reason -->
+          <div class="breakdown-card">
+            <div class="breakdown-card-title">Remake Reason</div>
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Reason</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-if="reasonBreakdown.length === 0">
+                  <tr><td colspan="3" style="color:var(--gray);text-align:center;padding:12px;">No data</td></tr>
+                </template>
+                <template x-for="row in reasonBreakdown" :key="row.name">
+                  <tr>
+                    <td x-text="row.name"></td>
+                    <td style="text-align:right;" x-text="row.count"></td>
+                    <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <!-- Remake Type -->
+          <div class="breakdown-card">
+            <div class="breakdown-card-title">Remake Type</div>
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-if="typeBreakdown.length === 0">
+                  <tr><td colspan="3" style="color:var(--gray);text-align:center;padding:12px;">No data</td></tr>
+                </template>
+                <template x-for="row in typeBreakdown" :key="row.name">
+                  <tr>
+                    <td x-text="row.name"></td>
+                    <td style="text-align:right;" x-text="row.count"></td>
+                    <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <!-- Top Products -->
+          <div class="breakdown-card">
+            <div class="breakdown-card-title">Top Products</div>
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-if="productBreakdown.length === 0">
+                  <tr><td colspan="3" style="color:var(--gray);text-align:center;padding:12px;">No data</td></tr>
+                </template>
+                <template x-for="row in productBreakdown" :key="row.name">
+                  <tr>
+                    <td x-text="row.name"></td>
+                    <td style="text-align:right;" x-text="row.count"></td>
+                    <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Remakes Case Table -->
+    <p class="section-header">Case-by-Case Detail</p>
+
+    <template x-if="filteredAll.length === 0">
+      <div class="empty-state">
+        <div class="empty-state-icon">&#9744;</div>
+        <div>No remake cases for this date range.</div>
+        <div style="margin-top:6px;font-size:0.8rem;">Click <strong>Refresh Data</strong> to load from the database.</div>
+      </div>
+    </template>
+
+    <template x-if="filteredAll.length > 0">
+      <div class="remakes-table-wrap">
+        <table class="remakes-table">
+          <thead>
+            <tr>
+              <th style="width:140px;">Old Rx</th>
+              <th style="width:120px;">Practice</th>
+              <th style="width:140px;">New Rx</th>
+              <th style="width:110px;">Remake Type</th>
+              <th style="width:160px;">Task List</th>
+              <th style="width:180px;">Call Notes / Reason</th>
+              <th style="width:160px;">Final Investigation Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="row in filteredAll" :key="row.MainCaseNumber">
+              <tr>
+                <!-- Old Rx -->
+                <td>
+                  <div class="case-num" x-text="row.OG_CaseNumber || '—'"></div>
+                  <div class="case-meta">
+                    <span x-show="row.OG_ShipDate">Ship: <span x-text="(row.OG_ShipDate||'').slice(0,10)"></span></span>
+                    <span x-show="row.OG_DueDate">Due: <span x-text="(row.OG_DueDate||'').slice(0,10)"></span></span>
+                    <span x-show="row.SalesPerson">Rep: <span x-text="row.SalesPerson"></span></span>
+                    <span>90d: <span x-text="row.TotalCases_90Days||0"></span> / <span x-text="row.TotalRemakes_90Days||0"></span> remakes</span>
+                  </div>
+                </td>
+                <!-- Practice -->
+                <td>
+                  <div x-text="row.PracticeName || '—'"></div>
+                </td>
+                <!-- New Rx -->
+                <td>
+                  <div class="case-num" x-text="row.MainCaseNumber || '—'"></div>
+                  <div class="case-meta">
+                    <span x-show="row.ShipDate">Ship: <span x-text="(row.ShipDate||'').slice(0,10)"></span></span>
+                    <span>
+                      <span :class="'status-badge status-' + (row.Status||'').replace(/ /g,'-')" x-text="row.Status"></span>
+                    </span>
+                    <span x-show="row.Product" x-text="row.Product"></span>
+                  </div>
+                </td>
+                <!-- Remake Type -->
+                <td>
+                  <span :class="'remake-chip' + (row.Remake === 'Remake Full Charge' ? ' full-charge' : '')" x-text="row.Remake || '—'"></span>
+                  <div class="case-meta" x-show="row.RemakeDiscount">
+                    <span x-text="'Disc: ' + row.RemakeDiscount + '%'"></span>
+                  </div>
+                </td>
+                <!-- Task List -->
+                <td>
+                  <template x-if="getTasksForCase(row.MainCaseID).length === 0">
+                    <span style="color:var(--gray)">—</span>
+                  </template>
+                  <template x-if="getTasksForCase(row.MainCaseID).length > 0">
+                    <ul class="task-list">
+                      <template x-for="t in getTasksForCase(row.MainCaseID)" :key="t.Task + t.CompletedDate">
+                        <li>
+                          <span class="task-name" x-text="t.CompletedByName || t.CompletedBy"></span>
+                          <span x-text="' – ' + (t.Task || '')"></span>
+                        </li>
+                      </template>
+                    </ul>
+                  </template>
+                </td>
+                <!-- Call Notes -->
+                <td>
+                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                    <span style="color:var(--gray)">—</span>
+                  </template>
+                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                    <div>
+                      <template x-for="n in getNotesForCase(row.MainCaseID, row.OG_CaseID)" :key="n.Note">
+                        <div class="call-note-item">
+                          <span class="call-note-user" x-text="(n.UserName || n.UserID) + ': '"></span>
+                          <span x-text="n.Note"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </td>
+                <!-- Final Investigation Notes -->
+                <td>
+                  <textarea class="note-textarea"
+                            :value="savedNotes[row.MainCaseNumber] || ''"
+                            @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                            placeholder="Add investigation notes…"></textarea>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </template>
+  </div><!-- /all remakes tab -->
+
+</div><!-- /remakes-page -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+function remakesPage() {
+  return {
+    activeTab: 'meeting',
+    loading: false,
+    message: '',
+    meetingStart: '{{ week_start }}',
+    meetingEnd: '{{ week_end }}',
+    allStart: new Date(Date.now() - 28 * 86400000).toISOString().slice(0, 10),
+    allEnd:   new Date().toISOString().slice(0, 10),
+    allPreset: '4w',
+    showBreakdowns: true,
+
+    allRecords:      {{ all_records | tojson }},
+    taskRecords:     {{ task_records | tojson }},
+    callNoteRecords: {{ call_note_records | tojson }},
+    revenueRecords:  {{ revenue_records | tojson }},
+    savedNotes:      {{ saved_notes | tojson }},
+
+    _charts: {},
+
+    // ── Filtered views ──────────────────────────────────────────
+    get filteredMeeting() {
+      const s = this.meetingStart, e = this.meetingEnd;
+      return this.allRecords.filter(r => {
+        if (r.Remake === 'Remake Full Charge') return false;
+        const d = (r.DateIn || '').slice(0, 10);
+        return d >= s && d <= e;
+      });
+    },
+
+    get filteredAll() {
+      const s = this.allStart, e = this.allEnd;
+      return this.allRecords.filter(r => {
+        const d = (r.DateIn || '').slice(0, 10);
+        return d >= s && d <= e;
+      });
+    },
+
+    // ── KPI getters ─────────────────────────────────────────────
+    get kpiTotalRemakes() {
+      return this.filteredAll.filter(r => r.Remake !== 'Remake Full Charge').length;
+    },
+
+    get kpiRemakeLoss() {
+      return this.filteredAll
+        .filter(r => r.Remake !== 'Remake Full Charge')
+        .reduce((sum, r) => {
+          const charge = parseFloat(r.TotalCharge) || 0;
+          const disc   = parseFloat(r.RemakeDiscount) || 0;
+          return sum + charge * (1 - disc / 100);
+        }, 0);
+    },
+
+    get kpiAvgLoss() {
+      const count = this.kpiTotalRemakes;
+      return count > 0 ? this.kpiRemakeLoss / count : 0;
+    },
+
+    get kpiRemakePct() {
+      const rows = this.filteredAll.filter(
+        r => r.Remake !== 'Remake Full Charge' && (r.TotalCases_90Days || 0) > 0
+      );
+      if (!rows.length) return 0;
+      const avg = rows.reduce(
+        (s, r) => s + ((r.TotalRemakes_90Days || 0) / (r.TotalCases_90Days || 1)), 0
+      ) / rows.length;
+      return avg * 100;
+    },
+
+    // ── ISO week helper ──────────────────────────────────────────
+    _isoWeek(dateStr) {
+      if (!dateStr) return '';
+      const d    = new Date(dateStr + 'T00:00:00');
+      const thu  = new Date(d);
+      thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+      const jan4 = new Date(thu.getFullYear(), 0, 4);
+      const wkNum = 1 + Math.round((thu - jan4) / 604800000);
+      return `${thu.getFullYear()}-W${String(wkNum).padStart(2, '0')}`;
+    },
+
+    get weeklyChartData() {
+      const weeks = {};
+      for (const r of this.filteredAll) {
+        const wk = this._isoWeek((r.DateIn || '').slice(0, 10));
+        if (!wk) continue;
+        if (!weeks[wk]) weeks[wk] = { count: 0, countAll: 0, loss: 0 };
+        weeks[wk].countAll++;
+        if (r.Remake !== 'Remake Full Charge') {
+          weeks[wk].count++;
+          const charge = parseFloat(r.TotalCharge) || 0;
+          const disc   = parseFloat(r.RemakeDiscount) || 0;
+          weeks[wk].loss += charge * (1 - disc / 100);
+        }
+      }
+      // Revenue
+      const rev = {};
+      for (const r of this.revenueRecords) {
+        const wk = this._isoWeek((r.DateIn || '').slice(0, 10));
+        if (!wk) continue;
+        rev[wk] = (rev[wk] || 0) + (parseFloat(r.TotalRevenue) || 0);
+      }
+      return Object.keys(weeks).sort().map(wk => ({
+        label:    wk.replace(/^\d+-W/, 'Wk '),
+        count:    weeks[wk].count,
+        countAll: weeks[wk].countAll,
+        loss:     Math.round(weeks[wk].loss),
+        revenue:  Math.round(rev[wk] || 0),
+      }));
+    },
+
+    // ── Breakdown getters ────────────────────────────────────────
+    get reasonBreakdown() {
+      return this._breakdown(r => r.RemakeReason || 'Unknown');
+    },
+    get typeBreakdown() {
+      return this._breakdown(r => r.Remake || 'Unknown');
+    },
+    get productBreakdown() {
+      return this._breakdown(r => r.Product || 'Unknown').slice(0, 10);
+    },
+    _breakdown(keyFn) {
+      const counts = {};
+      const total  = this.filteredAll.length || 1;
+      for (const r of this.filteredAll) {
+        const k = keyFn(r);
+        counts[k] = (counts[k] || 0) + 1;
+      }
+      return Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, count]) => ({ name, count, pct: ((count / total) * 100).toFixed(1) }));
+    },
+
+    // ── Per-case detail helpers ──────────────────────────────────
+    getTasksForCase(caseId) {
+      return this.taskRecords
+        .filter(t => String(t.CaseID) === String(caseId))
+        .sort((a, b) => ((a.CompletedDate || '') > (b.CompletedDate || '') ? 1 : -1));
+    },
+
+    getNotesForCase(mainCaseId, ogCaseId) {
+      const m = String(mainCaseId), o = String(ogCaseId);
+      return this.callNoteRecords.filter(n =>
+        String(n.AnchorCaseID) === m || String(n.LinkCaseID) === m ||
+        String(n.AnchorCaseID) === o || String(n.LinkCaseID) === o
+      );
+    },
+
+    // ── Formatting helpers ───────────────────────────────────────
+    fmtCurrency(v) {
+      return '$' + Math.round(v).toLocaleString('en-US');
+    },
+    fmtPct(v) {
+      return (v || 0).toFixed(1) + '%';
+    },
+
+    // ── Date preset ──────────────────────────────────────────────
+    setPreset(p) {
+      this.allPreset = p;
+      const today = new Date();
+      const days  = p === '2w' ? 14 : p === '4w' ? 28 : 56;
+      this.allEnd   = today.toISOString().slice(0, 10);
+      this.allStart = new Date(+today - days * 86400000).toISOString().slice(0, 10);
+      this.$nextTick(() => this.renderCharts());
+    },
+
+    switchToAll() {
+      this.activeTab = 'all';
+      this.$nextTick(() => this.renderCharts());
+    },
+
+    // ── Chart rendering ──────────────────────────────────────────
+    renderCharts() {
+      if (typeof Chart === 'undefined' || typeof ChartDataLabels === 'undefined') return;
+      Chart.register(ChartDataLabels);
+
+      const data   = this.weeklyChartData;
+      const labels = data.map(d => d.label);
+
+      const baseOpts = () => ({
+        type: 'bar',
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#FFFFFF',
+              font: { size: 10, weight: '700' },
+              anchor: 'center',
+              align: 'center',
+              display: ctx => (ctx.dataset.data[ctx.dataIndex] || 0) > 0,
+              formatter: v => v,
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#6B6B6B' } },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F0F0F0' },
+              ticks: { font: { size: 10 }, color: '#6B6B6B' },
+            },
+          },
+        },
+      });
+
+      const make = (id, dataset, color, fmt) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (this._charts[id]) { this._charts[id].destroy(); }
+        const cfg = baseOpts();
+        cfg.options.plugins.datalabels.formatter = fmt;
+        this._charts[id] = new Chart(el, {
+          ...cfg,
+          data: {
+            labels,
+            datasets: [{ data: dataset, backgroundColor: color, borderRadius: 3 }],
+          },
+        });
+      };
+
+      make('chartRemakesCount',
+        data.map(d => d.count), '#C0182B',
+        v => v > 0 ? String(v) : '');
+
+      make('chartRemakesPct',
+        data.map(d => d.countAll), '#6B6B6B',
+        v => v > 0 ? String(v) : '');
+
+      make('chartRevenue',
+        data.map(d => d.revenue), '#1A1A1A',
+        v => v >= 1000 ? '$' + Math.round(v / 1000) + 'K' : v > 0 ? '$' + v : '');
+
+      make('chartRemakeLoss',
+        data.map(d => d.loss), '#C0182B',
+        v => v >= 1000 ? '$' + Math.round(v / 1000) + 'K' : v > 0 ? '$' + v : '');
+    },
+
+    // ── Note persistence ─────────────────────────────────────────
+    async saveNote(caseNumber, noteText) {
+      if (!caseNumber) return;
+      try {
+        await fetch('/remakes/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ case_number: caseNumber, note: noteText }),
+        });
+      } catch (e) {
+        console.warn('Note save failed:', e);
+      }
+    },
+
+    // ── Refresh ──────────────────────────────────────────────────
+    async refresh() {
+      this.loading = true;
+      this.message = '';
+      try {
+        const res  = await fetch('/remakes/refresh', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          this.message = `Loaded: ${data.all_rows} remakes · ${data.tasks_rows} tasks · ${data.notes_rows} call notes · ${data.revenue_rows} revenue rows`;
+          setTimeout(() => window.location.reload(), 900);
+        } else {
+          this.message = 'Error: ' + (data.message || 'Unknown error');
+          this.loading = false;
+        }
+      } catch (e) {
+        this.message = 'Network error: ' + e.message;
+        this.loading = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}
