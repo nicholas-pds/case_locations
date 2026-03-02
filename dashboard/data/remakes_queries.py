@@ -121,7 +121,7 @@ WITH RemakeCases AS (
     UNION
     SELECT OG_CaseID  AS CaseID FROM RemakeCases
 )
-SELECT cn.Note, cn.UserID, chc.AnchorCaseID, chc.LinkCaseID
+SELECT cn.Note, cn.UserID, cn.[Date] AS CallDate, chc.AnchorCaseID, chc.LinkCaseID
 FROM dbo.CallNotes           AS cn
 INNER JOIN dbo.CaseHistory_Calls AS chc ON cn.CallID = chc.RefCallID
 WHERE chc.AnchorCaseID IN (SELECT CaseID FROM AllCaseIDs)
@@ -158,7 +158,7 @@ def get_tasks_for_case(conn, main_id: int, og_id: int) -> pd.DataFrame:
 
 def get_notes_for_case(conn, main_id: int, og_id: int) -> pd.DataFrame:
     sql = """
-    SELECT cn.Note, cn.UserID, chc.AnchorCaseID, chc.LinkCaseID
+    SELECT cn.Note, cn.UserID, cn.[Date] AS CallDate, chc.AnchorCaseID, chc.LinkCaseID
     FROM dbo.CallNotes AS cn
     INNER JOIN dbo.CaseHistory_Calls AS chc ON cn.CallID = chc.RefCallID
     WHERE chc.AnchorCaseID IN (?, ?)
