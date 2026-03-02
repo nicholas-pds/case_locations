@@ -87,6 +87,47 @@ GROUP BY CAST(InvoiceDate AS DATE)
 ORDER BY InvoiceDate ASC
 """
 
+_CASE_TASKS_SQL = """
+WITH RemakeCases AS (
+    SELECT main.CaseID AS MainCaseID, linked.CaseID AS OG_CaseID
+    FROM dbo.CaseLinks AS links
+    INNER JOIN dbo.Cases AS main   ON links.CaseID     = main.CaseID
+    INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
+    WHERE links.Notes LIKE '%Remake Of%'
+      AND main.DateIn >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
+      AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
+)
+SELECT th.CaseID, th.Task, th.CompletedBy, CAST(th.CompleteDate AS DATE) AS CompleteDate
+FROM dbo.CaseTasksHistory AS th
+WHERE th.CaseID IN (
+    SELECT MainCaseID FROM RemakeCases
+    UNION
+    SELECT OG_CaseID  FROM RemakeCases
+)
+ORDER BY th.CaseID, th.CompleteDate ASC
+"""
+
+_CALL_NOTES_SQL = """
+WITH RemakeCases AS (
+    SELECT main.CaseID AS MainCaseID, linked.CaseID AS OG_CaseID
+    FROM dbo.CaseLinks AS links
+    INNER JOIN dbo.Cases AS main   ON links.CaseID     = main.CaseID
+    INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
+    WHERE links.Notes LIKE '%Remake Of%'
+      AND main.DateIn >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
+      AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
+), AllCaseIDs AS (
+    SELECT MainCaseID AS CaseID FROM RemakeCases
+    UNION
+    SELECT OG_CaseID  AS CaseID FROM RemakeCases
+)
+SELECT cn.Note, cn.UserID, chc.AnchorCaseID, chc.LinkCaseID
+FROM dbo.CallNotes           AS cn
+INNER JOIN dbo.CaseHistory_Calls AS chc ON cn.CallID = chc.RefCallID
+WHERE chc.AnchorCaseID IN (SELECT CaseID FROM AllCaseIDs)
+   OR chc.LinkCaseID   IN (SELECT CaseID FROM AllCaseIDs)
+"""
+
 # ─── Query functions ──────────────────────────────────────────────────────────
 
 def get_all_remakes(conn) -> pd.DataFrame:
@@ -95,6 +136,14 @@ def get_all_remakes(conn) -> pd.DataFrame:
 
 def get_revenue_by_day(conn) -> pd.DataFrame:
     return pd.read_sql(_REVENUE_BY_DAY_SQL, conn)
+
+
+def get_case_tasks(conn) -> pd.DataFrame:
+    return pd.read_sql(_CASE_TASKS_SQL, conn)
+
+
+def get_call_notes(conn) -> pd.DataFrame:
+    return pd.read_sql(_CALL_NOTES_SQL, conn)
 
 
 def get_tasks_for_case(conn, main_id: int, og_id: int) -> pd.DataFrame:
@@ -191,7 +240,7 @@ def save_remake_note(case_number: str, note_text: str) -> None:
 # ─── Cache helpers ────────────────────────────────────────────────────────────
 
 async def refresh_remakes_cache() -> dict:
-    """Run get_all_remakes + get_revenue_by_day in parallel, store in cache.
+    """Run all 4 queries in parallel, store in cache.
     Each query opens its own connection. Sets _remakes_last_refresh."""
     global _remakes_last_refresh
     loop = asyncio.get_event_loop()
@@ -203,17 +252,29 @@ async def refresh_remakes_cache() -> dict:
         finally:
             conn.close()
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        all_df, revenue_df = await asyncio.gather(
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        all_df, revenue_df, tasks_df, notes_df = await asyncio.gather(
             loop.run_in_executor(pool, _run, get_all_remakes),
             loop.run_in_executor(pool, _run, get_revenue_by_day),
+            loop.run_in_executor(pool, _run, get_case_tasks),
+            loop.run_in_executor(pool, _run, get_call_notes),
         )
+
+    tasks_df = _apply_employee_names(tasks_df, "CompletedBy", "CompletedByName")
+    notes_df = _apply_employee_names(notes_df, "UserID", "UserName")
 
     await cache.set("remakes_all", all_df)
     await cache.set("remakes_revenue", revenue_df)
+    await cache.set("remakes_tasks", tasks_df)
+    await cache.set("remakes_notes_text", notes_df)
     _remakes_last_refresh = datetime.now()
 
-    return {"all_rows": len(all_df), "revenue_rows": len(revenue_df)}
+    return {
+        "all_rows": len(all_df),
+        "revenue_rows": len(revenue_df),
+        "tasks_rows": len(tasks_df),
+        "notes_rows": len(notes_df),
+    }
 
 
 def get_cached_remakes() -> dict:
@@ -221,6 +282,8 @@ def get_cached_remakes() -> dict:
     return {
         "all": cache.get_sync("remakes_all"),
         "revenue": cache.get_sync("remakes_revenue"),
+        "tasks": cache.get_sync("remakes_tasks"),
+        "notes_text": cache.get_sync("remakes_notes_text"),
         "last_refresh": _remakes_last_refresh,
     }
 

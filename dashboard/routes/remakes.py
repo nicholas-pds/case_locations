@@ -74,6 +74,8 @@ async def remakes_page(request: Request):
         "meeting_records": _df_to_records(meeting_df),
         "all_records": _df_to_records(all_df),
         "revenue_records": _df_to_records(cached["revenue"]),
+        "task_records": _df_to_records(cached.get("tasks")),
+        "call_note_records": _df_to_records(cached.get("notes_text")),
         "saved_notes": saved_notes,
         "week_start": str(week_start),
         "week_end": str(week_end),

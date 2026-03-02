@@ -408,6 +408,23 @@
     border-bottom: 1px solid var(--border);
   }
 
+  /* ── Old Rx cell ── */
+  .og-rx-cell { min-width: 130px; }
+  .og-case-num { font-weight: 700; font-size: 0.88rem; color: var(--dark); margin-bottom: 5px; }
+  .og-dates { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+  .og-date-item { font-size: 0.75rem; color: var(--gray); }
+  .og-date-label { font-weight: 700; color: var(--dark); margin-right: 3px; font-size: 0.7rem;
+                   text-transform: uppercase; letter-spacing: 0.04em; }
+  .og-rep { font-size: 0.75rem; color: var(--gray); margin-bottom: 4px; font-style: italic; }
+  .og-stats { display: flex; gap: 4px; flex-wrap: wrap; }
+  .og-stat-chip { background: var(--light); border: 1px solid var(--border); border-radius: 10px;
+                  padding: 1px 7px; font-size: 0.68rem; font-weight: 600; color: var(--gray); }
+  .og-stat-chip.remake { background: #FFF0F0; border-color: #f8bbd0; color: var(--red); }
+
+  /* ── Note save feedback ── */
+  .note-save-badge   { font-size: 0.72rem; color: #2E7D32; font-weight: 700; margin-top: 3px; }
+  .note-saving-badge { font-size: 0.72rem; color: var(--gray); font-style: italic; margin-top: 3px; }
+
   @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
@@ -491,15 +508,24 @@
           </thead>
           <tbody>
             <template x-for="row in filteredMeeting" :key="row.MainCaseNumber">
-              <tr @mouseenter="loadCaseDetails(row.MainCaseID, row.OG_CaseID)">
+              <tr>
                 <!-- Old Rx -->
-                <td>
-                  <div class="case-num" x-text="row.OG_CaseNumber || '—'"></div>
-                  <div class="case-meta">
-                    <span x-show="row.OG_ShipDate">Ship: <span x-text="(row.OG_ShipDate||'').slice(0,10)"></span></span>
-                    <span x-show="row.OG_DueDate">Due: <span x-text="(row.OG_DueDate||'').slice(0,10)"></span></span>
-                    <span x-show="row.SalesPerson">Rep: <span x-text="row.SalesPerson"></span></span>
-                    <span>90d: <span x-text="row.TotalCases_90Days||0"></span> cases / <span x-text="row.TotalRemakes_90Days||0"></span> remakes</span>
+                <td class="og-rx-cell">
+                  <div class="og-case-num" x-text="row.OG_CaseNumber || '—'"></div>
+                  <div class="og-dates">
+                    <span class="og-date-item" x-show="row.OG_ShipDate">
+                      <span class="og-date-label">Ship</span>
+                      <span x-text="(row.OG_ShipDate||'').slice(0,10)"></span>
+                    </span>
+                    <span class="og-date-item" x-show="row.OG_DueDate">
+                      <span class="og-date-label">Due</span>
+                      <span x-text="(row.OG_DueDate||'').slice(0,10)"></span>
+                    </span>
+                  </div>
+                  <div class="og-rep" x-show="row.SalesPerson" x-text="row.SalesPerson"></div>
+                  <div class="og-stats">
+                    <span class="og-stat-chip" x-text="`${row.TotalCases_90Days||0} cases`"></span>
+                    <span class="og-stat-chip remake" x-text="`${row.TotalRemakes_90Days||0} re`"></span>
                   </div>
                 </td>
                 <!-- Practice -->
@@ -521,15 +547,12 @@
                 <td>
                   <span :class="'remake-chip' + (row.Remake === 'Remake Full Charge' ? ' full-charge' : '')" x-text="row.Remake || '—'"></span>
                   <div class="case-meta" x-show="row.RemakeDiscount">
-                    <span x-text="'Disc: ' + row.RemakeDiscount + '%'"></span>
+                    <span x-text="'$' + row.RemakeDiscount"></span>
                   </div>
                 </td>
                 <!-- Task List -->
                 <td>
-                  <template x-if="isLoadingDetails(row.MainCaseID, row.OG_CaseID)">
-                    <span style="color:var(--gray);font-style:italic;">Loading…</span>
-                  </template>
-                  <template x-if="!isLoadingDetails(row.MainCaseID, row.OG_CaseID) && getTasksForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                  <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -545,10 +568,7 @@
                 </td>
                 <!-- Call Notes -->
                 <td>
-                  <template x-if="isLoadingDetails(row.MainCaseID, row.OG_CaseID)">
-                    <span style="color:var(--gray);font-style:italic;">Loading…</span>
-                  </template>
-                  <template x-if="!isLoadingDetails(row.MainCaseID, row.OG_CaseID) && getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -564,10 +584,18 @@
                 </td>
                 <!-- Final Investigation Notes -->
                 <td>
-                  <textarea class="note-textarea"
-                            :value="savedNotes[row.MainCaseNumber] || ''"
-                            @blur="saveNote(row.MainCaseNumber, $event.target.value)"
-                            placeholder="Add investigation notes…"></textarea>
+                  <div style="position:relative;">
+                    <textarea class="note-textarea"
+                              :value="savedNotes[row.MainCaseNumber] || ''"
+                              @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                              placeholder="Add investigation notes…"></textarea>
+                    <div class="note-save-badge"
+                         x-show="_noteSaveState[row.MainCaseNumber] === 'saved'"
+                         x-cloak>Saved ✓</div>
+                    <div class="note-saving-badge"
+                         x-show="_noteSaveState[row.MainCaseNumber] === 'saving'"
+                         x-cloak>Saving…</div>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -607,12 +635,12 @@
       <div class="kpi-card">
         <div class="kpi-label">Remake %</div>
         <div class="kpi-value" x-text="fmtPct(kpiRemakePct)"></div>
-        <div class="kpi-sub">~90-day rolling avg per practice</div>
+        <div class="kpi-sub">Remake Loss ÷ Total Revenue (period)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Remake Loss ($)</div>
         <div class="kpi-value" x-text="fmtCurrency(kpiRemakeLoss)"></div>
-        <div class="kpi-sub">Charge × (1 − discount%)</div>
+        <div class="kpi-sub">Sum of RemakeDiscount for filtered cases</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Avg Loss / Remake</div>
@@ -755,15 +783,24 @@
           </thead>
           <tbody>
             <template x-for="row in filteredAll" :key="row.MainCaseNumber">
-              <tr @mouseenter="loadCaseDetails(row.MainCaseID, row.OG_CaseID)">
+              <tr>
                 <!-- Old Rx -->
-                <td>
-                  <div class="case-num" x-text="row.OG_CaseNumber || '—'"></div>
-                  <div class="case-meta">
-                    <span x-show="row.OG_ShipDate">Ship: <span x-text="(row.OG_ShipDate||'').slice(0,10)"></span></span>
-                    <span x-show="row.OG_DueDate">Due: <span x-text="(row.OG_DueDate||'').slice(0,10)"></span></span>
-                    <span x-show="row.SalesPerson">Rep: <span x-text="row.SalesPerson"></span></span>
-                    <span>90d: <span x-text="row.TotalCases_90Days||0"></span> / <span x-text="row.TotalRemakes_90Days||0"></span> remakes</span>
+                <td class="og-rx-cell">
+                  <div class="og-case-num" x-text="row.OG_CaseNumber || '—'"></div>
+                  <div class="og-dates">
+                    <span class="og-date-item" x-show="row.OG_ShipDate">
+                      <span class="og-date-label">Ship</span>
+                      <span x-text="(row.OG_ShipDate||'').slice(0,10)"></span>
+                    </span>
+                    <span class="og-date-item" x-show="row.OG_DueDate">
+                      <span class="og-date-label">Due</span>
+                      <span x-text="(row.OG_DueDate||'').slice(0,10)"></span>
+                    </span>
+                  </div>
+                  <div class="og-rep" x-show="row.SalesPerson" x-text="row.SalesPerson"></div>
+                  <div class="og-stats">
+                    <span class="og-stat-chip" x-text="`${row.TotalCases_90Days||0} cases`"></span>
+                    <span class="og-stat-chip remake" x-text="`${row.TotalRemakes_90Days||0} re`"></span>
                   </div>
                 </td>
                 <!-- Practice -->
@@ -785,15 +822,12 @@
                 <td>
                   <span :class="'remake-chip' + (row.Remake === 'Remake Full Charge' ? ' full-charge' : '')" x-text="row.Remake || '—'"></span>
                   <div class="case-meta" x-show="row.RemakeDiscount">
-                    <span x-text="'Disc: ' + row.RemakeDiscount + '%'"></span>
+                    <span x-text="'$' + row.RemakeDiscount"></span>
                   </div>
                 </td>
                 <!-- Task List -->
                 <td>
-                  <template x-if="isLoadingDetails(row.MainCaseID, row.OG_CaseID)">
-                    <span style="color:var(--gray);font-style:italic;">Loading…</span>
-                  </template>
-                  <template x-if="!isLoadingDetails(row.MainCaseID, row.OG_CaseID) && getTasksForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                  <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -809,10 +843,7 @@
                 </td>
                 <!-- Call Notes -->
                 <td>
-                  <template x-if="isLoadingDetails(row.MainCaseID, row.OG_CaseID)">
-                    <span style="color:var(--gray);font-style:italic;">Loading…</span>
-                  </template>
-                  <template x-if="!isLoadingDetails(row.MainCaseID, row.OG_CaseID) && getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                  <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -828,10 +859,18 @@
                 </td>
                 <!-- Final Investigation Notes -->
                 <td>
-                  <textarea class="note-textarea"
-                            :value="savedNotes[row.MainCaseNumber] || ''"
-                            @blur="saveNote(row.MainCaseNumber, $event.target.value)"
-                            placeholder="Add investigation notes…"></textarea>
+                  <div style="position:relative;">
+                    <textarea class="note-textarea"
+                              :value="savedNotes[row.MainCaseNumber] || ''"
+                              @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                              placeholder="Add investigation notes…"></textarea>
+                    <div class="note-save-badge"
+                         x-show="_noteSaveState[row.MainCaseNumber] === 'saved'"
+                         x-cloak>Saved ✓</div>
+                    <div class="note-saving-badge"
+                         x-show="_noteSaveState[row.MainCaseNumber] === 'saving'"
+                         x-cloak>Saving…</div>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -860,12 +899,14 @@ function remakesPage() {
     allPreset: '4w',
     showBreakdowns: true,
 
-    allRecords:     {{ all_records | tojson }},
-    revenueRecords: {{ revenue_records | tojson }},
-    savedNotes:     {{ saved_notes | tojson }},
+    allRecords:      {{ all_records | tojson }},
+    revenueRecords:  {{ revenue_records | tojson }},
+    taskRecords:     {{ task_records | tojson }},
+    callNoteRecords: {{ call_note_records | tojson }},
+    savedNotes:      {{ saved_notes | tojson }},
 
     _charts: {},
-    _detailsCache: {},
+    _noteSaveState: {},
 
     // ── Filtered views ──────────────────────────────────────────
     get filteredMeeting() {
@@ -893,11 +934,7 @@ function remakesPage() {
     get kpiRemakeLoss() {
       return this.filteredAll
         .filter(r => r.Remake !== 'Remake Full Charge')
-        .reduce((sum, r) => {
-          const charge = parseFloat(r.TotalCharge) || 0;
-          const disc   = parseFloat(r.RemakeDiscount) || 0;
-          return sum + charge * (1 - disc / 100);
-        }, 0);
+        .reduce((sum, r) => sum + (parseFloat(r.RemakeDiscount) || 0), 0);
     },
 
     get kpiAvgLoss() {
@@ -905,15 +942,19 @@ function remakesPage() {
       return count > 0 ? this.kpiRemakeLoss / count : 0;
     },
 
+    get totalFilteredRevenue() {
+      const s = this.allStart, e = this.allEnd;
+      return this.revenueRecords
+        .filter(r => {
+          const d = (r.InvoiceDate || '').slice(0, 10);
+          return d >= s && d <= e;
+        })
+        .reduce((sum, r) => sum + (parseFloat(r.Revenue) || 0), 0);
+    },
+
     get kpiRemakePct() {
-      const rows = this.filteredAll.filter(
-        r => r.Remake !== 'Remake Full Charge' && (r.TotalCases_90Days || 0) > 0
-      );
-      if (!rows.length) return 0;
-      const avg = rows.reduce(
-        (s, r) => s + ((r.TotalRemakes_90Days || 0) / (r.TotalCases_90Days || 1)), 0
-      ) / rows.length;
-      return avg * 100;
+      const rev = this.totalFilteredRevenue;
+      return rev > 0 ? (this.kpiRemakeLoss / rev) * 100 : 0;
     },
 
     // ── ISO week helper ──────────────────────────────────────────
@@ -936,9 +977,7 @@ function remakesPage() {
         weeks[wk].countAll++;
         if (r.Remake !== 'Remake Full Charge') {
           weeks[wk].count++;
-          const charge = parseFloat(r.TotalCharge) || 0;
-          const disc   = parseFloat(r.RemakeDiscount) || 0;
-          weeks[wk].loss += charge * (1 - disc / 100);
+          weeks[wk].loss += parseFloat(r.RemakeDiscount) || 0;
         }
       }
       // Revenue
@@ -979,30 +1018,46 @@ function remakesPage() {
         .map(([name, count]) => ({ name, count, pct: ((count / total) * 100).toFixed(1) }));
     },
 
-    // ── Per-case detail helpers (lazy-loaded on demand) ─────────
-    async loadCaseDetails(mainId, ogId) {
-      const key = `${mainId}_${ogId}`;
-      if (this._detailsCache[key]) return;
-      this._detailsCache[key] = { tasks: [], notes: [], loading: true };
-      try {
-        const res  = await fetch(`/remakes/case-details?main_id=${mainId}&og_id=${ogId}`);
-        const data = await res.json();
-        this._detailsCache[key] = { tasks: data.tasks || [], notes: data.notes || [], loading: false };
-      } catch (e) {
-        this._detailsCache[key] = { tasks: [], notes: [], loading: false };
+    // ── Per-case detail helpers (bulk-loaded, O(1) map lookup) ──
+    get _taskMap() {
+      const m = {};
+      for (const t of this.taskRecords) {
+        const k = String(t.CaseID);
+        (m[k] = m[k] || []).push(t);
       }
+      return m;
+    },
+
+    get _noteMap() {
+      const m = {};
+      for (const n of this.callNoteRecords) {
+        for (const k of [String(n.AnchorCaseID), String(n.LinkCaseID)]) {
+          if (k && k !== 'None' && k !== '') (m[k] = m[k] || []).push(n);
+        }
+      }
+      return m;
     },
 
     getTasksForCase(mainId, ogId) {
-      return (this._detailsCache[`${mainId}_${ogId}`] || {}).tasks || [];
+      const seen = new Set();
+      return [
+        ...(this._taskMap[String(mainId)] || []),
+        ...(this._taskMap[String(ogId)]   || []),
+      ].filter(t => {
+        const k = t.Task + t.CompleteDate;
+        return seen.has(k) ? false : seen.add(k);
+      });
     },
 
     getNotesForCase(mainId, ogId) {
-      return (this._detailsCache[`${mainId}_${ogId}`] || {}).notes || [];
-    },
-
-    isLoadingDetails(mainId, ogId) {
-      return !!(this._detailsCache[`${mainId}_${ogId}`] || {}).loading;
+      const seen = new Set();
+      return [
+        ...(this._noteMap[String(mainId)] || []),
+        ...(this._noteMap[String(ogId)]   || []),
+      ].filter(n => {
+        const k = n.Note + n.UserID;
+        return seen.has(k) ? false : seen.add(k);
+      });
     },
 
     // ── Formatting helpers ───────────────────────────────────────
@@ -1098,13 +1153,23 @@ function remakesPage() {
     // ── Note persistence ─────────────────────────────────────────
     async saveNote(caseNumber, noteText) {
       if (!caseNumber) return;
+      this._noteSaveState[caseNumber] = 'saving';
       try {
-        await fetch('/remakes/notes', {
+        const res  = await fetch('/remakes/notes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ case_number: caseNumber, note: noteText }),
         });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          this.savedNotes[caseNumber] = noteText;
+          this._noteSaveState[caseNumber] = 'saved';
+          setTimeout(() => { this._noteSaveState[caseNumber] = ''; }, 2000);
+        } else {
+          this._noteSaveState[caseNumber] = '';
+        }
       } catch (e) {
+        this._noteSaveState[caseNumber] = '';
         console.warn('Note save failed:', e);
       }
     },
@@ -1117,7 +1182,7 @@ function remakesPage() {
         const res  = await fetch('/remakes/refresh', { method: 'POST' });
         const data = await res.json();
         if (data.status === 'ok') {
-          this.message = `Loaded: ${data.all_rows} remakes · ${data.revenue_rows} revenue rows`;
+          this.message = `Loaded: ${data.all_rows} remakes · ${data.tasks_rows} tasks · ${data.notes_rows} call notes · ${data.revenue_rows} revenue rows`;
           setTimeout(() => window.location.reload(), 900);
         } else {
           this.message = 'Error: ' + (data.message || 'Unknown error');
