@@ -114,7 +114,7 @@ WITH remake_ids AS (
 )
 SELECT cn.Note, cn.UserID, chc.AnchorCaseID, chc.LinkCaseID
 FROM dbo.CallNotes AS cn
-INNER JOIN dbo.CaseHistory_Calls AS chc ON cn.CallID = chc.RedCallID
+INNER JOIN dbo.CaseHistory_Calls AS chc ON cn.CallID = chc.RefCallID
 WHERE chc.AnchorCaseID IN (SELECT CaseID FROM remake_ids)
    OR chc.LinkCaseID   IN (SELECT CaseID FROM remake_ids)
 ORDER BY chc.AnchorCaseID, chc.LinkCaseID
