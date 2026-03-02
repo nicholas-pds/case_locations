@@ -25,40 +25,47 @@ _EMPLOYEE_LKUPS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "em
 
 _ALL_REMAKES_SQL = """
 SELECT
-    main.CaseID          AS MainCaseID,
-    linked.CaseID        AS OG_CaseID,
-    main.CaseNumber      AS MainCaseNumber,
-    linked.CaseNumber    AS OG_CaseNumber,
-    main.DateIn          AS DateIn,
-    CONVERT(datetime, main.DateIn) AS DateIn_TIME,
-    linked.ShipDate      AS OG_ShipDate,
-    linked.DueDate       AS OG_DueDate,
-    main.ShipDate        AS ShipDate,
-    main.PracticeName    AS PracticeName,
-    main.TotalCharge     AS TotalCharge,
-    links.Notes          AS RemakeReason,
-    main.CaseType        AS Remake,
-    main.Discount        AS RemakeDiscount,
-    main.[Status]        AS Status,
-    (
-        SELECT COUNT(*)
-        FROM dbo.Cases AS c2
-        WHERE c2.PracticeID = main.PracticeID
-          AND c2.DateIn >= DATEADD(DAY, -90, CAST(GETDATE() AS DATE))
-    ) AS TotalCases_90Days,
-    (
-        SELECT COUNT(*)
-        FROM dbo.CaseLinks AS cl2
-        INNER JOIN dbo.Cases AS cm2 ON cl2.CaseID = cm2.CaseID
-        WHERE cm2.PracticeID = main.PracticeID
-          AND cm2.DateIn >= DATEADD(DAY, -90, CAST(GETDATE() AS DATE))
-          AND cl2.Notes LIKE '%Remake Of%'
-    ) AS TotalRemakes_90Days,
-    main.SalesRep        AS SalesPerson,
-    main.CaseProduct     AS Product
+    main.CaseID                   AS MainCaseID,
+    linked.CaseID                 AS OG_CaseID,
+    main.DateIn                   AS DateIn_TIME,
+    CAST(linked.ShipDate AS DATE) AS OG_ShipDate,
+    CAST(linked.DueDate  AS DATE) AS OG_DueDate,
+    linked.CaseNumber             AS OG_CaseNumber,
+    main.CaseNumber               AS MainCaseNumber,
+    CAST(main.DateIn   AS DATE)   AS DateIn,
+    CAST(main.ShipDate AS DATE)   AS ShipDate,
+    cust.PracticeName,
+    main.TotalCharge,
+    main.RemakeReason,
+    main.Remake,
+    main.RemakeDiscount,
+    main.[Status],
+    ISNULL(T2.Cases,   0)         AS TotalCases_90Days,
+    ISNULL(T2.Remakes, 0)         AS TotalRemakes_90Days,
+    cust.SalesPerson,
+    topProduct.Description        AS Product
 FROM dbo.CaseLinks AS links
-INNER JOIN dbo.Cases AS main   ON links.CaseID     = main.CaseID
-INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
+INNER JOIN dbo.Cases     AS main   ON links.CaseID     = main.CaseID
+INNER JOIN dbo.Cases     AS linked ON links.LinkCaseID = linked.CaseID
+INNER JOIN dbo.Customers AS cust   ON main.CustomerID  = cust.CustomerID
+LEFT JOIN (
+    SELECT
+        cu.PracticeName,
+        COUNT(ca.CaseID) AS Cases,
+        COUNT(CASE WHEN NULLIF(LTRIM(RTRIM(ca.Remake)), '') IS NOT NULL THEN 1 END) AS Remakes
+    FROM dbo.Cases     AS ca
+    INNER JOIN dbo.Customers AS cu ON ca.CustomerID = cu.CustomerID
+    WHERE ca.InvoiceDate >= DATEADD(DAY, -91, CAST(GETDATE() AS DATE))
+    GROUP BY cu.PracticeName
+) AS T2 ON cust.PracticeName = T2.PracticeName
+OUTER APPLY (
+    SELECT TOP 1 p.Description
+    FROM dbo.CaseProducts AS cp
+    INNER JOIN dbo.Products AS p ON cp.ProductID = p.ProductID
+    WHERE cp.CaseID = linked.CaseID
+      AND p.Description NOT LIKE '%Rush%'
+    ORDER BY cp.UnitPrice DESC
+) AS topProduct
 WHERE links.Notes LIKE '%Remake Of%'
   AND main.DateIn >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
   AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
@@ -82,10 +89,10 @@ WITH remake_ids AS (
       AND main.DateIn >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
       AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
 )
-SELECT cth.CaseID, cth.Task, cth.CompletedBy, cth.CompletedDate
+SELECT cth.CaseID, cth.Task, cth.CompletedBy, cth.CompleteDate
 FROM dbo.CaseTasksHistory AS cth
 INNER JOIN remake_ids ON cth.CaseID = remake_ids.CaseID
-ORDER BY cth.CaseID, cth.CompletedDate ASC
+ORDER BY cth.CaseID, cth.CompleteDate ASC
 """
 
 _CALL_NOTES_SQL = """
@@ -115,14 +122,16 @@ ORDER BY chc.AnchorCaseID, chc.LinkCaseID
 
 _REVENUE_BY_DAY_SQL = """
 SELECT
-    CAST(c.DateIn AS DATE) AS DateIn,
-    SUM(c.TotalCharge)     AS TotalRevenue,
-    COUNT(*)               AS TotalCases
-FROM dbo.Cases AS c
-WHERE c.DateIn >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
-  AND c.[Status] IN ('In Production', 'Invoiced', 'On Hold')
-GROUP BY CAST(c.DateIn AS DATE)
-ORDER BY DateIn ASC
+    CAST(InvoiceDate AS DATE)             AS InvoiceDate,
+    SUM(TaxableAmount + NonTaxableAmount) AS Revenue
+FROM dbo.Cases
+WHERE [Status] NOT IN ('Cancelled', 'Submitted', 'Sent for TryIn')
+  AND Deleted = 0
+  AND [Type] = 'D'
+  AND InvoiceDate >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
+  AND InvoiceDate <  DATEADD(DAY,   1, CAST(GETDATE() AS DATE))
+GROUP BY CAST(InvoiceDate AS DATE)
+ORDER BY InvoiceDate ASC
 """
 
 # ─── Query functions ──────────────────────────────────────────────────────────

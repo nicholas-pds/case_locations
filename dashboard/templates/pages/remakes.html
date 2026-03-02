@@ -531,7 +531,7 @@
                   </template>
                   <template x-if="getTasksForCase(row.MainCaseID).length > 0">
                     <ul class="task-list">
-                      <template x-for="t in getTasksForCase(row.MainCaseID)" :key="t.Task + t.CompletedDate">
+                      <template x-for="t in getTasksForCase(row.MainCaseID)" :key="t.Task + t.CompleteDate">
                         <li>
                           <span class="task-name" x-text="t.CompletedByName || t.CompletedBy"></span>
                           <span x-text="' – ' + (t.Task || '')"></span>
@@ -789,7 +789,7 @@
                   </template>
                   <template x-if="getTasksForCase(row.MainCaseID).length > 0">
                     <ul class="task-list">
-                      <template x-for="t in getTasksForCase(row.MainCaseID)" :key="t.Task + t.CompletedDate">
+                      <template x-for="t in getTasksForCase(row.MainCaseID)" :key="t.Task + t.CompleteDate">
                         <li>
                           <span class="task-name" x-text="t.CompletedByName || t.CompletedBy"></span>
                           <span x-text="' – ' + (t.Task || '')"></span>
@@ -933,9 +933,9 @@ function remakesPage() {
       // Revenue
       const rev = {};
       for (const r of this.revenueRecords) {
-        const wk = this._isoWeek((r.DateIn || '').slice(0, 10));
+        const wk = this._isoWeek((r.InvoiceDate || '').slice(0, 10));
         if (!wk) continue;
-        rev[wk] = (rev[wk] || 0) + (parseFloat(r.TotalRevenue) || 0);
+        rev[wk] = (rev[wk] || 0) + (parseFloat(r.Revenue) || 0);
       }
       return Object.keys(weeks).sort().map(wk => ({
         label:    wk.replace(/^\d+-W/, 'Wk '),
@@ -972,7 +972,7 @@ function remakesPage() {
     getTasksForCase(caseId) {
       return this.taskRecords
         .filter(t => String(t.CaseID) === String(caseId))
-        .sort((a, b) => ((a.CompletedDate || '') > (b.CompletedDate || '') ? 1 : -1));
+        .sort((a, b) => ((a.CompleteDate || '') > (b.CompleteDate || '') ? 1 : -1));
     },
 
     getNotesForCase(mainCaseId, ogCaseId) {
