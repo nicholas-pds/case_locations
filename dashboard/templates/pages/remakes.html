@@ -434,12 +434,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="remakes-page"
-     x-data="remakesPage()"
-     x-init="
-       $watch('allStart', () => { if (activeTab === 'all') $nextTick(() => renderCharts()); });
-       $watch('allEnd',   () => { if (activeTab === 'all') $nextTick(() => renderCharts()); });
-     ">
+<div class="remakes-page" x-data="remakesPage()">
 
   <!-- Loading overlay -->
   <div class="loading-overlay" x-show="loading" x-cloak>
@@ -899,14 +894,40 @@ function remakesPage() {
     allPreset: '4w',
     showBreakdowns: true,
 
-    allRecords:      {{ all_records | tojson }},
-    revenueRecords:  {{ revenue_records | tojson }},
-    taskRecords:     {{ task_records | tojson }},
-    callNoteRecords: {{ call_note_records | tojson }},
-    savedNotes:      {{ saved_notes | tojson }},
+    allRecords:     {{ all_records | tojson }},
+    revenueRecords: {{ revenue_records | tojson }},
+    savedNotes:     {{ saved_notes | tojson }},
 
+    _taskMapData: {},
+    _noteMapData: {},
     _charts: {},
     _noteSaveState: {},
+
+    // ── Init ────────────────────────────────────────────────────
+    init() {
+      this.$watch('allStart', () => { if (this.activeTab === 'all') this.$nextTick(() => this.renderCharts()); });
+      this.$watch('allEnd',   () => { if (this.activeTab === 'all') this.$nextTick(() => this.renderCharts()); });
+
+      fetch('/remakes/all-details')
+        .then(r => r.json())
+        .then(data => {
+          const tm = {};
+          for (const t of (data.tasks || [])) {
+            const k = String(t.CaseID);
+            (tm[k] = tm[k] || []).push(t);
+          }
+          this._taskMapData = tm;
+
+          const nm = {};
+          for (const n of (data.notes || [])) {
+            for (const k of [String(n.AnchorCaseID), String(n.LinkCaseID)]) {
+              if (k && k !== 'None' && k !== '') (nm[k] = nm[k] || []).push(n);
+            }
+          }
+          this._noteMapData = nm;
+        })
+        .catch(e => console.warn('Failed to load case details:', e));
+    },
 
     // ── Filtered views ──────────────────────────────────────────
     get filteredMeeting() {
@@ -1018,31 +1039,12 @@ function remakesPage() {
         .map(([name, count]) => ({ name, count, pct: ((count / total) * 100).toFixed(1) }));
     },
 
-    // ── Per-case detail helpers (bulk-loaded, O(1) map lookup) ──
-    get _taskMap() {
-      const m = {};
-      for (const t of this.taskRecords) {
-        const k = String(t.CaseID);
-        (m[k] = m[k] || []).push(t);
-      }
-      return m;
-    },
-
-    get _noteMap() {
-      const m = {};
-      for (const n of this.callNoteRecords) {
-        for (const k of [String(n.AnchorCaseID), String(n.LinkCaseID)]) {
-          if (k && k !== 'None' && k !== '') (m[k] = m[k] || []).push(n);
-        }
-      }
-      return m;
-    },
-
+    // ── Per-case detail helpers ──────────────────────────────────
     getTasksForCase(mainId, ogId) {
       const seen = new Set();
       return [
-        ...(this._taskMap[String(mainId)] || []),
-        ...(this._taskMap[String(ogId)]   || []),
+        ...(this._taskMapData[String(mainId)] || []),
+        ...(this._taskMapData[String(ogId)]   || []),
       ].filter(t => {
         const k = t.Task + t.CompleteDate;
         return seen.has(k) ? false : seen.add(k);
@@ -1052,8 +1054,8 @@ function remakesPage() {
     getNotesForCase(mainId, ogId) {
       const seen = new Set();
       return [
-        ...(this._noteMap[String(mainId)] || []),
-        ...(this._noteMap[String(ogId)]   || []),
+        ...(this._noteMapData[String(mainId)] || []),
+        ...(this._noteMapData[String(ogId)]   || []),
       ].filter(n => {
         const k = n.Note + n.UserID;
         return seen.has(k) ? false : seen.add(k);

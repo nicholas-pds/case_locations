@@ -74,8 +74,6 @@ async def remakes_page(request: Request):
         "meeting_records": _df_to_records(meeting_df),
         "all_records": _df_to_records(all_df),
         "revenue_records": _df_to_records(cached["revenue"]),
-        "task_records": _df_to_records(cached.get("tasks")),
-        "call_note_records": _df_to_records(cached.get("notes_text")),
         "saved_notes": saved_notes,
         "week_start": str(week_start),
         "week_end": str(week_end),
@@ -90,6 +88,15 @@ async def remakes_refresh():
     except Exception as e:
         logger.error(f"Remakes refresh failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@router.get("/remakes/all-details")
+async def remakes_all_details():
+    cached = get_cached_remakes()
+    return JSONResponse({
+        "tasks": _df_to_records(cached.get("tasks")),
+        "notes": _df_to_records(cached.get("notes_text")),
+    })
 
 
 @router.get("/remakes/case-details")
