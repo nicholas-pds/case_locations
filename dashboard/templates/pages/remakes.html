@@ -610,10 +610,14 @@
   <div class="tab-content" x-show="activeTab==='meeting'">
 
     <div class="controls-row">
-      <span class="controls-label">Date Range:</span>
-      <input type="date" class="date-input" x-model="meetingStart">
-      <span class="date-sep">to</span>
-      <input type="date" class="date-input" x-model="meetingEnd">
+      <button class="preset-btn" :class="{active: meetingPreset==='last'}"   @click="setMeetingPreset('last')">Last Week</button>
+      <button class="preset-btn" :class="{active: meetingPreset==='this'}"   @click="setMeetingPreset('this')">This Week</button>
+      <button class="preset-btn" :class="{active: meetingPreset==='last4'}"  @click="setMeetingPreset('last4')">Last 4 Weeks</button>
+      <button class="preset-btn" :class="{active: meetingPreset==='custom'}" @click="meetingPreset='custom'">Custom</button>
+      <span class="date-sep" x-show="meetingPreset==='custom'">From</span>
+      <input type="date" class="date-input" x-model="meetingStart" x-show="meetingPreset==='custom'" @change="meetingPreset='custom'">
+      <span class="date-sep" x-show="meetingPreset==='custom'">to</span>
+      <input type="date" class="date-input" x-model="meetingEnd"   x-show="meetingPreset==='custom'" @change="meetingPreset='custom'">
       <input type="text" class="date-input" x-model="searchQuery" placeholder="Search case #…" style="width:140px;">
       <span class="date-sep" style="margin-left:4px;">
         (<span x-text="filteredMeeting.length"></span> cases)
@@ -785,14 +789,14 @@
 
     <!-- Date range controls -->
     <div class="controls-row">
-      <button class="preset-btn" :class="{active: allPreset==='1w'}" @click="setPreset('1w')">1 Wk</button>
-      <button class="preset-btn" :class="{active: allPreset==='4w'}" @click="setPreset('4w')">4 Wks</button>
-      <button class="preset-btn" :class="{active: allPreset==='8w'}" @click="setPreset('8w')">8 Wks</button>
+      <button class="preset-btn" :class="{active: allPreset==='last'}"   @click="setPreset('last')">Last Week</button>
+      <button class="preset-btn" :class="{active: allPreset==='this'}"   @click="setPreset('this')">This Week</button>
+      <button class="preset-btn" :class="{active: allPreset==='last4'}"  @click="setPreset('last4')">Last 4 Weeks</button>
       <button class="preset-btn" :class="{active: allPreset==='custom'}" @click="allPreset='custom'">Custom</button>
-      <span class="date-sep" style="margin-left:4px;">From</span>
-      <input type="date" class="date-input" x-model="allStart" @change="allPreset='custom'">
-      <span class="date-sep">to</span>
-      <input type="date" class="date-input" x-model="allEnd" @change="allPreset='custom'">
+      <span class="date-sep" style="margin-left:4px;" x-show="allPreset==='custom'">From</span>
+      <input type="date" class="date-input" x-model="allStart" @change="allPreset='custom'" x-show="allPreset==='custom'">
+      <span class="date-sep" x-show="allPreset==='custom'">to</span>
+      <input type="date" class="date-input" x-model="allEnd" @change="allPreset='custom'" x-show="allPreset==='custom'">
       <input type="text" class="date-input" x-model="searchQuery" placeholder="Search case #…" style="width:140px;">
       <span class="date-sep">
         (<span x-text="filteredAll.length"></span> cases)
@@ -1117,10 +1121,14 @@
        ══════════════════════════════════════════ -->
   <div class="tab-content" x-show="activeTab !== 'meeting' && activeTab !== 'all'" x-cloak>
     <div class="controls-row">
-      <span class="controls-label">Date Range:</span>
-      <input type="date" class="date-input" x-model="amStart">
-      <span class="date-sep">to</span>
-      <input type="date" class="date-input" x-model="amEnd">
+      <button class="preset-btn" :class="{active: amPreset==='last'}"   @click="setAMPreset('last')">Last Week</button>
+      <button class="preset-btn" :class="{active: amPreset==='this'}"   @click="setAMPreset('this')">This Week</button>
+      <button class="preset-btn" :class="{active: amPreset==='last4'}"  @click="setAMPreset('last4')">Last 4 Weeks</button>
+      <button class="preset-btn" :class="{active: amPreset==='custom'}" @click="amPreset='custom'">Custom</button>
+      <span class="date-sep" x-show="amPreset==='custom'">From</span>
+      <input type="date" class="date-input" x-model="amStart" x-show="amPreset==='custom'" @change="amPreset='custom'">
+      <span class="date-sep" x-show="amPreset==='custom'">to</span>
+      <input type="date" class="date-input" x-model="amEnd"   x-show="amPreset==='custom'" @change="amPreset='custom'">
       <input type="text" class="date-input" x-model="searchQuery" placeholder="Search case #…" style="width:140px;margin-left:8px;">
       <button class="preset-btn" @click="exportAM()" style="margin-left:auto;">Export CSV</button>
     </div>
@@ -1260,13 +1268,15 @@ function remakesPage() {
     activeTab: 'all',
     loading: false,
     message: '',
-    meetingStart: '{{ week_start }}',
-    meetingEnd: '{{ week_end }}',
-    allStart: new Date(Date.now() - 28 * 86400000).toISOString().slice(0, 10),
-    allEnd:   new Date().toISOString().slice(0, 10),
-    allPreset: '4w',
-    amStart: '{{ week_start }}',
-    amEnd:   '{{ week_end }}',
+    meetingPreset: 'last',
+    allPreset:     'last',
+    amPreset:      'last',
+    meetingStart: '',
+    meetingEnd:   '',
+    allStart:     '',
+    allEnd:       '',
+    amStart:      '',
+    amEnd:        '',
     searchQuery: '',
     showBreakdowns: true,
 
@@ -1283,10 +1293,81 @@ function remakesPage() {
     _noteSaveState: {},
     _tip: { show: false, type: '', items: [] },
 
+    // ── Week anchor helpers ──────────────────────────────────────
+    _weekAnchor() {
+      const today = new Date();
+      const dow = today.getDay(); // 0=Sun,1=Mon,...,5=Fri,6=Sat
+      let d;
+      if      (dow === 0) d = 6;    // Sun → 6 days back to Mon
+      else if (dow === 6) d = 5;    // Sat → 5 days back to Mon
+      else                d = dow - 1;
+      const mon = new Date(today); mon.setDate(today.getDate() - d); mon.setHours(0,0,0,0);
+      const fri = new Date(mon);   fri.setDate(mon.getDate() + 4);
+      return { mon, fri };
+    },
+    _isoDate(dt) { return dt.toISOString().slice(0, 10); },
+    _presetRange(p) {
+      const { mon, fri } = this._weekAnchor();
+      if (p === 'last') {
+        const lm = new Date(mon); lm.setDate(mon.getDate() - 7);
+        const lf = new Date(lm);  lf.setDate(lm.getDate() + 4);
+        return { start: this._isoDate(lm), end: this._isoDate(lf) };
+      }
+      if (p === 'this') return { start: this._isoDate(mon), end: this._isoDate(fri) };
+      if (p === 'last4') {
+        const s = new Date(mon); s.setDate(mon.getDate() - 28);
+        return { start: this._isoDate(s), end: this._isoDate(fri) };
+      }
+      return null; // custom
+    },
+    _chartBars() {
+      const { mon: am } = this._weekAnchor();
+      const iso = d => this._isoDate(d);
+      const lbl = d => `${d.getMonth()+1}/${d.getDate()}`;
+      const makeBar = (m) => {
+        const f = new Date(m); f.setDate(m.getDate() + 4);
+        return { start: iso(m), end: iso(f), label: lbl(m) };
+      };
+      const p = this.allPreset;
+      if (p === 'last' || p === 'this') {
+        const rightMon = p === 'last'
+          ? new Date(am.getTime() - 7 * 86400000) : am;
+        return [3,2,1,0].map(i => {
+          const m = new Date(rightMon.getTime() - i * 7 * 86400000);
+          return makeBar(m);
+        });
+      }
+      if (p === 'last4') {
+        return [5,4,3,2,1,0].map(i => {
+          const m = new Date(am.getTime() - i * 7 * 86400000);
+          return makeBar(m);
+        });
+      }
+      // custom: one bar per Mon–Fri week in allStart–allEnd
+      const startD = new Date(this.allStart + 'T00:00:00');
+      const endD   = new Date(this.allEnd   + 'T00:00:00');
+      if (isNaN(startD) || isNaN(endD)) return [];
+      const sdow = startD.getDay();
+      const dtm  = sdow === 0 ? 6 : sdow === 6 ? 5 : sdow - 1;
+      const firstMon = new Date(startD.getTime() - dtm * 86400000);
+      const bars = [];
+      for (let m = new Date(firstMon); m <= endD; m.setDate(m.getDate() + 7)) {
+        bars.push(makeBar(new Date(m)));
+      }
+      return bars;
+    },
+
     // ── Init ────────────────────────────────────────────────────
     init() {
-      this.$watch('allStart', () => { if (this.activeTab === 'all') this._scheduleCharts(); });
-      this.$watch('allEnd',   () => { if (this.activeTab === 'all') this._scheduleCharts(); });
+      // Set all tabs to "Last Week" default
+      const r = this._presetRange('last');
+      this.meetingStart = r.start; this.meetingEnd = r.end;
+      this.allStart     = r.start; this.allEnd     = r.end;
+      this.amStart      = r.start; this.amEnd      = r.end;
+
+      this.$watch('allStart',  () => { if (this.activeTab === 'all') this._scheduleCharts(); });
+      this.$watch('allEnd',    () => { if (this.activeTab === 'all') this._scheduleCharts(); });
+      this.$watch('allPreset', () => { if (this.activeTab === 'all') this._scheduleCharts(); });
       this.$watch('activeTab', v => { if (v === 'all') this._scheduleCharts(); });
 
       fetch('/remakes/all-details')
@@ -1411,44 +1492,25 @@ function remakesPage() {
       return rev > 0 ? (this.kpiRemakeLoss / rev) * 100 : 0;
     },
 
-    // ── ISO week helper ──────────────────────────────────────────
-    _isoWeek(dateStr) {
-      if (!dateStr) return '';
-      const d    = new Date(dateStr + 'T00:00:00');
-      const thu  = new Date(d);
-      thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
-      const jan4 = new Date(thu.getFullYear(), 0, 4);
-      const wkNum = 1 + Math.round((thu - jan4) / 604800000);
-      return `${thu.getFullYear()}-W${String(wkNum).padStart(2, '0')}`;
-    },
-
     get weeklyChartData() {
-      const weeks = {};
-      for (const r of this.filteredAll) {
-        const wk = this._isoWeek((r.DateIn || '').slice(0, 10));
-        if (!wk) continue;
-        if (!weeks[wk]) weeks[wk] = { count: 0, countAll: 0, loss: 0 };
-        weeks[wk].countAll++;
-        if (r.Remake !== 'Remake Full Charge') {
-          weeks[wk].count++;
-          weeks[wk].loss += parseFloat(r.RemakeDiscount) || 0;
-        }
-      }
-      // Revenue
-      const rev = {};
-      for (const r of this.revenueRecords) {
-        const wk = this._isoWeek((r.InvoiceDate || '').slice(0, 10));
-        if (!wk) continue;
-        rev[wk] = (rev[wk] || 0) + (parseFloat(r.Revenue) || 0);
-      }
-      return Object.keys(weeks).sort().map(wk => ({
-        label:    wk.replace(/^\d+-W/, 'Wk '),
-        count:    weeks[wk].count,
-        countAll: weeks[wk].countAll,
-        loss:     Math.round(weeks[wk].loss),
-        revenue:  Math.round(rev[wk] || 0),
-        pct:      rev[wk] > 0 ? +((weeks[wk].loss / rev[wk]) * 100).toFixed(2) : 0,
-      }));
+      const bars = this._chartBars();
+      const revRecs = this.revenueRecords;
+      return bars.map(bar => {
+        const recs = this.allRecords.filter(r => {
+          const d = (r.DateIn || '').slice(0, 10);
+          return d >= bar.start && d <= bar.end;
+        });
+        const countAll = recs.length;
+        const meeting  = recs.filter(r => r.Remake !== 'Remake Full Charge');
+        const count    = meeting.length;
+        const loss     = meeting.reduce((s, r) => s + (parseFloat(r.RemakeDiscount) || 0), 0);
+        const revenue  = revRecs.filter(r => {
+          const d = (r.InvoiceDate || '').slice(0, 10);
+          return d >= bar.start && d <= bar.end;
+        }).reduce((s, r) => s + (parseFloat(r.Revenue) || 0), 0);
+        const pct = revenue > 0 ? +((loss / revenue) * 100).toFixed(2) : 0;
+        return { label: bar.label, count, countAll, loss: Math.round(loss), revenue: Math.round(revenue), pct };
+      });
     },
 
     // ── Breakdown getters ────────────────────────────────────────
@@ -1553,14 +1615,27 @@ function remakesPage() {
            + ' ' + dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     },
 
-    // ── Date preset ──────────────────────────────────────────────
+    // ── Date presets ─────────────────────────────────────────────
     setPreset(p) {
       this.allPreset = p;
-      const today = new Date();
-      const days  = p === '1w' ? 7 : p === '4w' ? 28 : 56;
-      this.allEnd   = today.toISOString().slice(0, 10);
-      this.allStart = new Date(+today - days * 86400000).toISOString().slice(0, 10);
-      // watchers on allStart/allEnd call _scheduleCharts() automatically
+      if (p !== 'custom') {
+        const r = this._presetRange(p);
+        this.allStart = r.start; this.allEnd = r.end;
+      }
+    },
+    setMeetingPreset(p) {
+      this.meetingPreset = p;
+      if (p !== 'custom') {
+        const r = this._presetRange(p);
+        this.meetingStart = r.start; this.meetingEnd = r.end;
+      }
+    },
+    setAMPreset(p) {
+      this.amPreset = p;
+      if (p !== 'custom') {
+        const r = this._presetRange(p);
+        this.amStart = r.start; this.amEnd = r.end;
+      }
     },
 
     switchToAll() {

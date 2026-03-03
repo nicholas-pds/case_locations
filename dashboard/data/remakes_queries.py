@@ -336,9 +336,11 @@ def get_db_connection():
 # ─── Week bounds helper ───────────────────────────────────────────────────────
 
 def get_current_week_bounds() -> tuple:
-    """Return (week_start, week_end) for the current Tue–Mon week."""
+    """Return (week_start, week_end) for the current Mon–Fri work week.
+    On Sat/Sun, returns the prior week's Mon–Fri."""
     today = date.today()
-    days_since_tuesday = (today.weekday() - 1) % 7
-    week_start = today - timedelta(days=days_since_tuesday)
-    week_end = week_start + timedelta(days=6)
+    dow = today.weekday()          # 0=Mon … 4=Fri, 5=Sat, 6=Sun
+    days_to_mon = dow if dow <= 4 else dow   # Sat→5, Sun→6 (back to prior Mon)
+    week_start = today - timedelta(days=days_to_mon)
+    week_end   = week_start + timedelta(days=4)   # Friday
     return week_start, week_end
