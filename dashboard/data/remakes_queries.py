@@ -112,15 +112,15 @@ WITH RemakeCases AS (
     SELECT DISTINCT main.CaseID
     FROM dbo.CaseLinks AS links
     INNER JOIN dbo.Cases AS main   ON links.CaseID       = main.CaseID
-    INNER JOIN dbo.Cases AS linked ON links.LinkedCaseID = linked.CaseID
+    INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE N'%Remake Of%'
     AND main.DateIn >= DATEADD(DAY, -180, GETDATE())
     AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
     UNION
     SELECT DISTINCT linked.CaseID
     FROM dbo.CaseLinks AS links
-    INNER JOIN dbo.Cases AS main   ON links.CaseID       = main.CaseID
-    INNER JOIN dbo.Cases AS linked ON links.LinkedCaseID = linked.CaseID
+    INNER JOIN dbo.Cases AS main   ON links.CaseID     = main.CaseID
+    INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE N'%Remake Of%'
     AND main.DateIn >= DATEADD(DAY, -180, GETDATE())
     AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
