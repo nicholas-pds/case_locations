@@ -122,7 +122,7 @@ async def get_attachment(path: str, thumb: int = 0):
 
         suffix = full_path.suffix.lower()
         headers = {"Cache-Control": "max-age=3600"}
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         if suffix in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
             if thumb:
@@ -154,7 +154,7 @@ async def get_attachment(path: str, thumb: int = 0):
         raise
     except Exception as e:
         logger.error(f"Attachment error for path '{path}': {e}", exc_info=True)
-        raise HTTPException(500, "Error serving file")
+        raise HTTPException(500, f"{type(e).__name__}: {e}")
 
 
 @router.get("/remakes/case-details")
