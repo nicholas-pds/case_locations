@@ -21,10 +21,30 @@ from dashboard.data.remakes_queries import (
     _apply_employee_names,
 )
 from dashboard.data.cache import cache
+from dashboard.config import DOCS_SERVER_USER, DOCS_SERVER_PASS
 
 router = APIRouter()
 _DOCS_BASE = r"\\APP-SERVER\DLCPMImages\CaseDocuments"
+_DOCS_SHARE = r"\\APP-SERVER\DLCPMImages"
 logger = logging.getLogger("dashboard.routes.remakes")
+
+
+def _mount_docs_share() -> None:
+    """Mount the UNC docs share with stored credentials (Windows net use)."""
+    if not (DOCS_SERVER_USER and DOCS_SERVER_PASS):
+        logger.warning("DOCS_SERVER_USER/PASS not set — UNC share access may fail")
+        return
+    import subprocess
+    result = subprocess.run(
+        ["net", "use", _DOCS_SHARE, DOCS_SERVER_PASS, f"/user:{DOCS_SERVER_USER}", "/persistent:no"],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        logger.warning(f"net use failed (may already be connected): {result.stderr.strip()}")
+    else:
+        logger.info(f"Mounted docs share: {_DOCS_SHARE} as {DOCS_SERVER_USER}")
+
+_mount_docs_share()
 
 
 def _df_to_records(df):
@@ -154,7 +174,7 @@ async def get_attachment(path: str, thumb: int = 0):
         raise
     except Exception as e:
         logger.error(f"Attachment error for path '{path}': {e}", exc_info=True)
-        raise HTTPException(500, f"{type(e).__name__}: {e}")
+        raise HTTPException(500, "Error serving file")
 
 
 @router.get("/remakes/case-details")

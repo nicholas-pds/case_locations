@@ -14,6 +14,10 @@ STATIC_DIR = Path(__file__).parent / "static"
 DASHBOARD_PORT = int(os.getenv("DASHBOARD_PORT", "8050"))
 DASHBOARD_HOST = os.getenv("DASHBOARD_HOST", "0.0.0.0")
 
+# Docs share credentials
+DOCS_SERVER_USER = os.getenv("DOCS_SERVER_USER", "")
+DOCS_SERVER_PASS = os.getenv("DOCS_SERVER_PASS", "")
+
 # Auth
 DASHBOARD_PASSWORD = os.getenv("DASHBOARD_PASSWORD", "Partners1724!")
 SECRET_KEY = os.getenv("DASHBOARD_SECRET_KEY", "partners-dashboard-secret-key-change-me")
