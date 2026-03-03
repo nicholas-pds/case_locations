@@ -1,9 +1,12 @@
 """Remakes dashboard page routes."""
+import io
 import logging
+import os
+from pathlib import Path
 
 import pandas as pd
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 
 from dashboard.data.remakes_queries import (
     get_cached_remakes,
@@ -19,6 +22,7 @@ from dashboard.data.remakes_queries import (
 from dashboard.data.cache import cache
 
 router = APIRouter()
+_DOCS_BASE = r"\\APP-SERVER\DLCPMImages\CaseDocuments"
 logger = logging.getLogger("dashboard.routes.remakes")
 
 
@@ -96,7 +100,42 @@ async def remakes_all_details():
     return JSONResponse({
         "tasks": _df_to_records(cached.get("tasks")),
         "notes": _df_to_records(cached.get("notes_text")),
+        "documents": _df_to_records(cached.get("documents")),
     })
+
+
+@router.get("/remakes/attachment")
+async def get_attachment(path: str, thumb: int = 0):
+    if ".." in path:
+        raise HTTPException(400, "Invalid path")
+    normalized = path.replace("/", os.sep).lstrip(os.sep + "/")
+    full_path = Path(_DOCS_BASE) / normalized
+    if not full_path.exists():
+        raise HTTPException(404, "File not found")
+
+    suffix = full_path.suffix.lower()
+    headers = {"Cache-Control": "max-age=3600"}
+
+    if suffix in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+        if thumb:
+            from PIL import Image
+            with Image.open(full_path) as img:
+                img.thumbnail((120, 120))
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG", quality=80)
+                buf.seek(0)
+            return Response(buf.read(), media_type="image/jpeg", headers=headers)
+        return FileResponse(str(full_path), media_type="image/jpeg", headers=headers)
+
+    elif suffix == ".pdf":
+        return FileResponse(str(full_path), media_type="application/pdf", headers=headers)
+
+    else:
+        return FileResponse(
+            str(full_path),
+            media_type="application/octet-stream",
+            headers={**headers, "Content-Disposition": f"attachment; filename={full_path.name}"},
+        )
 
 
 @router.get("/remakes/case-details")

@@ -436,9 +436,59 @@
   .og-stat-chip.remake { background: #FFF0F0; border-color: #f8bbd0; color: var(--red); }
 
   /* ── Column widths ── */
-  .col-task  { max-width: 160px; }
-  .col-notes { max-width: 180px; }
+  .col-task  { max-width: 96px; }
+  .col-notes { max-width: 162px; }
   .col-note-final { min-width: 160px; white-space: normal !important; overflow: visible !important; }
+
+  /* ── Attachments column ── */
+  .col-attachments { width: 100px; min-width: 80px; vertical-align: top; }
+  .att-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .att-thumb {
+    width: 100%; aspect-ratio: 1;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--light);
+    font-size: 0.6rem; font-weight: 700; color: var(--gray);
+    transition: border-color 0.15s;
+  }
+  .att-thumb:hover { border-color: var(--red); }
+  .att-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .att-icon { text-align: center; padding: 4px; }
+  .att-icon-pdf { color: #C0182B; }
+  .att-icon-stl { color: #6B6B6B; }
+  .att-icon-file { color: #6B6B6B; }
+
+  /* ── Lightbox ── */
+  .lb-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lb-modal {
+    background: #fff; border-radius: 10px;
+    width: min(90vw, 900px); max-height: 90vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+  .lb-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .lb-title { font-size: 0.85rem; font-weight: 600; color: var(--dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-close { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--gray); padding: 2px 6px; }
+  .lb-close:hover { color: var(--red); }
+  .lb-body { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 12px; background: #f0f0f0; }
+  .lb-body img { max-width: 100%; max-height: 70vh; border-radius: 4px; display: block; }
+  .lb-body iframe { width: 100%; height: 70vh; border: none; }
+  .lb-unsupported { text-align: center; padding: 32px; }
+  .lb-unsupported a { color: var(--red); text-decoration: underline; }
+  .lb-footer { padding: 8px 14px; font-size: 0.78rem; color: var(--gray); border-top: 1px solid var(--border); text-align: center; }
 
   /* ── Note save feedback ── */
   .note-save-badge   { font-size: 0.72rem; color: #2E7D32; font-weight: 700; margin-top: 3px; }
@@ -585,10 +635,11 @@
           <thead>
             <tr>
               <th style="width:160px;">Old Rx</th>
-              <th style="width:140px;">New Rx</th>
+              <th style="width:84px;">New Rx</th>
               <th style="width:110px;">Remake Type</th>
               <th class="col-task">Task List</th>
               <th class="col-notes">Call Notes / Reason</th>
+              <th class="col-attachments">Attachments</th>
               <th class="col-note-final">Final Investigation Notes</th>
             </tr>
           </thead>
@@ -675,6 +726,27 @@
                           @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID))">
                           + Read All
                         </button>
+                      </template>
+                    </div>
+                  </template>
+                </td>
+                <!-- Attachments -->
+                <td class="col-attachments">
+                  <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                    <span style="color:var(--gray)">—</span>
+                  </template>
+                  <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                    <div class="att-grid">
+                      <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID)" :key="doc.FilePath">
+                        <div class="att-thumb" :title="doc.SourceFileName" @click.stop="showLightbox(doc)">
+                          <template x-if="doc.isImage">
+                            <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'"
+                                 loading="lazy" alt="">
+                          </template>
+                          <template x-if="!doc.isImage">
+                            <span class="att-icon" :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                          </template>
+                        </div>
                       </template>
                     </div>
                   </template>
@@ -893,10 +965,11 @@
           <thead>
             <tr>
               <th style="width:160px;">Old Rx</th>
-              <th style="width:140px;">New Rx</th>
+              <th style="width:84px;">New Rx</th>
               <th style="width:110px;">Remake Type</th>
               <th class="col-task">Task List</th>
               <th class="col-notes">Call Notes / Reason</th>
+              <th class="col-attachments">Attachments</th>
               <th class="col-note-final">Final Investigation Notes</th>
             </tr>
           </thead>
@@ -983,6 +1056,27 @@
                           @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID))">
                           + Read All
                         </button>
+                      </template>
+                    </div>
+                  </template>
+                </td>
+                <!-- Attachments -->
+                <td class="col-attachments">
+                  <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                    <span style="color:var(--gray)">—</span>
+                  </template>
+                  <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                    <div class="att-grid">
+                      <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID)" :key="doc.FilePath">
+                        <div class="att-thumb" :title="doc.SourceFileName" @click.stop="showLightbox(doc)">
+                          <template x-if="doc.isImage">
+                            <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'"
+                                 loading="lazy" alt="">
+                          </template>
+                          <template x-if="!doc.isImage">
+                            <span class="att-icon" :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                          </template>
+                        </div>
                       </template>
                     </div>
                   </template>
@@ -1119,6 +1213,33 @@
     </div>
   </template>
 
+  <!-- Lightbox modal -->
+  <template x-if="_lightbox.show">
+    <div class="lb-backdrop" @click.self="hideLightbox()">
+      <div class="lb-modal">
+        <div class="lb-header">
+          <span class="lb-title" x-text="_lightbox.filename"></span>
+          <button class="lb-close" @click="hideLightbox()">&#x2715;</button>
+        </div>
+        <div class="lb-body">
+          <template x-if="_lightbox.isImage">
+            <img :src="'/remakes/attachment?path=' + encodeURIComponent(_lightbox.src)" alt="">
+          </template>
+          <template x-if="_lightbox.fileType === 'pdf'">
+            <iframe :src="'/remakes/attachment?path=' + encodeURIComponent(_lightbox.src)"></iframe>
+          </template>
+          <template x-if="!_lightbox.isImage && _lightbox.fileType !== 'pdf'">
+            <div class="lb-unsupported">
+              <p>Preview not available for <strong x-text="_lightbox.fileType.toUpperCase()"></strong> files.</p>
+              <a :href="'/remakes/attachment?path=' + encodeURIComponent(_lightbox.src)" target="_blank">Download File</a>
+            </div>
+          </template>
+        </div>
+        <div class="lb-footer" x-text="_lightbox.createDate ? fmtNoteDate(_lightbox.createDate) : ''"></div>
+      </div>
+    </div>
+  </template>
+
 </div><!-- /remakes-page -->
 {% endblock %}
 
@@ -1147,6 +1268,8 @@ function remakesPage() {
 
     _taskMapData: {},
     _noteMapData: {},
+    _documentsMapData: {},
+    _lightbox: { show: false, src: '', filename: '', createDate: '', fileType: '', isImage: false },
     _charts: {},
     _chartRaf: null,
     _noteSaveState: {},
@@ -1175,6 +1298,16 @@ function remakesPage() {
             }
           }
           this._noteMapData = nm;
+
+          const dm = {};
+          for (const doc of (data.documents || [])) {
+            const cid = String(doc.CaseID);
+            if (!dm[cid]) dm[cid] = [];
+            const ext = ((doc.SourceFileName || doc.FilePath || '').split('.').pop() || '').toLowerCase();
+            const isImage = ['jpg','jpeg','png','gif','webp'].includes(ext);
+            dm[cid].push({ ...doc, fileType: ext, isImage });
+          }
+          this._documentsMapData = dm;
 
           if (this.activeTab === 'all') {
             this._scheduleCharts();
@@ -1369,6 +1502,26 @@ function remakesPage() {
     hideTip() {
       this._tip = { show: false, type: '', items: [] };
     },
+
+    getDocsForCase(mainId, ogId) {
+      const seen = new Set();
+      const docs = [];
+      for (const cid of [String(mainId), String(ogId)]) {
+        for (const doc of (this._documentsMapData[cid] || [])) {
+          if (!seen.has(doc.FilePath)) {
+            seen.add(doc.FilePath);
+            docs.push(doc);
+          }
+        }
+      }
+      return docs;
+    },
+
+    showLightbox(doc) {
+      this._lightbox = { show: true, src: doc.FilePath, filename: doc.SourceFileName, createDate: doc.CreateDate, fileType: doc.fileType, isImage: doc.isImage };
+    },
+
+    hideLightbox() { this._lightbox.show = false; },
 
     // ── Formatting helpers ───────────────────────────────────────
     fmtCurrency(v) {

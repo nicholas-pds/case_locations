@@ -107,6 +107,30 @@ WHERE th.CaseID IN (
 ORDER BY th.CaseID, th.CompleteDate ASC
 """
 
+_CASE_DOCUMENTS_SQL = """
+WITH RemakeCases AS (
+    SELECT DISTINCT main.CaseID
+    FROM dbo.CaseLinks AS links
+    INNER JOIN dbo.Cases AS main   ON links.CaseID       = main.CaseID
+    INNER JOIN dbo.Cases AS linked ON links.LinkedCaseID = linked.CaseID
+    WHERE links.Notes LIKE N'%Remake Of%'
+    AND main.DateIn >= DATEADD(DAY, -180, GETDATE())
+    AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
+    UNION
+    SELECT DISTINCT linked.CaseID
+    FROM dbo.CaseLinks AS links
+    INNER JOIN dbo.Cases AS main   ON links.CaseID       = main.CaseID
+    INNER JOIN dbo.Cases AS linked ON links.LinkedCaseID = linked.CaseID
+    WHERE links.Notes LIKE N'%Remake Of%'
+    AND main.DateIn >= DATEADD(DAY, -180, GETDATE())
+    AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
+)
+SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.CreateDate
+FROM dbo.CaseDocuments AS cd
+INNER JOIN RemakeCases rc ON rc.CaseID = cd.CaseID
+ORDER BY cd.CaseID, cd.CreateDate
+"""
+
 _CALL_NOTES_SQL = """
 WITH RemakeCases AS (
     SELECT main.CaseID AS MainCaseID, linked.CaseID AS OG_CaseID
@@ -144,6 +168,10 @@ def get_case_tasks(conn) -> pd.DataFrame:
 
 def get_call_notes(conn) -> pd.DataFrame:
     return pd.read_sql(_CALL_NOTES_SQL, conn)
+
+
+def get_case_documents(conn) -> pd.DataFrame:
+    return pd.read_sql(_CASE_DOCUMENTS_SQL, conn)
 
 
 def get_tasks_for_case(conn, main_id: int, og_id: int) -> pd.DataFrame:
@@ -252,12 +280,13 @@ async def refresh_remakes_cache() -> dict:
         finally:
             conn.close()
 
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        all_df, revenue_df, tasks_df, notes_df = await asyncio.gather(
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        all_df, revenue_df, tasks_df, notes_df, docs_df = await asyncio.gather(
             loop.run_in_executor(pool, _run, get_all_remakes),
             loop.run_in_executor(pool, _run, get_revenue_by_day),
             loop.run_in_executor(pool, _run, get_case_tasks),
             loop.run_in_executor(pool, _run, get_call_notes),
+            loop.run_in_executor(pool, _run, get_case_documents),
         )
 
     tasks_df = _apply_employee_names(tasks_df, "CompletedBy", "CompletedByName")
@@ -267,6 +296,7 @@ async def refresh_remakes_cache() -> dict:
     await cache.set("remakes_revenue", revenue_df)
     await cache.set("remakes_tasks", tasks_df)
     await cache.set("remakes_notes_text", notes_df)
+    await cache.set("remakes_documents", docs_df)
     _remakes_last_refresh = datetime.now()
 
     return {
@@ -274,6 +304,7 @@ async def refresh_remakes_cache() -> dict:
         "revenue_rows": len(revenue_df),
         "tasks_rows": len(tasks_df),
         "notes_rows": len(notes_df),
+        "docs_rows": len(docs_df),
     }
 
 
@@ -284,6 +315,7 @@ def get_cached_remakes() -> dict:
         "revenue": cache.get_sync("remakes_revenue"),
         "tasks": cache.get_sync("remakes_tasks"),
         "notes_text": cache.get_sync("remakes_notes_text"),
+        "documents": cache.get_sync("remakes_documents"),
         "last_refresh": _remakes_last_refresh,
     }
 
