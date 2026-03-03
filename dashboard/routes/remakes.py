@@ -1,4 +1,5 @@
 """Remakes dashboard page routes."""
+import asyncio
 import io
 import logging
 import os
@@ -106,36 +107,54 @@ async def remakes_all_details():
 
 @router.get("/remakes/attachment")
 async def get_attachment(path: str, thumb: int = 0):
+    # External URLs stored in FilePath — cannot serve locally
+    if path.startswith("http://") or path.startswith("https://"):
+        raise HTTPException(400, "External URL — not served here")
     if ".." in path:
         raise HTTPException(400, "Invalid path")
-    normalized = path.replace("/", os.sep).lstrip(os.sep + "/")
-    full_path = Path(_DOCS_BASE) / normalized
-    if not full_path.exists():
-        raise HTTPException(404, "File not found")
+    try:
+        # Robust join: handles both \ and / regardless of DB storage format
+        parts = [p for p in path.replace("\\", "/").split("/") if p]
+        full_path = Path(_DOCS_BASE).joinpath(*parts)
 
-    suffix = full_path.suffix.lower()
-    headers = {"Cache-Control": "max-age=3600"}
+        if not full_path.exists():
+            raise HTTPException(404, "File not found")
 
-    if suffix in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-        if thumb:
-            from PIL import Image
-            with Image.open(full_path) as img:
-                img.thumbnail((120, 120))
-                buf = io.BytesIO()
-                img.save(buf, format="JPEG", quality=80)
-                buf.seek(0)
-            return Response(buf.read(), media_type="image/jpeg", headers=headers)
-        return FileResponse(str(full_path), media_type="image/jpeg", headers=headers)
+        suffix = full_path.suffix.lower()
+        headers = {"Cache-Control": "max-age=3600"}
+        loop = asyncio.get_event_loop()
 
-    elif suffix == ".pdf":
-        return FileResponse(str(full_path), media_type="application/pdf", headers=headers)
+        if suffix in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+            if thumb:
+                from PIL import Image
+                def _make_thumb():
+                    with Image.open(full_path) as img:
+                        img.thumbnail((120, 120))
+                        buf = io.BytesIO()
+                        img.save(buf, format="JPEG", quality=80)
+                        return buf.getvalue()
+                data = await loop.run_in_executor(None, _make_thumb)
+            else:
+                data = await loop.run_in_executor(None, full_path.read_bytes)
+            return Response(data, media_type="image/jpeg", headers=headers)
 
-    else:
-        return FileResponse(
-            str(full_path),
-            media_type="application/octet-stream",
-            headers={**headers, "Content-Disposition": f"attachment; filename={full_path.name}"},
-        )
+        elif suffix == ".pdf":
+            data = await loop.run_in_executor(None, full_path.read_bytes)
+            return Response(data, media_type="application/pdf", headers=headers)
+
+        else:
+            data = await loop.run_in_executor(None, full_path.read_bytes)
+            return Response(
+                data,
+                media_type="application/octet-stream",
+                headers={**headers, "Content-Disposition": f"attachment; filename={full_path.name}"},
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Attachment error for path '{path}': {e}", exc_info=True)
+        raise HTTPException(500, "Error serving file")
 
 
 @router.get("/remakes/case-details")

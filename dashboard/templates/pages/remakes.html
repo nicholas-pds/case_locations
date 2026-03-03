@@ -738,12 +738,16 @@
                   <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <div class="att-grid">
                       <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID)" :key="doc.FilePath">
-                        <div class="att-thumb" :title="doc.SourceFileName" @click.stop="showLightbox(doc)">
-                          <template x-if="doc.isImage">
+                        <div class="att-thumb" :title="doc.SourceFileName" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
+                          <template x-if="doc.isExternal">
+                            <a :href="doc.FilePath" target="_blank" class="att-icon att-icon-file"
+                               style="text-decoration:none;" title="Open external link" @click.stop>&#x1F517;</a>
+                          </template>
+                          <template x-if="doc.isImage && !doc.isExternal">
                             <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'"
                                  loading="lazy" alt="">
                           </template>
-                          <template x-if="!doc.isImage">
+                          <template x-if="!doc.isImage && !doc.isExternal">
                             <span class="att-icon" :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
                           </template>
                         </div>
@@ -1068,12 +1072,16 @@
                   <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <div class="att-grid">
                       <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID)" :key="doc.FilePath">
-                        <div class="att-thumb" :title="doc.SourceFileName" @click.stop="showLightbox(doc)">
-                          <template x-if="doc.isImage">
+                        <div class="att-thumb" :title="doc.SourceFileName" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
+                          <template x-if="doc.isExternal">
+                            <a :href="doc.FilePath" target="_blank" class="att-icon att-icon-file"
+                               style="text-decoration:none;" title="Open external link" @click.stop>&#x1F517;</a>
+                          </template>
+                          <template x-if="doc.isImage && !doc.isExternal">
                             <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'"
                                  loading="lazy" alt="">
                           </template>
-                          <template x-if="!doc.isImage">
+                          <template x-if="!doc.isImage && !doc.isExternal">
                             <span class="att-icon" :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
                           </template>
                         </div>
@@ -1225,10 +1233,10 @@
           <template x-if="_lightbox.isImage">
             <img :src="'/remakes/attachment?path=' + encodeURIComponent(_lightbox.src)" alt="">
           </template>
-          <template x-if="_lightbox.fileType === 'pdf'">
+          <template x-if="_lightbox.fileType === 'pdf' && !_lightbox.isExternal">
             <iframe :src="'/remakes/attachment?path=' + encodeURIComponent(_lightbox.src)"></iframe>
           </template>
-          <template x-if="!_lightbox.isImage && _lightbox.fileType !== 'pdf'">
+          <template x-if="!_lightbox.isImage && _lightbox.fileType !== 'pdf' && !_lightbox.isExternal">
             <div class="lb-unsupported">
               <p>Preview not available for <strong x-text="_lightbox.fileType.toUpperCase()"></strong> files.</p>
               <a :href="'/remakes/attachment?path=' + encodeURIComponent(_lightbox.src)" target="_blank">Download File</a>
@@ -1269,7 +1277,7 @@ function remakesPage() {
     _taskMapData: {},
     _noteMapData: {},
     _documentsMapData: {},
-    _lightbox: { show: false, src: '', filename: '', createDate: '', fileType: '', isImage: false },
+    _lightbox: { show: false, src: '', filename: '', createDate: '', fileType: '', isImage: false, isExternal: false },
     _charts: {},
     _chartRaf: null,
     _noteSaveState: {},
@@ -1305,7 +1313,8 @@ function remakesPage() {
             if (!dm[cid]) dm[cid] = [];
             const ext = ((doc.SourceFileName || doc.FilePath || '').split('.').pop() || '').toLowerCase();
             const isImage = ['jpg','jpeg','png','gif','webp'].includes(ext);
-            dm[cid].push({ ...doc, fileType: ext, isImage });
+            const isExternal = doc.FilePath && (doc.FilePath.startsWith('http://') || doc.FilePath.startsWith('https://'));
+            dm[cid].push({ ...doc, fileType: ext, isImage, isExternal });
           }
           this._documentsMapData = dm;
 
@@ -1518,7 +1527,8 @@ function remakesPage() {
     },
 
     showLightbox(doc) {
-      this._lightbox = { show: true, src: doc.FilePath, filename: doc.SourceFileName, createDate: doc.CreateDate, fileType: doc.fileType, isImage: doc.isImage };
+      if (doc.isExternal) { window.open(doc.FilePath, '_blank'); return; }
+      this._lightbox = { show: true, src: doc.FilePath, filename: doc.SourceFileName, createDate: doc.CreateDate, fileType: doc.fileType, isImage: doc.isImage, isExternal: false };
     },
 
     hideLightbox() { this._lightbox.show = false; },
