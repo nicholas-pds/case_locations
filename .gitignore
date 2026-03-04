@@ -1,3 +1,6 @@
+logs/*.txt
+logs/*.log
+
 # Python-specific ignores
 __pycache__/
 *.py[cod]
