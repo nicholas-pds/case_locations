@@ -2241,7 +2241,8 @@ function remakesPage() {
     },
     fmtNoteShort(note) {
       if (!note) return '';
-      return note.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      const s = note.replace(/[\r\n\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim();
+      return s.length > 120 ? s.slice(0, 120) + '…' : s;
     },
     fmtNote(note) {
       if (!note) return '';
@@ -2256,7 +2257,7 @@ function remakesPage() {
       ];
       let result = s;
       for (const label of labels) {
-        result = result.split(label).join('<br><strong>' + label + '</strong>');
+        result = result.split(label).join('<br>' + label);
       }
       return result.replace(/^<br>/, '');
     },
