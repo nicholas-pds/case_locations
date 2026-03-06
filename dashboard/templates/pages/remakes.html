@@ -772,7 +772,7 @@
                       <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="n.Note + n.UserID">
                         <div class="call-note-item">
                           <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
-                          <span x-text="n.Note"></span>
+                          <span x-html="fmtNote(n.Note)"></span>
                         </div>
                       </template>
                       <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -1106,7 +1106,7 @@
                       <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="n.Note + n.UserID">
                         <div class="call-note-item">
                           <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
-                          <span x-text="n.Note"></span>
+                          <span x-html="fmtNote(n.Note)"></span>
                         </div>
                       </template>
                       <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -1539,7 +1539,7 @@
                         <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,3)" :key="n.Note + n.UserID">
                           <div class="call-note-item">
                             <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
-                            <span x-text="n.Note"></span>
+                            <span x-html="fmtNote(n.Note)"></span>
                           </div>
                         </template>
                         <button class="overflow-btn"
@@ -1605,7 +1605,7 @@
             <template x-for="n in _tip.items" :key="n.Note + n.UserID">
               <div class="tip-note-item">
                 <div class="tip-note-meta" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + fmtNoteDate(n.CallDate) : '')"></div>
-                <div class="tip-note-text" x-text="n.Note"></div>
+                <div class="tip-note-text" x-html="fmtNote(n.Note)"></div>
               </div>
             </template>
           </div>
@@ -2171,6 +2171,23 @@ function remakesPage() {
       if (isNaN(dt.getTime())) return String(d).slice(0, 16);
       return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
            + ' ' + dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    },
+    fmtNote(note) {
+      if (!note) return '';
+      const s = note.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      if (!s.includes('Business Name:') && !s.includes('Customer ID:')) {
+        return s.replace(/\n/g, '<br>');
+      }
+      const labels = [
+        'Business Name:', 'Customer ID:', 'Doctor Name:', 'Date In:', 'Type:',
+        'Case Number:', 'Patient Name:', 'Requested Return Date:', 'New Case #',
+        'Products:', 'Case comments:',
+      ];
+      let result = s;
+      for (const label of labels) {
+        result = result.split(label).join('<br><strong>' + label + '</strong>');
+      }
+      return result.replace(/^<br>/, '');
     },
 
     // ── Date presets ─────────────────────────────────────────────
