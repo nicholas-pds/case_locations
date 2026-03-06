@@ -500,8 +500,8 @@
     .breakdown-grid { grid-template-columns: 1fr; }
   }
 
-  /* ── Drill Down filter chips ── */
-  .dd-chip {
+  /* ── Drill Down filter chips (active bar) ── */
+  .filter-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -513,7 +513,7 @@
     color: var(--red);
     font-weight: 600;
   }
-  .dd-chip-x {
+  .filter-chip-x {
     background: none;
     border: none;
     cursor: pointer;
@@ -523,7 +523,29 @@
     line-height: 1;
     font-weight: 700;
   }
-  .dd-chip-x:hover { color: var(--red-dark); }
+  .filter-chip-x:hover { color: var(--red-dark); }
+
+  /* ── KPI note ── */
+  .kpi-note { font-size: 0.67rem; color: #aaa; font-style: italic; margin-top: 2px; }
+
+  /* ── Drill Down filter trigger buttons ── */
+  .dd-filter-btn { border: 1px solid var(--border); background: var(--light); border-radius: 4px; padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer; }
+  .dd-filter-btn.dd-filter-active { border-color: var(--red); color: var(--red); }
+  .dd-clear-btn { border: 1px solid var(--red); color: var(--red); background: transparent; border-radius: 4px; padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer; }
+  .dd-clear-btn:hover { background: var(--red); color: #fff; }
+
+  /* ── Popup overlay ── */
+  .dd-popup-overlay    { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
+  .dd-popup-panel      { background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); padding: 1.25rem; width: min(580px, 92vw); max-height: 72vh; overflow-y: auto; }
+  .dd-popup-header     { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 1rem; margin-bottom: 1rem; }
+  .dd-popup-close      { background: none; border: none; font-size: 1rem; cursor: pointer; color: var(--gray); }
+  .dd-popup-grid       { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 1rem; }
+  .dd-chip             { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.6rem; border-radius: 4px; border: 1px solid var(--border); background: var(--light); font-size: 0.77rem; cursor: pointer; text-align: left; transition: all 0.12s; }
+  .dd-chip.selected    { background: var(--red); color: #fff; border-color: var(--red); }
+  .chip-x              { font-size: 0.68rem; margin-left: auto; flex-shrink: 0; }
+  .dd-popup-footer     { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.75rem; }
+  .dd-popup-apply      { background: var(--red); color: #fff; border: none; padding: 0.35rem 1.2rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+  .dd-popup-clear      { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 0.82rem; text-decoration: underline; }
 
   /* ── Drill Down multi-select dropdowns ── */
   .dd-multiselect { position: relative; }
@@ -858,7 +880,8 @@
       <div class="kpi-card">
         <div class="kpi-label">Total Remakes</div>
         <div class="kpi-value" x-text="kpiTotalRemakes"></div>
-        <div class="kpi-sub">Excl. Full Charge · in selected range</div>
+        <div class="kpi-note">Excl. Full Charge &amp; Courtesy</div>
+        <div class="kpi-sub">in selected range</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Remake %</div>
@@ -868,6 +891,7 @@
       <div class="kpi-card">
         <div class="kpi-label">Remake Loss ($)</div>
         <div class="kpi-value" x-text="fmtCurrency(kpiRemakeLoss)"></div>
+        <div class="kpi-note">Excl. Full Charge &amp; Courtesy</div>
         <div class="kpi-sub">Sum of RemakeDiscount for filtered cases</div>
       </div>
       <div class="kpi-card">
@@ -1251,72 +1275,34 @@
 
     <!-- Filter Bar -->
     <div class="controls-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
-      <!-- Products multi-select -->
-      <div class="dd-multiselect" x-data="{ open: false }">
-        <button class="date-input dd-ms-trigger"
-                :class="{ active: ddSelProducts.length }"
-                @click="open = !open"
-                @click.outside="open = false">
-          <span x-text="ddSelProducts.length ? ddSelProducts.length + ' Product' + (ddSelProducts.length > 1 ? 's' : '') : 'All Products'"></span>
-          <span style="font-size:0.7rem;">▾</span>
-        </button>
-        <div class="dd-ms-dropdown" x-show="open" x-cloak>
-          <label class="dd-ms-option" x-show="ddSelProducts.length"
-                 @click="ddSelProducts = []; open = false" style="color:var(--red);font-weight:600;">
-            ✕ Clear
-          </label>
-          <template x-for="p in ddProducts" :key="p">
-            <label class="dd-ms-option">
-              <input type="checkbox" :value="p" x-model="ddSelProducts">
-              <span x-text="p"></span>
-            </label>
-          </template>
-        </div>
-      </div>
-      <!-- Reasons multi-select -->
-      <div class="dd-multiselect" x-data="{ open: false }">
-        <button class="date-input dd-ms-trigger"
-                :class="{ active: ddSelReasons.length }"
-                @click="open = !open"
-                @click.outside="open = false">
-          <span x-text="ddSelReasons.length ? ddSelReasons.length + ' Reason' + (ddSelReasons.length > 1 ? 's' : '') : 'All Reasons'"></span>
-          <span style="font-size:0.7rem;">▾</span>
-        </button>
-        <div class="dd-ms-dropdown" x-show="open" x-cloak>
-          <label class="dd-ms-option" x-show="ddSelReasons.length"
-                 @click="ddSelReasons = []; open = false" style="color:var(--red);font-weight:600;">
-            ✕ Clear
-          </label>
-          <template x-for="r in ddReasons" :key="r">
-            <label class="dd-ms-option">
-              <input type="checkbox" :value="r" x-model="ddSelReasons">
-              <span x-text="r"></span>
-            </label>
-          </template>
-        </div>
-      </div>
-      <!-- Types multi-select -->
-      <div class="dd-multiselect" x-data="{ open: false }">
-        <button class="date-input dd-ms-trigger"
-                :class="{ active: ddSelTypes.length }"
-                @click="open = !open"
-                @click.outside="open = false">
-          <span x-text="ddSelTypes.length ? ddSelTypes.length + ' Type' + (ddSelTypes.length > 1 ? 's' : '') : 'All Types'"></span>
-          <span style="font-size:0.7rem;">▾</span>
-        </button>
-        <div class="dd-ms-dropdown" x-show="open" x-cloak>
-          <label class="dd-ms-option" x-show="ddSelTypes.length"
-                 @click="ddSelTypes = []; open = false" style="color:var(--red);font-weight:600;">
-            ✕ Clear
-          </label>
-          <template x-for="t in ddTypes" :key="t">
-            <label class="dd-ms-option">
-              <input type="checkbox" :value="t" x-model="ddSelTypes">
-              <span x-text="t"></span>
-            </label>
-          </template>
-        </div>
-      </div>
+      <!-- Products trigger -->
+      <button @click="ddOpenFilter = ddOpenFilter === 'products' ? null : 'products'"
+              class="dd-filter-btn" :class="{ 'dd-filter-active': ddSelProducts.length }">
+        Products<template x-if="ddSelProducts.length"> (<span x-text="ddSelProducts.length"></span>)</template> ▾
+      </button>
+      <!-- Reasons trigger -->
+      <button @click="ddOpenFilter = ddOpenFilter === 'reasons' ? null : 'reasons'"
+              class="dd-filter-btn" :class="{ 'dd-filter-active': ddSelReasons.length }">
+        Reasons<template x-if="ddSelReasons.length"> (<span x-text="ddSelReasons.length"></span>)</template> ▾
+      </button>
+      <!-- Types trigger -->
+      <button @click="ddOpenFilter = ddOpenFilter === 'types' ? null : 'types'"
+              class="dd-filter-btn" :class="{ 'dd-filter-active': ddSelTypes.length }">
+        Types<template x-if="ddSelTypes.length"> (<span x-text="ddSelTypes.length"></span>)</template> ▾
+      </button>
+      <!-- Practice trigger -->
+      <button @click="ddOpenFilter = ddOpenFilter === 'practice' ? null : 'practice'"
+              class="dd-filter-btn" :class="{ 'dd-filter-active': ddSelPractice.length }">
+        Practice<template x-if="ddSelPractice.length"> (<span x-text="ddSelPractice.length"></span>)</template> ▾
+      </button>
+      <!-- Clear All button -->
+      <button
+        x-show="ddSelProducts.length || ddSelReasons.length || ddSelTypes.length || ddSelPractice.length"
+        @click="ddClearFilters()"
+        class="dd-clear-btn"
+        x-transition>
+        ✕ Clear Filters
+      </button>
       <span class="date-sep" style="margin-left:8px;">Period:</span>
       <button class="preset-btn" :class="{active: ddPreset==='last2w'}"  @click="setDdPreset('last2w')">2 Wks</button>
       <button class="preset-btn" :class="{active: ddPreset==='last1mo'}" @click="setDdPreset('last1mo')">1 Mo</button>
@@ -1329,26 +1315,93 @@
       <input type="date" class="date-input" x-model="ddEnd" x-show="ddPreset==='custom'" @change="ddPreset='custom'">
     </div>
 
+    <!-- Popup overlay -->
+    <div x-show="ddOpenFilter !== null" @click.self="ddOpenFilter = null"
+         class="dd-popup-overlay" x-transition style="display:none">
+      <div class="dd-popup-panel">
+
+        <div class="dd-popup-header">
+          <span x-text="{'products':'Products','reasons':'Reasons','types':'Types','practice':'Practices'}[ddOpenFilter]"></span>
+          <button @click="ddOpenFilter = null" class="dd-popup-close">✕</button>
+        </div>
+
+        <div class="dd-popup-grid">
+          <!-- Products -->
+          <template x-if="ddOpenFilter === 'products'">
+            <template x-for="p in ddProducts" :key="p">
+              <button @click="ddSelProducts.includes(p) ? ddSelProducts.splice(ddSelProducts.indexOf(p),1) : ddSelProducts.push(p)"
+                class="dd-chip" :class="{ selected: ddSelProducts.includes(p) }">
+                <span x-text="p"></span>
+                <span class="chip-x" x-show="ddSelProducts.includes(p)">✕</span>
+              </button>
+            </template>
+          </template>
+          <!-- Reasons -->
+          <template x-if="ddOpenFilter === 'reasons'">
+            <template x-for="r in ddReasons" :key="r">
+              <button @click="ddSelReasons.includes(r) ? ddSelReasons.splice(ddSelReasons.indexOf(r),1) : ddSelReasons.push(r)"
+                class="dd-chip" :class="{ selected: ddSelReasons.includes(r) }">
+                <span x-text="r"></span>
+                <span class="chip-x" x-show="ddSelReasons.includes(r)">✕</span>
+              </button>
+            </template>
+          </template>
+          <!-- Types -->
+          <template x-if="ddOpenFilter === 'types'">
+            <template x-for="t in ddTypes" :key="t">
+              <button @click="ddSelTypes.includes(t) ? ddSelTypes.splice(ddSelTypes.indexOf(t),1) : ddSelTypes.push(t)"
+                class="dd-chip" :class="{ selected: ddSelTypes.includes(t) }">
+                <span x-text="t"></span>
+                <span class="chip-x" x-show="ddSelTypes.includes(t)">✕</span>
+              </button>
+            </template>
+          </template>
+          <!-- Practice -->
+          <template x-if="ddOpenFilter === 'practice'">
+            <template x-for="p in ddPractices" :key="p">
+              <button @click="ddSelPractice.includes(p) ? ddSelPractice.splice(ddSelPractice.indexOf(p),1) : ddSelPractice.push(p)"
+                class="dd-chip" :class="{ selected: ddSelPractice.includes(p) }">
+                <span x-text="p"></span>
+                <span class="chip-x" x-show="ddSelPractice.includes(p)">✕</span>
+              </button>
+            </template>
+          </template>
+        </div>
+
+        <div class="dd-popup-footer">
+          <button @click="if(ddOpenFilter==='products') ddSelProducts=[]; else if(ddOpenFilter==='reasons') ddSelReasons=[]; else if(ddOpenFilter==='types') ddSelTypes=[]; else ddSelPractice=[]"
+            class="dd-popup-clear">Clear all</button>
+          <button @click="ddOpenFilter = null" class="dd-popup-apply">Apply</button>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Active filter chips -->
     <div class="controls-row" style="gap:6px;margin-top:-8px;margin-bottom:12px;flex-wrap:wrap;"
-         x-show="ddSelProducts.length || ddSelReasons.length || ddSelTypes.length">
+         x-show="ddSelProducts.length || ddSelReasons.length || ddSelTypes.length || ddSelPractice.length">
       <span style="font-size:0.75rem;color:var(--gray);font-weight:600;">Active:</span>
       <template x-for="p in ddSelProducts" :key="'p'+p">
-        <span class="dd-chip">
+        <span class="filter-chip">
           <span x-text="p"></span>
-          <button @click="ddSelProducts = ddSelProducts.filter(x => x !== p)" class="dd-chip-x" title="Remove">×</button>
+          <button @click="ddSelProducts = ddSelProducts.filter(x => x !== p)" class="filter-chip-x" title="Remove">×</button>
         </span>
       </template>
       <template x-for="r in ddSelReasons" :key="'r'+r">
-        <span class="dd-chip">
+        <span class="filter-chip">
           <span x-text="r"></span>
-          <button @click="ddSelReasons = ddSelReasons.filter(x => x !== r)" class="dd-chip-x" title="Remove">×</button>
+          <button @click="ddSelReasons = ddSelReasons.filter(x => x !== r)" class="filter-chip-x" title="Remove">×</button>
         </span>
       </template>
       <template x-for="t in ddSelTypes" :key="'t'+t">
-        <span class="dd-chip">
+        <span class="filter-chip">
           <span x-text="t"></span>
-          <button @click="ddSelTypes = ddSelTypes.filter(x => x !== t)" class="dd-chip-x" title="Remove">×</button>
+          <button @click="ddSelTypes = ddSelTypes.filter(x => x !== t)" class="filter-chip-x" title="Remove">×</button>
+        </span>
+      </template>
+      <template x-for="v in ddSelPractice" :key="'prac-'+v">
+        <span class="filter-chip">Practice: <span x-text="v"></span>
+          <button @click="ddSelPractice = ddSelPractice.filter(x=>x!==v)" class="filter-chip-x" title="Remove">×</button>
         </span>
       </template>
     </div>
@@ -1665,9 +1718,11 @@ function remakesPage() {
     searchQuery: '',
     showBreakdowns: true,
     ddShowBreakdowns: true,
+    ddOpenFilter:  null,
     ddSelProducts: [],
     ddSelReasons:  [],
     ddSelTypes:    [],
+    ddSelPractice: [],
     ddPreset:  'last3mo',
     ddStart:   '',
     ddEnd:     '',
@@ -1789,6 +1844,7 @@ function remakesPage() {
       this.$watch('ddSelProducts', () => this._scheduleDdChart());
       this.$watch('ddSelReasons',  () => this._scheduleDdChart());
       this.$watch('ddSelTypes',    () => this._scheduleDdChart());
+      this.$watch('ddSelPractice', () => this._scheduleDdChart());
       this.$watch('ddStart',   () => this._scheduleDdChart());
       this.$watch('ddEnd',     () => this._scheduleDdChart());
 
@@ -1847,11 +1903,16 @@ function remakesPage() {
       return [...seen].sort();
     },
 
+    // ── Exclusion helper ─────────────────────────────────────────
+    _excluded(r) {
+      return r.Remake === 'Remake Full Charge' || r.Remake === 'Remake NC Courtesy';
+    },
+
     // ── Filtered views ──────────────────────────────────────────
     get filteredMeeting() {
       const s = this.meetingStart, e = this.meetingEnd, q = this.searchQuery.trim().toLowerCase();
       return this.allRecords.filter(r => {
-        if (r.Remake === 'Remake Full Charge') return false;
+        if (this._excluded(r)) return false;
         const d = (r.DateIn || '').slice(0, 10);
         if (d < s || d > e) return false;
         if (q) return (r.MainCaseNumber||'').toLowerCase().includes(q)
@@ -1885,12 +1946,12 @@ function remakesPage() {
 
     // ── KPI getters ─────────────────────────────────────────────
     get kpiTotalRemakes() {
-      return this.filteredAll.filter(r => r.Remake !== 'Remake Full Charge').length;
+      return this.filteredAll.filter(r => !this._excluded(r)).length;
     },
 
     get kpiRemakeLoss() {
       return this.filteredAll
-        .filter(r => r.Remake !== 'Remake Full Charge')
+        .filter(r => !this._excluded(r))
         .reduce((sum, r) => sum + (parseFloat(r.RemakeDiscount) || 0), 0);
     },
 
@@ -1923,7 +1984,7 @@ function remakesPage() {
           return d >= bar.start && d <= bar.end;
         });
         const countAll = recs.length;
-        const meeting  = recs.filter(r => r.Remake !== 'Remake Full Charge');
+        const meeting  = recs.filter(r => !this._excluded(r));
         const count    = meeting.length;
         const loss     = meeting.reduce((s, r) => s + (parseFloat(r.RemakeDiscount) || 0), 0);
         const revenue  = revRecs.filter(r => {
@@ -1959,6 +2020,10 @@ function remakesPage() {
       return [...s].sort();
     },
 
+    get ddPractices() {
+      return [...new Set(this.allRecords.map(r => r.PracticeName).filter(Boolean))].sort();
+    },
+
     get ddDateRange() {
       if (this.ddPreset === 'custom') return { start: this.ddStart, end: this.ddEnd };
       return this._presetRange(this.ddPreset) || { start: this.ddStart, end: this.ddEnd };
@@ -1972,6 +2037,7 @@ function remakesPage() {
         if (this.ddSelProducts.length && !this.ddSelProducts.includes(r.Product)) return false;
         if (this.ddSelReasons.length  && !this.ddSelReasons.includes(r.RemakeReason)) return false;
         if (this.ddSelTypes.length    && !this.ddSelTypes.includes(r.Remake)) return false;
+        if (this.ddSelPractice.length && !this.ddSelPractice.includes(r.PracticeName)) return false;
         return true;
       }).sort((a, b) => (b.DateIn || '') > (a.DateIn || '') ? 1 : -1);
     },
@@ -2219,6 +2285,13 @@ function remakesPage() {
         const r = this._presetRange(p);
         if (r) { this.ddStart = r.start; this.ddEnd = r.end; }
       }
+    },
+
+    ddClearFilters() {
+      this.ddSelProducts = [];
+      this.ddSelReasons  = [];
+      this.ddSelTypes    = [];
+      this.ddSelPractice = [];
     },
 
     _scheduleDdChart() {
