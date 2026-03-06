@@ -68,7 +68,7 @@ LEFT JOIN (
     WHERE p.Description NOT LIKE '%Rush%'
 ) AS topProduct ON topProduct.CaseID = linked.CaseID AND topProduct.rn = 1
 WHERE links.Notes LIKE '%Remake Of%'
-  AND main.DateIn >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
+  AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
   AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
 ORDER BY main.DateIn DESC
 """
@@ -81,7 +81,7 @@ FROM dbo.Cases
 WHERE [Status] NOT IN ('Cancelled', 'Submitted', 'Sent for TryIn')
   AND Deleted = 0
   AND [Type] = 'D'
-  AND InvoiceDate >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
+  AND InvoiceDate >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
   AND InvoiceDate <  DATEADD(DAY,   1, CAST(GETDATE() AS DATE))
 GROUP BY CAST(InvoiceDate AS DATE)
 ORDER BY InvoiceDate ASC
@@ -94,7 +94,7 @@ WITH RemakeCases AS (
     INNER JOIN dbo.Cases AS main   ON links.CaseID     = main.CaseID
     INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE '%Remake Of%'
-      AND main.DateIn >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
+      AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
       AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
 )
 SELECT th.CaseID, th.Task, th.CompletedBy, CAST(th.CompleteDate AS DATE) AS CompleteDate
@@ -114,7 +114,7 @@ WITH RemakeCases AS (
     INNER JOIN dbo.Cases AS main   ON links.CaseID       = main.CaseID
     INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE N'%Remake Of%'
-    AND main.DateIn >= DATEADD(DAY, -180, GETDATE())
+    AND main.DateIn >= DATEADD(DAY, -365, GETDATE())
     AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
     UNION
     SELECT DISTINCT linked.CaseID
@@ -122,7 +122,7 @@ WITH RemakeCases AS (
     INNER JOIN dbo.Cases AS main   ON links.CaseID     = main.CaseID
     INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE N'%Remake Of%'
-    AND main.DateIn >= DATEADD(DAY, -180, GETDATE())
+    AND main.DateIn >= DATEADD(DAY, -365, GETDATE())
     AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
 )
 SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.CreateDate
@@ -138,7 +138,7 @@ WITH RemakeCases AS (
     INNER JOIN dbo.Cases AS main   ON links.CaseID     = main.CaseID
     INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE '%Remake Of%'
-      AND main.DateIn >= DATEADD(DAY, -180, CAST(GETDATE() AS DATE))
+      AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
       AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
 ), AllCaseIDs AS (
     SELECT MainCaseID AS CaseID FROM RemakeCases
