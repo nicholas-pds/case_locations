@@ -822,7 +822,7 @@
                               <span>&#x1F517;</span>
                             </template>
                             <template x-if="doc.isImage && !doc.isExternal">
-                              <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.effectivePath) + '&thumb=1'" loading="lazy" alt="">
+                              <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
                             </template>
                             <template x-if="!doc.isImage && !doc.isExternal">
                               <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
@@ -1159,7 +1159,7 @@
                               <span>&#x1F517;</span>
                             </template>
                             <template x-if="doc.isImage && !doc.isExternal">
-                              <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.effectivePath) + '&thumb=1'" loading="lazy" alt="">
+                              <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
                             </template>
                             <template x-if="!doc.isImage && !doc.isExternal">
                               <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
@@ -1877,20 +1877,6 @@ function remakesPage() {
             const ext = ((doc.SourceFileName || doc.FilePath || '').split('.').pop() || '').toLowerCase();
             const isImage = ['jpg','jpeg','png','gif','webp'].includes(ext);
             const isExternal = doc.FilePath && (doc.FilePath.startsWith('http://') || doc.FilePath.startsWith('https://'));
-
-            // Build effectivePath: path relative to \\APP-SERVER\DLCPMImages\
-            let rawPath = (doc.FilePath || '').replace(/\\/g, '/');
-            rawPath = rawPath.replace(/^\/\/[^/]+\/DLCPMImages\/?/i, '');
-            const repo = (doc.Repository || '').replace(/\\/g, '/');
-            if (repo && !rawPath.toLowerCase().startsWith(repo.toLowerCase() + '/')) {
-              rawPath = repo.replace(/\/$/, '') + '/' + rawPath.replace(/^\//, '');
-            }
-            const sfn = doc.SourceFileName || '';
-            if (sfn && !rawPath.toLowerCase().endsWith('/' + sfn.toLowerCase())) {
-              rawPath = rawPath.replace(/\/$/, '') + '/' + sfn;
-            }
-            doc.effectivePath = rawPath;
-
             dm[cid].push({ ...doc, fileType: ext, isImage, isExternal });
           }
           this._documentsMapData = dm;
@@ -2233,7 +2219,7 @@ function remakesPage() {
 
     showLightbox(doc) {
       if (doc.isExternal) { window.open(doc.FilePath, '_blank'); return; }
-      this._lightbox = { show: true, src: doc.effectivePath, filename: doc.SourceFileName, createDate: doc.CreateDate, fileType: doc.fileType, isImage: doc.isImage, isExternal: false };
+      this._lightbox = { show: true, src: doc.FilePath, filename: doc.SourceFileName, createDate: doc.CreateDate, fileType: doc.fileType, isImage: doc.isImage, isExternal: false };
     },
 
     hideLightbox() { this._lightbox.show = false; },

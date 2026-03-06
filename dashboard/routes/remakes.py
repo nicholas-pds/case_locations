@@ -133,14 +133,9 @@ async def get_attachment(path: str, thumb: int = 0):
     if ".." in path:
         raise HTTPException(400, "Invalid path")
     try:
-        # path is relative to \\APP-SERVER\DLCPMImages (e.g. "CaseDocuments/subdir/file.jpg")
+        # Robust join: handles both \ and / regardless of DB storage format
         parts = [p for p in path.replace("\\", "/").split("/") if p]
-        full_path = Path(_DOCS_SHARE).joinpath(*parts)
-        # security: must stay within the share
-        try:
-            full_path.relative_to(Path(_DOCS_SHARE))
-        except ValueError:
-            raise HTTPException(403, "Access denied")
+        full_path = Path(_DOCS_BASE).joinpath(*parts)
 
         if not full_path.exists():
             raise HTTPException(404, "File not found")
