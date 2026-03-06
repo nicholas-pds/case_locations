@@ -666,7 +666,7 @@
       All Remakes Tracking
     </button>
     <button class="tab-btn" :class="{active: activeTab==='drill'}" @click="activeTab='drill'; $nextTick(() => _scheduleDdChart())">
-      Drill Down
+      Explorer
     </button>
     <button class="tab-btn" :class="{active: activeTab==='meeting'}" @click="activeTab='meeting'">
       Meeting Remakes
@@ -2064,6 +2064,7 @@ function remakesPage() {
         if (this.ddSelProducts.length && !this.ddSelProducts.includes(r.Product)) return false;
         if (this.ddSelReasons.length  && !this.ddSelReasons.includes(r.RemakeReason)) return false;
         if (this.ddSelTypes.length    && !this.ddSelTypes.includes(r.Remake)) return false;
+        if (this.ddSelPractice.length && !this.ddSelPractice.includes(r.PracticeName)) return false;
         return r.Remake !== 'Remake Full Charge';
       }).length;
 
