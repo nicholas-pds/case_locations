@@ -125,7 +125,7 @@ WITH RemakeCases AS (
     AND main.DateIn >= DATEADD(DAY, -365, GETDATE())
     AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
 )
-SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.CreateDate
+SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.CreateDate, cd.Repository
 FROM dbo.CaseDocuments AS cd
 INNER JOIN RemakeCases rc ON rc.CaseID = cd.CaseID
 ORDER BY cd.CaseID, cd.CreateDate
