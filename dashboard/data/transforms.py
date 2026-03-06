@@ -587,13 +587,13 @@ def build_daily_sales_chart(df: pd.DataFrame, num_days: int = 30) -> dict:
         full_dates = []
         full_vals = []
 
-    # 7-day rolling average
+    # 5-day rolling average (business week)
     rolling = []
     for i in range(len(full_vals)):
-        if i < 6:
+        if i < 4:
             rolling.append(None)
         else:
-            rolling.append(round(sum(full_vals[i-6:i+1]) / 7, 2))
+            rolling.append(round(sum(full_vals[i-4:i+1]) / 5, 2))
 
     labels = []
     is_today = []

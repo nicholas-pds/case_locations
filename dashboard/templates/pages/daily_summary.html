@@ -244,7 +244,7 @@
             },
             {
               type: 'line',
-              label: '7-Day Avg',
+              label: '5-Day Avg',
               data: dailyData.trend,
               borderColor: '#C0392B',
               backgroundColor: 'transparent',
@@ -269,7 +269,7 @@
                 label: function(ctx) {
                   if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtMillions(ctx.raw);
                   if (ctx.raw == null) return null;
-                  return '7-Day Avg: ' + fmtMillions(ctx.raw);
+                  return '5-Day Avg: ' + fmtMillions(ctx.raw);
                 }
               }
             }
@@ -569,7 +569,7 @@
   </div>
   <div class="ds-chart-container">
     <h3 class="ds-chart-title">Daily Sales</h3>
-    <p class="ds-chart-subtitle">Last 30 days &mdash; invoice revenue + 7-day trend</p>
+    <p class="ds-chart-subtitle">Last 30 days &mdash; invoice revenue + 5-day trend</p>
     <canvas id="dailySalesChart" style="max-height:300px;"></canvas>
   </div>
 </div>
