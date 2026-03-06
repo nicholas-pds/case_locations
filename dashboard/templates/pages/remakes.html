@@ -500,6 +500,31 @@
     .breakdown-grid { grid-template-columns: 1fr; }
   }
 
+  /* ── Drill Down filter chips ── */
+  .dd-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #FFF0F0;
+    border: 1px solid #f8bbd0;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    color: var(--red);
+    font-weight: 600;
+  }
+  .dd-chip-x {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--red);
+    font-size: 0.95rem;
+    padding: 0 2px;
+    line-height: 1;
+    font-weight: 700;
+  }
+  .dd-chip-x:hover { color: var(--red-dark); }
+
   /* ── Overflow button ── */
   .overflow-btn {
     display: inline-block;
@@ -595,6 +620,9 @@
   <div class="tab-nav">
     <button class="tab-btn" :class="{active: activeTab==='all'}" @click="switchToAll()">
       All Remakes Tracking
+    </button>
+    <button class="tab-btn" :class="{active: activeTab==='drill'}" @click="activeTab='drill'; $nextTick(() => _scheduleDdChart())">
+      Drill Down
     </button>
     <button class="tab-btn" :class="{active: activeTab==='meeting'}" @click="activeTab='meeting'">
       Meeting Remakes
@@ -1119,7 +1147,7 @@
   <!-- ══════════════════════════════════════════
        TAB: AM TABS (shared panel)
        ══════════════════════════════════════════ -->
-  <div class="tab-content" x-show="activeTab !== 'meeting' && activeTab !== 'all'" x-cloak>
+  <div class="tab-content" x-show="activeTab !== 'meeting' && activeTab !== 'all' && activeTab !== 'drill'" x-cloak>
     <div class="controls-row">
       <button class="preset-btn" :class="{active: amPreset==='last'}"   @click="setAMPreset('last')">Last Week</button>
       <button class="preset-btn" :class="{active: amPreset==='this'}"   @click="setAMPreset('this')">This Week</button>
@@ -1193,6 +1221,271 @@
       </div>
     </template>
   </div><!-- /AM tab -->
+
+  <!-- ══════════════════════════════════════════
+       TAB: DRILL DOWN
+       ══════════════════════════════════════════ -->
+  <div class="tab-content" x-show="activeTab==='drill'" x-cloak>
+
+    <!-- Filter Bar -->
+    <div class="controls-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+      <select class="date-input" x-model="ddProduct" style="max-width:200px;">
+        <option value="">All Products</option>
+        <template x-for="p in ddProducts" :key="p">
+          <option :value="p" x-text="p"></option>
+        </template>
+      </select>
+      <select class="date-input" x-model="ddReason" style="max-width:200px;">
+        <option value="">All Reasons</option>
+        <template x-for="r in ddReasons" :key="r">
+          <option :value="r" x-text="r"></option>
+        </template>
+      </select>
+      <select class="date-input" x-model="ddType" style="max-width:180px;">
+        <option value="">All Types</option>
+        <template x-for="t in ddTypes" :key="t">
+          <option :value="t" x-text="t"></option>
+        </template>
+      </select>
+      <span class="date-sep" style="margin-left:8px;">Period:</span>
+      <button class="preset-btn" :class="{active: ddPreset==='last2w'}"  @click="setDdPreset('last2w')">2 Wks</button>
+      <button class="preset-btn" :class="{active: ddPreset==='last1mo'}" @click="setDdPreset('last1mo')">1 Mo</button>
+      <button class="preset-btn" :class="{active: ddPreset==='last3mo'}" @click="setDdPreset('last3mo')">3 Mo</button>
+      <button class="preset-btn" :class="{active: ddPreset==='last6mo'}" @click="setDdPreset('last6mo')">6 Mo</button>
+      <button class="preset-btn" :class="{active: ddPreset==='custom'}"  @click="ddPreset='custom'">Custom</button>
+      <span class="date-sep" x-show="ddPreset==='custom'">From</span>
+      <input type="date" class="date-input" x-model="ddStart" x-show="ddPreset==='custom'" @change="ddPreset='custom'">
+      <span class="date-sep" x-show="ddPreset==='custom'">to</span>
+      <input type="date" class="date-input" x-model="ddEnd" x-show="ddPreset==='custom'" @change="ddPreset='custom'">
+    </div>
+
+    <!-- Active filter chips -->
+    <div class="controls-row" style="gap:6px;margin-top:-8px;margin-bottom:12px;" x-show="ddProduct || ddReason || ddType">
+      <span style="font-size:0.75rem;color:var(--gray);font-weight:600;">Active:</span>
+      <template x-if="ddProduct">
+        <span class="dd-chip">Product: <span x-text="ddProduct"></span>
+          <button @click="ddProduct=''" class="dd-chip-x" title="Clear">×</button>
+        </span>
+      </template>
+      <template x-if="ddReason">
+        <span class="dd-chip">Reason: <span x-text="ddReason"></span>
+          <button @click="ddReason=''" class="dd-chip-x" title="Clear">×</button>
+        </span>
+      </template>
+      <template x-if="ddType">
+        <span class="dd-chip">Type: <span x-text="ddType"></span>
+          <button @click="ddType=''" class="dd-chip-x" title="Clear">×</button>
+        </span>
+      </template>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Remakes</div>
+        <div class="kpi-value" x-text="ddKPIs.count"></div>
+        <div class="kpi-sub">Excl. Full Charge · in period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Loss</div>
+        <div class="kpi-value" x-text="fmtCurrency(ddKPIs.loss)"></div>
+        <div class="kpi-sub">Sum of RemakeDiscount</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Loss / Remake</div>
+        <div class="kpi-value" x-text="fmtCurrency(ddKPIs.avg)"></div>
+        <div class="kpi-sub">Loss ÷ Count</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Trend vs Prior Period</div>
+        <div class="kpi-value"
+             :style="ddKPIs.trend==='up' ? 'color:#C0182B' : ddKPIs.trend==='down' ? 'color:#2E7D32' : ''"
+             x-text="ddKPIs.trend==='up' ? '▲ ' + ddKPIs.diff + ' more' : ddKPIs.trend==='down' ? '▼ ' + Math.abs(ddKPIs.diff) + ' fewer' : '— flat'">
+        </div>
+        <div class="kpi-sub">Prior period: <span x-text="ddKPIs.prior"></span> remakes</div>
+      </div>
+    </div>
+
+    <!-- Trend Chart -->
+    <div class="chart-card" style="margin-bottom:20px;">
+      <div class="chart-title"
+           x-text="(ddProduct || ddReason || ddType ? [ddProduct, ddReason, ddType].filter(Boolean).join(' · ') : 'All Remakes') + ' — Weekly Trend'">
+      </div>
+      <div class="chart-wrap" style="height:200px;"><canvas id="ddTrendChart"></canvas></div>
+    </div>
+
+    <!-- Breakdown Tables -->
+    <div class="breakdown-section">
+      <button class="breakdown-toggle" @click="ddShowBreakdowns = !ddShowBreakdowns">
+        <span x-text="ddShowBreakdowns ? '▾' : '▸'"></span>
+        Breakdowns
+      </button>
+      <div x-show="ddShowBreakdowns">
+        <div class="breakdown-grid" :style="ddProduct ? 'grid-template-columns: 1fr 1fr' : ''">
+
+          <!-- By Reason (always shown) -->
+          <div class="breakdown-card">
+            <div class="breakdown-card-title">By Reason</div>
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Reason</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">Loss</th>
+                  <th style="text-align:right;">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-if="ddReasonBreakdown.length === 0">
+                  <tr><td colspan="4" style="color:var(--gray);text-align:center;padding:12px;">No data</td></tr>
+                </template>
+                <template x-for="row in ddReasonBreakdown" :key="row.name">
+                  <tr>
+                    <td x-text="row.name"></td>
+                    <td style="text-align:right;" x-text="row.count"></td>
+                    <td style="text-align:right;" x-text="fmtCurrency(row.loss)"></td>
+                    <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- By Product (hidden when product filter is active) -->
+          <div class="breakdown-card" x-show="!ddProduct">
+            <div class="breakdown-card-title">By Product</div>
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">Loss</th>
+                  <th style="text-align:right;">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-if="ddProductBreakdown.length === 0">
+                  <tr><td colspan="4" style="color:var(--gray);text-align:center;padding:12px;">No data</td></tr>
+                </template>
+                <template x-for="row in ddProductBreakdown" :key="row.name">
+                  <tr>
+                    <td x-text="row.name"></td>
+                    <td style="text-align:right;" x-text="row.count"></td>
+                    <td style="text-align:right;" x-text="fmtCurrency(row.loss)"></td>
+                    <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- By Practice (top 10, always shown) -->
+          <div class="breakdown-card">
+            <div class="breakdown-card-title">By Practice (Top 10)</div>
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Practice</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">Loss</th>
+                  <th style="text-align:right;">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-if="ddPracticeBreakdown.length === 0">
+                  <tr><td colspan="4" style="color:var(--gray);text-align:center;padding:12px;">No data</td></tr>
+                </template>
+                <template x-for="row in ddPracticeBreakdown" :key="row.name">
+                  <tr>
+                    <td x-text="row.name"></td>
+                    <td style="text-align:right;" x-text="row.count"></td>
+                    <td style="text-align:right;" x-text="fmtCurrency(row.loss)"></td>
+                    <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Case Table -->
+    <p class="section-header">
+      Matching Cases
+      <span style="font-weight:400;color:var(--gray);margin-left:4px;" x-text="'(' + ddFiltered.length + ' total)'"></span>
+    </p>
+
+    <template x-if="ddFiltered.length === 0">
+      <div class="empty-state">
+        <div class="empty-state-icon">&#128269;</div>
+        <div>No cases match the current filters.</div>
+        <div style="margin-top:6px;font-size:0.8rem;">Try widening the date range or clearing a filter.</div>
+      </div>
+    </template>
+
+    <template x-if="ddFiltered.length > 0">
+      <div>
+        <div class="remakes-table-wrap">
+          <table class="remakes-table">
+            <thead>
+              <tr>
+                <th style="width:100px;">Date In</th>
+                <th style="width:150px;">Product</th>
+                <th style="width:150px;">Reason</th>
+                <th style="width:120px;">Type</th>
+                <th style="width:160px;">Practice</th>
+                <th style="width:80px;">Sales Rep</th>
+                <th style="width:70px;">Loss</th>
+                <th class="col-note-final">Investigation Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="row in (ddExpanded ? ddFiltered : ddFiltered.slice(0, 50))" :key="row.MainCaseNumber">
+                <tr>
+                  <td>
+                    <div x-text="(row.DateIn || '').slice(0, 10)"></div>
+                    <div class="case-meta"><span x-text="row.MainCaseNumber"></span></div>
+                  </td>
+                  <td x-text="row.Product || '—'"></td>
+                  <td x-text="row.RemakeReason || '—'"></td>
+                  <td>
+                    <span :class="'remake-chip' + (row.Remake === 'Remake Full Charge' ? ' full-charge' : '')"
+                          x-text="row.Remake || '—'"></span>
+                  </td>
+                  <td x-text="row.PracticeName || '—'"></td>
+                  <td x-text="fmtShortName(row.SalesPerson)"></td>
+                  <td x-text="row.RemakeDiscount ? fmtCurrency(parseFloat(row.RemakeDiscount)) : '—'"></td>
+                  <td class="col-note-final">
+                    <div style="position:relative;">
+                      <textarea class="note-textarea"
+                                :value="savedNotes[row.MainCaseNumber] || ''"
+                                @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                                placeholder="Add investigation notes…"></textarea>
+                      <div class="note-save-badge"
+                           x-show="_noteSaveState[row.MainCaseNumber] === 'saved'"
+                           x-cloak>Saved ✓</div>
+                      <div class="note-saving-badge"
+                           x-show="_noteSaveState[row.MainCaseNumber] === 'saving'"
+                           x-cloak>Saving…</div>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <template x-if="!ddExpanded && ddFiltered.length > 50">
+          <button class="preset-btn" style="margin-top:10px;"
+                  @click="ddExpanded = true"
+                  x-text="'+ ' + (ddFiltered.length - 50) + ' more cases'">
+          </button>
+        </template>
+      </div>
+    </template>
+
+  </div><!-- /drill down tab -->
 
   <!-- Tooltip overlay -->
   <template x-if="_tip.show">
@@ -1279,6 +1572,14 @@ function remakesPage() {
     amEnd:        '',
     searchQuery: '',
     showBreakdowns: true,
+    ddShowBreakdowns: true,
+    ddProduct: '',
+    ddReason:  '',
+    ddType:    '',
+    ddPreset:  'last3mo',
+    ddStart:   '',
+    ddEnd:     '',
+    ddExpanded: false,
 
     allRecords:     {{ all_records | tojson }},
     revenueRecords: {{ revenue_records | tojson }},
@@ -1290,6 +1591,7 @@ function remakesPage() {
     _lightbox: { show: false, src: '', filename: '', createDate: '', fileType: '', isImage: false, isExternal: false },
     _charts: {},
     _chartRaf: null,
+    _ddChartRaf: null,
     _noteSaveState: {},
     _tip: { show: false, type: '', items: [] },
 
@@ -1317,6 +1619,22 @@ function remakesPage() {
       if (p === 'last4') {
         const s = new Date(mon); s.setDate(mon.getDate() - 28);
         return { start: this._isoDate(s), end: this._isoDate(fri) };
+      }
+      if (p === 'last2w') {
+        const s = new Date(mon); s.setDate(mon.getDate() - 14);
+        return { start: this._isoDate(s), end: this._isoDate(fri) };
+      }
+      if (p === 'last1mo') {
+        const s = new Date(); s.setDate(s.getDate() - 30);
+        return { start: this._isoDate(s), end: this._isoDate(new Date()) };
+      }
+      if (p === 'last3mo') {
+        const s = new Date(); s.setDate(s.getDate() - 90);
+        return { start: this._isoDate(s), end: this._isoDate(new Date()) };
+      }
+      if (p === 'last6mo') {
+        const s = new Date(); s.setDate(s.getDate() - 180);
+        return { start: this._isoDate(s), end: this._isoDate(new Date()) };
       }
       return null; // custom
     },
@@ -1365,10 +1683,22 @@ function remakesPage() {
       this.allStart     = r.start; this.allEnd     = r.end;
       this.amStart      = r.start; this.amEnd      = r.end;
 
+      // Set drill down to last 3 months
+      const dd = this._presetRange('last3mo');
+      this.ddStart = dd.start; this.ddEnd = dd.end;
+
       this.$watch('allStart',  () => { if (this.activeTab === 'all') this._scheduleCharts(); });
       this.$watch('allEnd',    () => { if (this.activeTab === 'all') this._scheduleCharts(); });
       this.$watch('allPreset', () => { if (this.activeTab === 'all') this._scheduleCharts(); });
-      this.$watch('activeTab', v => { if (v === 'all') this._scheduleCharts(); });
+      this.$watch('activeTab', v => {
+        if (v === 'all')   this._scheduleCharts();
+        if (v === 'drill') this._scheduleDdChart();
+      });
+      this.$watch('ddProduct', () => this._scheduleDdChart());
+      this.$watch('ddReason',  () => this._scheduleDdChart());
+      this.$watch('ddType',    () => this._scheduleDdChart());
+      this.$watch('ddStart',   () => this._scheduleDdChart());
+      this.$watch('ddEnd',     () => this._scheduleDdChart());
 
       fetch('/remakes/all-details')
         .then(r => r.json())
@@ -1518,6 +1848,142 @@ function remakesPage() {
     get typeBreakdown()    { return this._breakdownWithTrend(r => r.Remake || 'Unknown'); },
     get productBreakdown() { return this._breakdownWithTrend(r => r.Product || 'Unknown').slice(0, 10); },
 
+    // ── Drill Down computed getters ──────────────────────────────
+    get ddProducts() {
+      const s = new Set();
+      for (const r of this.allRecords) if (r.Product) s.add(r.Product);
+      return [...s].sort();
+    },
+
+    get ddReasons() {
+      const s = new Set();
+      for (const r of this.allRecords) if (r.RemakeReason) s.add(r.RemakeReason);
+      return [...s].sort();
+    },
+
+    get ddTypes() {
+      const s = new Set();
+      for (const r of this.allRecords) if (r.Remake) s.add(r.Remake);
+      return [...s].sort();
+    },
+
+    get ddDateRange() {
+      if (this.ddPreset === 'custom') return { start: this.ddStart, end: this.ddEnd };
+      return this._presetRange(this.ddPreset) || { start: this.ddStart, end: this.ddEnd };
+    },
+
+    get ddFiltered() {
+      const { start: s, end: e } = this.ddDateRange;
+      return this.allRecords.filter(r => {
+        const d = (r.DateIn || '').slice(0, 10);
+        if (d < s || d > e) return false;
+        if (this.ddProduct && r.Product !== this.ddProduct) return false;
+        if (this.ddReason  && r.RemakeReason !== this.ddReason) return false;
+        if (this.ddType    && r.Remake !== this.ddType) return false;
+        return true;
+      }).sort((a, b) => (b.DateIn || '') > (a.DateIn || '') ? 1 : -1);
+    },
+
+    get ddKPIs() {
+      const recs   = this.ddFiltered;
+      const nonFC  = recs.filter(r => r.Remake !== 'Remake Full Charge');
+      const count  = nonFC.length;
+      const loss   = nonFC.reduce((s, r) => s + (parseFloat(r.RemakeDiscount) || 0), 0);
+      const avg    = count > 0 ? loss / count : 0;
+
+      // Prior period of same length
+      const { start, end } = this.ddDateRange;
+      const startD = new Date(start + 'T00:00:00');
+      const endD   = new Date(end   + 'T00:00:00');
+      const days   = Math.max(1, Math.round((endD - startD) / 86400000));
+      const priorEnd   = new Date(startD.getTime() - 86400000);
+      const priorStart = new Date(priorEnd.getTime() - days * 86400000);
+      const pS = this._isoDate(priorStart), pE = this._isoDate(priorEnd);
+
+      const prior = this.allRecords.filter(r => {
+        const d = (r.DateIn || '').slice(0, 10);
+        if (d < pS || d > pE) return false;
+        if (this.ddProduct && r.Product !== this.ddProduct) return false;
+        if (this.ddReason  && r.RemakeReason !== this.ddReason) return false;
+        if (this.ddType    && r.Remake !== this.ddType) return false;
+        return r.Remake !== 'Remake Full Charge';
+      }).length;
+
+      const diff  = count - prior;
+      const trend = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+      return { count, loss, avg, prior, diff, trend };
+    },
+
+    get ddTrendData() {
+      const { start, end } = this.ddDateRange;
+      const startD = new Date(start + 'T00:00:00');
+      const endD   = new Date(end   + 'T00:00:00');
+      if (isNaN(startD) || isNaN(endD)) return [];
+      // Walk back to Monday
+      const sdow = startD.getDay();
+      const back = sdow === 0 ? 6 : sdow === 6 ? 5 : sdow - 1;
+      const firstMon = new Date(startD.getTime() - back * 86400000);
+      firstMon.setHours(0, 0, 0, 0);
+      const weeks = [];
+      for (let m = new Date(firstMon); m <= endD; m.setDate(m.getDate() + 7)) {
+        const wS = this._isoDate(new Date(m));
+        const wE = new Date(m); wE.setDate(m.getDate() + 6);
+        const wEStr = this._isoDate(wE);
+        const wRecs = this.ddFiltered.filter(r => {
+          const d = (r.DateIn || '').slice(0, 10);
+          return d >= wS && d <= wEStr;
+        });
+        const wCount = wRecs.filter(r => r.Remake !== 'Remake Full Charge').length;
+        const wLoss  = wRecs.filter(r => r.Remake !== 'Remake Full Charge')
+                            .reduce((s, r) => s + (parseFloat(r.RemakeDiscount) || 0), 0);
+        const d = new Date(wS + 'T00:00:00');
+        weeks.push({ label: (d.getMonth()+1) + '/' + d.getDate(), count: wCount, loss: Math.round(wLoss) });
+      }
+      return weeks;
+    },
+
+    get ddReasonBreakdown() {
+      const total = this.ddFiltered.length || 1;
+      const c = {}, l = {};
+      for (const r of this.ddFiltered) {
+        const k = r.RemakeReason || 'Unknown';
+        c[k] = (c[k] || 0) + 1;
+        l[k] = (l[k] || 0) + (parseFloat(r.RemakeDiscount) || 0);
+      }
+      return Object.entries(c).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({
+        name, count, loss: Math.round(l[name] || 0),
+        pct: ((count / total) * 100).toFixed(1),
+      }));
+    },
+
+    get ddProductBreakdown() {
+      const total = this.ddFiltered.length || 1;
+      const c = {}, l = {};
+      for (const r of this.ddFiltered) {
+        const k = r.Product || 'Unknown';
+        c[k] = (c[k] || 0) + 1;
+        l[k] = (l[k] || 0) + (parseFloat(r.RemakeDiscount) || 0);
+      }
+      return Object.entries(c).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({
+        name, count, loss: Math.round(l[name] || 0),
+        pct: ((count / total) * 100).toFixed(1),
+      }));
+    },
+
+    get ddPracticeBreakdown() {
+      const total = this.ddFiltered.length || 1;
+      const c = {}, l = {};
+      for (const r of this.ddFiltered) {
+        const k = r.PracticeName || 'Unknown';
+        c[k] = (c[k] || 0) + 1;
+        l[k] = (l[k] || 0) + (parseFloat(r.RemakeDiscount) || 0);
+      }
+      return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({
+        name, count, loss: Math.round(l[name] || 0),
+        pct: ((count / total) * 100).toFixed(1),
+      }));
+    },
+
     _breakdownWithTrend(keyFn) {
       const now   = new Date();
       const last7 = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
@@ -1636,6 +2102,59 @@ function remakesPage() {
         const r = this._presetRange(p);
         this.amStart = r.start; this.amEnd = r.end;
       }
+    },
+
+    setDdPreset(p) {
+      this.ddPreset = p;
+      if (p !== 'custom') {
+        const r = this._presetRange(p);
+        if (r) { this.ddStart = r.start; this.ddEnd = r.end; }
+      }
+    },
+
+    _scheduleDdChart() {
+      if (this._ddChartRaf) cancelAnimationFrame(this._ddChartRaf);
+      this._ddChartRaf = requestAnimationFrame(() => {
+        this._ddChartRaf = null;
+        this.renderDdChart();
+      });
+    },
+
+    renderDdChart() {
+      if (typeof Chart === 'undefined') return;
+      const el = document.getElementById('ddTrendChart');
+      if (!el) return;
+      if (this._charts['ddTrendChart']) { this._charts['ddTrendChart'].destroy(); }
+      const data   = this.ddTrendData;
+      const labels = data.map(d => d.label);
+      const counts = data.map(d => d.count);
+      this._charts['ddTrendChart'] = new Chart(el, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ data: counts, backgroundColor: '#C0182B', borderRadius: 3 }],
+        },
+        options: {
+          animation: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#FFFFFF',
+              font: { size: 10, weight: '700' },
+              anchor: 'center',
+              align: 'center',
+              display: ctx => (ctx.dataset.data[ctx.dataIndex] || 0) > 0,
+              formatter: v => v > 0 ? String(v) : '',
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#6B6B6B' } },
+            y: { beginAtZero: true, grid: { color: '#F0F0F0' }, ticks: { font: { size: 10 }, color: '#6B6B6B' } },
+          },
+        },
+      });
     },
 
     switchToAll() {
