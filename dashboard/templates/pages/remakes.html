@@ -441,22 +441,24 @@
   .col-note-final { min-width: 160px; white-space: normal !important; overflow: visible !important; }
 
   /* ── Attachments column ── */
-  .col-attachments { width: 100px; min-width: 80px; vertical-align: top; }
-  .att-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-  .att-thumb {
-    width: 100%; aspect-ratio: 1;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--light);
-    font-size: 0.6rem; font-weight: 700; color: var(--gray);
-    transition: border-color 0.15s;
+  .col-attachments { width: 200px; min-width: 160px; vertical-align: top; }
+  .att-list { display: flex; flex-direction: column; gap: 1px; }
+  .att-row {
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer; padding: 2px 3px; border-radius: 3px;
   }
-  .att-thumb:hover { border-color: var(--red); }
-  .att-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .att-icon { text-align: center; padding: 4px; }
+  .att-row:hover { background: var(--light); }
+  .att-row-icon {
+    flex-shrink: 0; width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 700;
+    border-radius: 2px; overflow: hidden;
+  }
+  .att-row-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .att-row-name {
+    font-size: 0.7rem; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; max-width: 155px; color: var(--dark);
+  }
   .att-icon-pdf { color: #C0182B; }
   .att-icon-stl { color: #6B6B6B; }
   .att-icon-file { color: #6B6B6B; }
@@ -812,20 +814,21 @@
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 0">
-                    <div class="att-grid">
-                      <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID)" :key="doc.FilePath">
-                        <div class="att-thumb" :title="doc.SourceFileName" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
-                          <template x-if="doc.isExternal">
-                            <a :href="doc.FilePath" target="_blank" class="att-icon att-icon-file"
-                               style="text-decoration:none;" title="Open external link" @click.stop>&#x1F517;</a>
-                          </template>
-                          <template x-if="doc.isImage && !doc.isExternal">
-                            <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'"
-                                 loading="lazy" alt="">
-                          </template>
-                          <template x-if="!doc.isImage && !doc.isExternal">
-                            <span class="att-icon" :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
-                          </template>
+                    <div class="att-list">
+                      <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID).slice(0, 8)" :key="doc.FilePath">
+                        <div class="att-row" :title="doc.SourceFileName" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
+                          <div class="att-row-icon">
+                            <template x-if="doc.isExternal">
+                              <span>&#x1F517;</span>
+                            </template>
+                            <template x-if="doc.isImage && !doc.isExternal">
+                              <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
+                            </template>
+                            <template x-if="!doc.isImage && !doc.isExternal">
+                              <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                            </template>
+                          </div>
+                          <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
                         </div>
                       </template>
                     </div>
@@ -1148,20 +1151,21 @@
                     <span style="color:var(--gray)">—</span>
                   </template>
                   <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 0">
-                    <div class="att-grid">
-                      <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID)" :key="doc.FilePath">
-                        <div class="att-thumb" :title="doc.SourceFileName" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
-                          <template x-if="doc.isExternal">
-                            <a :href="doc.FilePath" target="_blank" class="att-icon att-icon-file"
-                               style="text-decoration:none;" title="Open external link" @click.stop>&#x1F517;</a>
-                          </template>
-                          <template x-if="doc.isImage && !doc.isExternal">
-                            <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'"
-                                 loading="lazy" alt="">
-                          </template>
-                          <template x-if="!doc.isImage && !doc.isExternal">
-                            <span class="att-icon" :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
-                          </template>
+                    <div class="att-list">
+                      <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID).slice(0, 8)" :key="doc.FilePath">
+                        <div class="att-row" :title="doc.SourceFileName" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
+                          <div class="att-row-icon">
+                            <template x-if="doc.isExternal">
+                              <span>&#x1F517;</span>
+                            </template>
+                            <template x-if="doc.isImage && !doc.isExternal">
+                              <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
+                            </template>
+                            <template x-if="!doc.isImage && !doc.isExternal">
+                              <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                            </template>
+                          </div>
+                          <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
                         </div>
                       </template>
                     </div>
@@ -2243,6 +2247,10 @@ function remakesPage() {
       if (!note) return '';
       const s = note.replace(/[\r\n\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim();
       return s.length > 120 ? s.slice(0, 120) + '…' : s;
+    },
+    fmtFileName(name) {
+      if (!name) return '';
+      return name.length > 22 ? name.slice(0, 22) + '…' : name;
     },
     fmtNote(note) {
       if (!note) return '';
