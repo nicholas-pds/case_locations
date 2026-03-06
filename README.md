@@ -1,325 +1,162 @@
-## 🚀 Case Locations Report Generator (uv Edition)
+# Partners Dental Lab — Internal Analytics Dashboard
 
-A small Python utility that:
-- connects to a SQL database,
-- runs a query from `sql_query/`,
-- cleans/transforms the results, and
-- writes the cleaned report to a Google Sheet.
-
-This README explains setup and how to run the script on Windows (PowerShell) using the project's layout.
+Internal web dashboard for tracking lab cases, efficiency, remakes, and daily operations. Self-hosted on a Windows VM and accessible at [https://partnersds.live](https://partnersds.live).
 
 ---
 
-## 🛠️ Prerequisites
+## System Architecture
 
-Make sure you have:
+| Layer | What it is |
+|---|---|
+| MagicTouch DB | Source of truth — live lab data (cases, orders, tasks, etc.) |
+| Nightly sync (2 AM) | Automated job copies new records to cloud |
+| Cloud DB (mirror) | Independent PostgreSQL database on Render — no MT dependency going forward |
+| Dashboard / Webapp | Built on cloud DB + MT. Self-hosted on VM. Cloudflare tunnel connector handles DNS, SSL, and networking. Domain: partnersds.live |
 
-1. Python 3.8+ installed and on PATH.
-2. The `uv` installer if you prefer it (optional):
+---
 
-```powershell
-# only if you want to install/upgrade uv
-pip install -U uv
+## Tech Stack
+
+- **Python 3.13+**, FastAPI, Uvicorn
+- **Jinja2** templates, **Alpine.js**, **htmx**, **Chart.js 4.4.7**
+- **pyodbc** (SQL Server / MagicTouch), **psycopg2** (PostgreSQL / Render)
+- **Pandas** + **PyArrow** (parquet caching)
+- Server-sent events for live refresh
+
+---
+
+## Dashboard Pages
+
+| Route | Page | Description |
+|---|---|---|
+| `/` | Case Locations | Location grid with case counts + filterable data table |
+| `/workload` | Workload | Stacked bar chart (Invoiced vs In Production) + category breakdown |
+| `/airway` | Airway Workflow | Workflow stage cards — New Cases, Email, Zoom sections |
+| `/airway-hold` | Airway Hold Status | Hold status table with follow-up dates |
+| `/local-delivery` | Local Delivery | Cases flagged for local delivery |
+| `/overdue-noscan` | Overdue No Scan | Overdue cases not scanned within 4 hours |
+| `/daily-summary` | Daily Summary | End-of-day case summary view |
+| `/customers` | Customers | Customer-level case and order data |
+| `/efficiency` | Efficiency | Technician efficiency metrics from parquet cache |
+| `/remakes` | Remakes | Remake tracking with AM tabs, charts, notes, and meeting view |
+
+---
+
+## Setup & Running
+
+### Prerequisites
+
+- Python 3.13+
+- [uv](https://docs.astral.sh/uv/) package manager
+- Microsoft ODBC Driver 17 (or 18) for SQL Server
+
+### Install
+
+```bash
+git clone <repo-url>
+cd case_locations
+uv sync
 ```
 
-3. Project Python dependencies. If a `requirements.txt` or `pyproject.toml` exists, install via pip or your preferred tool. Example with pip and a requirements file:
+### Configure
 
-```powershell
-pip install -r requirements.txt
+```bash
+cp .env.example .env
+# Fill in credentials (see Configuration section below)
 ```
 
-4. Access to the SQL database (host, database, user, password) used by the query in `sql_query/`.
+### Run
 
-5. Google Sheets API credentials (Service Account):
-   - Create a Google Cloud project and enable the Google Sheets API.
-   - Create a Service Account and download the JSON key (e.g. `service_account.json`).
-   - Share the target Google Sheet with the service account email (give Editor access).
+```bash
+uv run python -m dashboard.run
+# or
+python dashboard/run.py
+```
+
+Default URL: [http://localhost:8050](http://localhost:8050)
 
 ---
 
 ## Configuration
 
-- Place your service account JSON somewhere on disk and point the environment variable `GOOGLE_APPLICATION_CREDENTIALS` at it. In PowerShell:
+Key `.env` variables:
 
-```powershell
-$env:GOOGLE_APPLICATION_CREDENTIALS = 'C:\path\to\service_account.json'
-```
-
-- Supply DB credentials either via environment variables or by editing the configuration section the code expects (check `src/main.py` for exact config keys). If the project uses a config file, use that instead.
-
-Notes / assumptions:
-- I assume the main entry point is `src/main.py`. If your project uses a different module path, run that instead.
-
----
-
-## Project layout
-
-Top-level files and directories you should expect:
-
-- `README.md` — this file.
-- `pyproject.toml` — project metadata / dependencies (may exist).
-- `sql_query/` — folder containing SQL query files used by the script.
-- `src/` — Python source; expected entry `src/main.py`.
-
----
-
-## How to run (Windows PowerShell)
-
-Run the script directly with Python (recommended):
-
-```powershell
-# from project root
-python src\main.py
-```
-
-Or run as a module:
-
-```powershell
-python -m src.main
-```
-
-If you use `uv` to manage environments or run scripts, adapt the above to your workflow (the repository doesn't require a specific runner beyond Python).
-
----
-
-## Common tasks
-
-- Update dependencies:
-
-```powershell
-pip install -r requirements.txt
-```
-
-- Set Google credentials (PowerShell):
-
-```powershell
-$env:GOOGLE_APPLICATION_CREDENTIALS = 'C:\full\path\to\service_account.json'
-```
-
----
-
-## Troubleshooting
-
-- Google Sheets permission errors: confirm the service account email is shared with the sheet and has Editor rights.
-- Database connection issues: verify network access, firewall, and provided DB credentials.
-- Missing dependencies: install the packages listed in `requirements.txt` or shown in `pyproject.toml`.
-
----
-
-## Real-Time Dashboard
-
-This project includes a web-based dashboard that replaces the Google Sheets + Looker Studio pipeline with a self-hosted, near-real-time interface.
-
-### What the Dashboard Does
-
-Unlike the batch script (which runs every 15 minutes and writes to Google Sheets), the dashboard is a **web server** that:
-- Starts once and stays running (like an app)
-- Automatically queries the SQL database every **60 seconds**
-- Displays results in a browser - anyone on the network can access it
-- Only queries during business hours (6 AM - 6 PM)
-
-### Dashboard Pages
-
-| Page | URL | Description |
-|------|-----|-------------|
-| Case Locations | `/` | Main page - location grid with case counts + filterable data table |
-| Workload | `/workload` | Stacked bar chart (Invoiced vs In Production) + category breakdown |
-| Airway Workflow | `/airway` | Workflow stage cards (New Cases, Email, Zoom sections) |
-| Airway Hold Status | `/airway-hold` | Hold status table with follow-up dates |
-| Local Delivery | `/local-delivery` | Cases with LocalDelivery = TRUE |
-| Overdue No Scan | `/overdue-noscan` | Overdue cases not scanned in 4 hours |
-
-### How to Start the Dashboard
-
-#### Windows
-
-**Option 1: Double-click the batch file**
-
-Double-click `run_dashboard.bat` in the project folder.
-
-**Option 2: From a terminal**
-
-```powershell
-cd C:\Users\Partners\Desktop\repos\case_locations
-uv run python -m dashboard.run
-```
-
-#### macOS
-
-**Prerequisites:**
-
-Install [Homebrew](https://brew.sh) if you don't have it, then install the required system dependency:
-
-```bash
-brew install unixodbc
-```
-
-**Start the dashboard:**
-
-```bash
-cd /path/to/case_locations
-uv run python -m dashboard.run
-```
-
-#### Access
-
-Once started, open a browser and go to:
-- **On the same machine:** `http://localhost:8050`
-- **From another computer on the network:** `http://<IP-address>:8050`
-
-You'll see a login page. The password is configured in the `.env` file (`DASHBOARD_PASSWORD`).
-
-### How to Stop the Dashboard
-
-- Close the terminal window, or
-- Press `Ctrl+C` in the terminal
-
-### Dashboard Configuration
-
-Add these to your `.env` file:
-
-```
-DASHBOARD_PASSWORD=Partners1724!
-DASHBOARD_PORT=8050
-DASHBOARD_SECRET_KEY=your-secret-key-here
-```
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DASHBOARD_PASSWORD` | `Partners1724!` | Password for the login page |
-| `DASHBOARD_PORT` | `8050` | Port number the dashboard runs on |
-| `DASHBOARD_SECRET_KEY` | (auto) | Secret key for session cookies |
-
-### Auto-Start Services (NSSM)
-
-Both the dashboard and the Cloudflare tunnel run as Windows services via [NSSM](https://nssm.cc) and start automatically on boot. No manual action needed after a reboot.
-
-| Service Name | What it runs |
+| Variable | Description |
 |---|---|
-| `PartnersDashboard` | The Dash web app on port 8050 |
+| `DASHBOARD_PASSWORD` | Password for the login page |
+| `DASHBOARD_PORT` | Port the server listens on (default: `8050`) |
+| `DASHBOARD_SECRET_KEY` | Secret key for session cookies |
+| `SQL_SERVER` | MagicTouch SQL Server hostname or IP |
+| `SQL_DATABASE` | Database name |
+| `SQL_USERNAME` | SQL Server login |
+| `SQL_PASSWORD` | SQL Server password |
+| `PG_HOST` | PostgreSQL (Render) host |
+| `PG_DATABASE` | PostgreSQL database name |
+| `PG_USER` | PostgreSQL user |
+| `PG_PASSWORD` | PostgreSQL password |
+
+---
+
+## User Inputs (CSVs)
+
+Files in `User_Inputs/` are read at runtime and control dashboard behavior:
+
+| File | Purpose |
+|---|---|
+| `tech_constants.csv` | Per-technician constants used in efficiency calculations |
+| `employee_lkups.csv` | Employee ID to name mapping (used in Remakes module) |
+| `revenue_goals.csv` | Revenue targets for chart overlays |
+| `remake_notes.csv` | Persistent notes per case, upserted by MainCaseNumber |
+
+---
+
+## Background Sync
+
+- **`sync/`** — PostgreSQL sync engine. Runs nightly at 2 AM. Copies new records from MagicTouch SQL Server to cloud DB.
+- **`dashboard/data/refresh.py`** — In-app cache refresh loop. Runs every 60 seconds during business hours (6 AM–6 PM). Queries both DBs and populates in-memory cache.
+
+---
+
+## Deployment
+
+The dashboard runs as a Windows service via [NSSM](https://nssm.cc) and starts automatically on boot.
+
+| Service | What it runs |
+|---|---|
+| `PartnersDashboard` | FastAPI web app on port 8050 |
 | `CloudflaredTunnel` | Cloudflare tunnel → `partnersds.live` |
 
-**Check status (Admin PowerShell):**
+Cloudflare handles DNS, SSL, and networking — no VPN or firewall port-forwarding required.
+
+Public URL: **https://partnersds.live**
+
+**Manage services (Admin PowerShell):**
+
 ```powershell
 Get-Service PartnersDashboard, CloudflaredTunnel
-```
-
-**Start a service:**
-```powershell
 Start-Service PartnersDashboard
-Start-Service CloudflaredTunnel
+Restart-Service CloudflaredTunnel
 ```
 
-**Stop a service:**
-```powershell
-Stop-Service PartnersDashboard
-Stop-Service CloudflaredTunnel
-```
+NSSM installed at `C:\nssm\nssm.exe`. Edit a service:
 
-**If a service hangs on stop, force-kill it:**
-```powershell
-Stop-Process -Name python -Force       # for PartnersDashboard
-Stop-Process -Name cloudflared -Force  # for CloudflaredTunnel
-```
-
-NSSM is installed at `C:\nssm\nssm.exe`. To edit a service's settings:
 ```powershell
 C:\nssm\nssm.exe edit PartnersDashboard
-C:\nssm\nssm.exe edit CloudflaredTunnel
 ```
-
-### Filters
-
-| Filter | What it Shows |
-|--------|---------------|
-| **Rush** | Cases where Pan Number starts with "R" and is less than 4 characters |
-| **Leaves Today** | Cases with Ship Date = today |
-| **Overdue** | Cases with Ship Date = previous business day, plus rush cases shipping today |
-| **View All** | All cases (clears filters) |
-
-### Company Holidays
-
-Holidays are defined in `company_holidays.csv` at the project root. The file controls which days are skipped when calculating the previous business day (used by the Overdue and Leaves Today filters).
-
-To add a holiday, open the CSV and add a new row:
-```csv
-2027-01-01,New Year's Day
-```
-
-The format is `YYYY-MM-DD,Holiday Name`. The dashboard will automatically pick up changes on the next data refresh (every 60 seconds).
-
-### Network Access (Accessing from Other Computers)
-
-The dashboard server binds to `0.0.0.0` (all network interfaces) by default. However, **Windows Firewall** blocks incoming connections. You must create a firewall rule to allow other computers on the network to access the dashboard.
-
-**Option 1: PowerShell (Run as Administrator)**
-
-```powershell
-New-NetFirewallRule -DisplayName "Partners Dashboard (TCP 8050)" -Direction Inbound -Protocol TCP -LocalPort 8050 -Action Allow
-```
-
-**Option 2: Windows Firewall GUI**
-
-1. Open **Windows Defender Firewall with Advanced Security** (search "wf.msc" in Start)
-2. Click **Inbound Rules** in the left panel
-3. Click **New Rule...** in the right panel
-4. Choose **Port** -> Next
-5. Choose **TCP**, enter **8050** in "Specific local ports" -> Next
-6. Choose **Allow the connection** -> Next
-7. Check all profiles (Domain, Private, Public) -> Next
-8. Name it **Partners Dashboard (TCP 8050)** -> Finish
-
-After creating the rule, other machines on the network can access `http://<server-IP>:8050`.
-
-To find the server's IP address, run in PowerShell:
-```powershell
-ipconfig
-```
-Look for the **IPv4 Address** under your active network adapter (e.g., `192.168.10.x`).
-
-### Remote Access (Cloudflare Tunnel)
-
-The dashboard is publicly accessible at:
-
-**https://partnersds.live**
-
-This works via a Cloudflare Tunnel — no VPN, no firewall port-forwarding needed. The `CloudflaredTunnel` Windows service maintains a persistent outbound connection to Cloudflare's network.
-
-Tunnel config: `C:\Users\MagicTouch\.cloudflared\config.yml`
-
-**If the public URL is not loading:**
-1. Check both services are running: `Get-Service PartnersDashboard, CloudflaredTunnel`
-2. Test the app locally on the server: open `http://localhost:8050` in a browser
-3. If local works but public doesn't, restart the tunnel: `Restart-Service CloudflaredTunnel`
-4. If the service hangs on restart: `Stop-Process -Name cloudflared -Force` then `Start-Service CloudflaredTunnel`
-
-### Manually Triggering a One-Time Data Pull
-
-The dashboard only auto-refreshes during business hours (6 AM – 6 PM). If the server was restarted outside those hours and pages show no data, you can force an immediate pull:
-
-1. Open the dashboard in Chrome (`http://192.168.10.5:8050` or `https://partnersds.live`)
-2. Log in if prompted
-3. Press **F12** (or right-click anywhere → **Inspect**)
-4. Click the **Console** tab
-5. Paste the following and press Enter:
-
-```js
-fetch('/api/refresh', {method: 'POST'}).then(r => r.json()).then(console.log)
-```
-
-You should see a response like `{ok: true, datasets: {...}}` with row counts for each dataset. The dashboard will update immediately.
-
-To check the current cache state (row counts, last refresh time):
-
-```js
-fetch('/api/status').then(r => r.json()).then(console.log)
-```
-
-### Troubleshooting
-
-- **"Can't connect" / page won't load:** Check that the server is running. Check Windows Firewall allows port 8050 (see Network Access above).
-- **"Data not updating":** Check SQL Server is accessible at 192.168.10.5. Look at the server terminal for error messages.
-- **"Incorrect password":** Password is set in `.env` file as `DASHBOARD_PASSWORD`.
-- **Change the port:** Edit `DASHBOARD_PORT` in `.env` and restart the server.
 
 ---
+
+## Roadmap
+
+| Horizon | Initiative | Notes |
+|---|---|---|
+| Now | UI improvements | Cleaner layouts, better readability, consistent theme |
+| Now | External Remakes | Drill-down views, STL file viewer, new categories, learning opportunity breakouts |
+| Near-term | Efficiency — Current | Needs tie-out + PDF formatting |
+| Mid-term | Check-in team efficiency | Add to existing efficiency view |
+| Mid-term | Internal Rejects | Copy from existing dashboard |
+| Mid-term | Write-access to DB | Two-way data syncing |
+| Mid-term | Financials | Sales, expenses, revenue, department breakouts |
+| Long-term | Lab TVs — Live Dashboards | Needs hardware budget discussion. Technician case queue. |
+| Long-term | Case Task Tracking | Handle and record all case task activity |
+| Long-term | Full custom lab management software | Flip a switch to drop MT entirely |
