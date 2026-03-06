@@ -8,29 +8,29 @@
 
 /* ── CSS VARIABLES ── */
 :root {
-  /* Dark theme colors */
-  --eff-bg: #0f1117;
-  --eff-surface: #161b27;
-  --eff-surface2: #1e2535;
-  --eff-border: #252d3d;
-  --eff-text: #e8eaf0;
-  --eff-muted: #6b7694;
-  --eff-accent: #c8d4f0;
-  --eff-red-brand: #cc2222;
+  /* Light theme colors */
+  --eff-bg: #F8F8F8;
+  --eff-surface: #FFFFFF;
+  --eff-surface2: #F2F2F4;
+  --eff-border: #E5E5E5;
+  --eff-text: #1A1A1A;
+  --eff-muted: #6B6B6B;
+  --eff-accent: #1A1A1A;
+  --eff-red-brand: #C0182B;
 
   /* 5-tier efficiency colors */
-  --eff-green: #4ade80;        /* ≥120% great */
-  --eff-green-light: #86efac;  /* 100-119% good */
-  --eff-yellow: #facc15;       /* 85-99% ok */
-  --eff-orange: #fb923c;       /* 70-84% low */
-  --eff-red: #f87171;          /* <70% poor */
+  --eff-green: #16a34a;        /* ≥120% great */
+  --eff-green-light: #22c55e;  /* 100-119% good */
+  --eff-yellow: #ca8a04;       /* 85-99% ok */
+  --eff-orange: #ea580c;       /* 70-84% low */
+  --eff-red: #dc2626;          /* <70% poor */
 
   /* Tier background colors (for badges/pills) */
-  --eff-green-dim: #0f2e1a;
-  --eff-green-light-dim: #1a3a28;
-  --eff-yellow-dim: #2e2a10;
-  --eff-orange-dim: #2e1f10;
-  --eff-red-dim: #2e1414;
+  --eff-green-dim: #dcfce7;
+  --eff-green-light-dim: #bbf7d0;
+  --eff-yellow-dim: #fef9c3;
+  --eff-orange-dim: #ffedd5;
+  --eff-red-dim: #fee2e2;
 }
 
 /* ── PRINT / LIGHT THEME ── */
@@ -589,9 +589,9 @@
 /* ── TRAINING BADGE ── */
 .eff-training-badge {
   font-size: 8px;
-  background: #1e2a4a;
-  color: #93b4f0;
-  border: 1px solid #2d3f6a;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
   border-radius: 3px;
   padding: 1px 5px;
   font-weight: 600;
@@ -714,7 +714,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
