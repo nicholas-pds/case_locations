@@ -186,8 +186,10 @@
               borderColor: '#C0392B',
               backgroundColor: 'transparent',
               borderWidth: 2,
-              pointRadius: 3,
-              pointBackgroundColor: '#C0392B',
+              pointRadius: monthlyData.is_current.map(c => c ? 5 : 3),
+              pointBackgroundColor: monthlyData.is_current.map(c => c ? '#FFFFFF' : '#C0392B'),
+              pointBorderColor: '#C0392B',
+              pointBorderWidth: monthlyData.is_current.map(c => c ? 2 : 0),
               tension: 0.3,
               order: 1,
               spanGaps: true,
@@ -206,6 +208,7 @@
                 label: function(ctx) {
                   if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtMillions(ctx.raw);
                   if (ctx.raw == null) return null;
+                  if (monthlyData.is_current[ctx.dataIndex]) return 'Projected: ' + fmtMillions(ctx.raw);
                   return '3-Mo Avg: ' + fmtMillions(ctx.raw);
                 }
               }
@@ -249,8 +252,10 @@
               borderColor: '#C0392B',
               backgroundColor: 'transparent',
               borderWidth: 2,
-              pointRadius: 2,
-              pointBackgroundColor: '#C0392B',
+              pointRadius: dailyData.is_today.map(t => t ? 5 : 2),
+              pointBackgroundColor: dailyData.is_today.map(t => t ? '#FFFFFF' : '#C0392B'),
+              pointBorderColor: '#C0392B',
+              pointBorderWidth: dailyData.is_today.map(t => t ? 2 : 0),
               tension: 0.3,
               order: 1,
               spanGaps: true,
@@ -269,6 +274,7 @@
                 label: function(ctx) {
                   if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtMillions(ctx.raw);
                   if (ctx.raw == null) return null;
+                  if (dailyData.is_today[ctx.dataIndex]) return 'Projected: ' + fmtMillions(ctx.raw);
                   return '5-Day Avg: ' + fmtMillions(ctx.raw);
                 }
               }

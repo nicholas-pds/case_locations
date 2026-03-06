@@ -547,6 +547,10 @@ def build_monthly_sales_chart(df: pd.DataFrame, num_months: int = 18) -> dict:
         trend.append(display_rolling[i])
         is_current.append(yr == current_year and mo == current_month)
 
+    # Project current month's trend: avg of last 3 complete months (exclude partial current month)
+    if is_current and is_current[-1] and len(subtotals) >= 4:
+        trend[-1] = round((subtotals[-2] + subtotals[-3] + subtotals[-4]) / 3, 2)
+
     return {'labels': labels, 'data': data, 'trend': trend, 'is_current': is_current}
 
 
@@ -602,6 +606,19 @@ def build_daily_sales_chart(df: pd.DataFrame, num_days: int = 30) -> dict:
             rolling.append(None)
         else:
             rolling.append(round(sum(weekday_vals) / 5, 2))
+
+    # Project today's trend: 5-day weekday avg of prior days (exclude today's partial revenue)
+    if full_dates and full_dates[-1] == today:
+        proj_vals = []
+        j = len(full_vals) - 2  # start from yesterday
+        while j >= 0 and len(proj_vals) < 5:
+            d = full_dates[j]
+            dt = d if isinstance(d, date) else d.date()
+            if dt.weekday() < 5:
+                proj_vals.append(full_vals[j])
+            j -= 1
+        if len(proj_vals) == 5:
+            rolling[-1] = round(sum(proj_vals) / 5, 2)
 
     labels = []
     is_today = []
