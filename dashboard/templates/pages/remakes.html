@@ -794,7 +794,7 @@
                       <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="n.Note + n.UserID">
                         <div class="call-note-item">
                           <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
-                          <span x-html="fmtNote(n.Note)"></span>
+                          <span x-text="fmtNoteShort(n.Note)"></span>
                         </div>
                       </template>
                       <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -1130,7 +1130,7 @@
                       <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="n.Note + n.UserID">
                         <div class="call-note-item">
                           <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
-                          <span x-html="fmtNote(n.Note)"></span>
+                          <span x-text="fmtNoteShort(n.Note)"></span>
                         </div>
                       </template>
                       <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
@@ -1592,7 +1592,7 @@
                         <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,3)" :key="n.Note + n.UserID">
                           <div class="call-note-item">
                             <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
-                            <span x-html="fmtNote(n.Note)"></span>
+                            <span x-text="fmtNoteShort(n.Note)"></span>
                           </div>
                         </template>
                         <button class="overflow-btn"
@@ -2237,6 +2237,10 @@ function remakesPage() {
       if (isNaN(dt.getTime())) return String(d).slice(0, 16);
       return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
            + ' ' + dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    },
+    fmtNoteShort(note) {
+      if (!note) return '';
+      return note.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
     },
     fmtNote(note) {
       if (!note) return '';
