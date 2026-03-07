@@ -181,7 +181,7 @@ def _split_source_names(source_name: str, file_count: int) -> list:
 
 
 def _effective_doc_path(repo: str, file_path: str, source_name: str) -> str:
-    """Return path relative to \\APP-SERVER\DLCPMImages\ for the given document.
+    r"""Return path relative to \\APP-SERVER\DLCPMImages\ for the given document.
 
     CaseDocuments FilePath already includes filename: \Feb\24\CaseDoc_abc.pdf
     Other repos FilePath is folder only:              \169001-169500\169226\Upload_1\
