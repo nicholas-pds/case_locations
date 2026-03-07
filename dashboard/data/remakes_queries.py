@@ -125,9 +125,11 @@ WITH RemakeCases AS (
     AND main.DateIn >= DATEADD(DAY, -365, GETDATE())
     AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
 )
-SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.CreateDate
+SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.CreateDate,
+       cd.Repository, cd.IsURL, cd.FileCount
 FROM dbo.CaseDocuments AS cd
 INNER JOIN RemakeCases rc ON rc.CaseID = cd.CaseID
+WHERE cd.Deleted = 0
 ORDER BY cd.CaseID, cd.CreateDate
 """
 
@@ -152,6 +154,56 @@ WHERE chc.AnchorCaseID IN (SELECT CaseID FROM AllCaseIDs)
    OR chc.LinkCaseID   IN (SELECT CaseID FROM AllCaseIDs)
 """
 
+import re as _re
+
+# Maps dbo.CaseDocuments.Repository → actual subfolder on \\APP-SERVER\DLCPMImages\
+_REPO_FOLDER_MAP = {
+    "CaseDocuments":      "CaseDocuments",
+    "Digital Impression": "DigitalImpressions",
+    "Design":             "Designs",
+    "Model Scan":         "ModelScans",
+}
+
+
+def _split_source_names(source_name: str, file_count: int) -> list:
+    """Split space-separated filenames when FileCount > 1.
+    Primary: split on whitespace after a file extension (.xxx or .xxxx).
+    Fallback: split on 2+ spaces. Last resort: return as single-item list."""
+    if file_count <= 1 or not source_name:
+        return [source_name or ""]
+    parts = _re.split(r'(?<=\.\w{3})\s+(?=\S)|(?<=\.\w{4})\s+(?=\S)', source_name.strip())
+    if len(parts) == file_count:
+        return parts
+    parts2 = _re.split(r'  +', source_name.strip())
+    if len(parts2) == file_count:
+        return parts2
+    return [source_name]  # can't split safely
+
+
+def _effective_doc_path(repo: str, file_path: str, source_name: str) -> str:
+    """Return path relative to \\APP-SERVER\DLCPMImages\ for the given document.
+
+    CaseDocuments FilePath already includes filename: \Feb\24\CaseDoc_abc.pdf
+    Other repos FilePath is folder only:              \169001-169500\169226\Upload_1\
+    """
+    folder = _REPO_FOLDER_MAP.get(repo, repo)
+    path = file_path.replace("\\", "/").lstrip("/")
+    # Strip any UNC prefix that may appear
+    for prefix in ["//app-server/dlcpmimages/", "//app-server/dlcpmimages"]:
+        if path.lower().startswith(prefix):
+            path = path[len(prefix):]
+            break
+    path = path.lstrip("/")
+    # Prepend folder name if not already present
+    folder_prefix = folder + "/"
+    if not path.lower().startswith(folder_prefix.lower()):
+        path = folder_prefix + path
+    # If folder path (ends with /), append filename
+    if path.endswith("/"):
+        path = path + source_name
+    return path
+
+
 # ─── Query functions ──────────────────────────────────────────────────────────
 
 def get_all_remakes(conn) -> pd.DataFrame:
@@ -171,7 +223,23 @@ def get_call_notes(conn) -> pd.DataFrame:
 
 
 def get_case_documents(conn) -> pd.DataFrame:
-    return pd.read_sql(_CASE_DOCUMENTS_SQL, conn)
+    df = pd.read_sql(_CASE_DOCUMENTS_SQL, conn)
+    if df.empty:
+        return df
+    expanded_rows = []
+    for row in df.to_dict("records"):
+        is_url    = row.get("IsURL") == 1
+        repo      = str(row.get("Repository") or "CaseDocuments")
+        file_path = str(row.get("FilePath") or "")
+        source    = str(row.get("SourceFileName") or "")
+        count     = int(row.get("FileCount") or 1)
+        if is_url:
+            expanded_rows.append({**row, "FilePath": file_path})
+            continue
+        for name in _split_source_names(source, count):
+            effective = _effective_doc_path(repo, file_path, name)
+            expanded_rows.append({**row, "FilePath": effective, "SourceFileName": name})
+    return pd.DataFrame(expanded_rows)
 
 
 def get_tasks_for_case(conn, main_id: int, og_id: int) -> pd.DataFrame:

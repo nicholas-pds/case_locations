@@ -572,6 +572,19 @@
   .dd-ms-option input[type="checkbox"] { accent-color: var(--red); }
 
   /* ── Overflow button ── */
+  .tip-group-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 8px 0 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .tip-att-group { margin-bottom: 12px; }
+  .tip-att-row { cursor: pointer; }
+
   .overflow-btn {
     display: inline-block;
     margin-top: 4px;
@@ -830,6 +843,11 @@
                           </div>
                           <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
                         </div>
+                      </template>
+                      <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 8">
+                        <button class="overflow-btn" @click.stop="showAttachmentsTip(row)">
+                          + See All
+                        </button>
                       </template>
                     </div>
                   </template>
@@ -1167,6 +1185,11 @@
                           </div>
                           <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
                         </div>
+                      </template>
+                      <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 8">
+                        <button class="overflow-btn" @click.stop="showAttachmentsTip(row)">
+                          + See All
+                        </button>
                       </template>
                     </div>
                   </template>
@@ -1642,7 +1665,9 @@
       <div class="tip-backdrop" @click="hideTip()"></div>
       <div class="tip-card">
         <div class="tip-header">
-          <span class="tip-title" x-text="_tip.type === 'tasks' ? 'Task List (' + _tip.items.length + ')' : 'Call Notes (' + _tip.items.length + ')'"></span>
+          <span class="tip-title" x-text="_tip.type === 'tasks' ? 'Task List (' + _tip.items.length + ')'
+                                       : _tip.type === 'notes' ? 'Call Notes (' + _tip.items.length + ')'
+                                       : 'Attachments (' + _tip.items.length + ')'"></span>
           <button class="tip-close" @click="hideTip()">&#x2715;</button>
         </div>
         <!-- Tasks content -->
@@ -1664,6 +1689,34 @@
                 <div class="tip-note-meta" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + fmtNoteDate(n.CallDate) : '')"></div>
                 <div class="tip-note-text" x-html="fmtNote(n.Note)"></div>
               </div>
+            </template>
+          </div>
+        </template>
+        <!-- Attachments content -->
+        <template x-if="_tip.type === 'attachments'">
+          <div>
+            <template x-for="group in _tip.attachmentsGroups" :key="group.label">
+              <template x-if="group.docs.length > 0">
+                <div class="tip-att-group">
+                  <div class="tip-group-label" x-text="group.label"></div>
+                  <template x-for="doc in group.docs" :key="doc.FilePath">
+                    <div class="att-row tip-att-row"
+                         :title="doc.SourceFileName"
+                         @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
+                      <div class="att-row-icon">
+                        <template x-if="doc.isExternal"><span>&#x1F517;</span></template>
+                        <template x-if="doc.isImage && !doc.isExternal">
+                          <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
+                        </template>
+                        <template x-if="!doc.isImage && !doc.isExternal">
+                          <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                        </template>
+                      </div>
+                      <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
+                    </div>
+                  </template>
+                </div>
+              </template>
             </template>
           </div>
         </template>
@@ -2197,6 +2250,23 @@ function remakesPage() {
 
     showTip(type, items) {
       this._tip = { show: true, type, items };
+    },
+
+    showAttachmentsTip(row) {
+      const allDocs = this.getDocsForCase(row.MainCaseID, row.OG_CaseID);
+      const mainStr = String(row.MainCaseID);
+      const ogStr   = String(row.OG_CaseID);
+      this._tip = {
+        show: true,
+        type: 'attachments',
+        items: allDocs,
+        attachmentsGroups: [
+          { label: 'New Case ' + row.MainCaseNumber,
+            docs: allDocs.filter(d => String(d.CaseID) === mainStr) },
+          { label: 'Original Case ' + row.OG_CaseNumber,
+            docs: allDocs.filter(d => String(d.CaseID) === ogStr) },
+        ],
+      };
     },
 
     hideTip() {
