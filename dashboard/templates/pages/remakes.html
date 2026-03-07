@@ -844,11 +844,9 @@
                           <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
                         </div>
                       </template>
-                      <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 8">
-                        <button class="overflow-btn" @click.stop="showAttachmentsTip(row)">
-                          + See All
-                        </button>
-                      </template>
+                      <button class="overflow-btn" @click.stop="showAttachmentsTip(row)">
+                        + See All
+                      </button>
                     </div>
                   </template>
                 </td>
@@ -1186,11 +1184,9 @@
                           <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
                         </div>
                       </template>
-                      <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 8">
-                        <button class="overflow-btn" @click.stop="showAttachmentsTip(row)">
-                          + See All
-                        </button>
-                      </template>
+                      <button class="overflow-btn" @click.stop="showAttachmentsTip(row)">
+                        + See All
+                      </button>
                     </div>
                   </template>
                 </td>
@@ -1712,7 +1708,7 @@
                           <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
                         </template>
                       </div>
-                      <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
+                      <span class="att-row-name" x-text="doc.SourceFileName"></span>
                     </div>
                   </template>
                 </div>
