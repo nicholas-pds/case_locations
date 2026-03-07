@@ -109,27 +109,23 @@ ORDER BY th.CaseID, th.CompleteDate ASC
 
 _CASE_DOCUMENTS_SQL = """
 WITH RemakeCases AS (
-    SELECT DISTINCT main.CaseID
-    FROM dbo.CaseLinks AS links
-    INNER JOIN dbo.Cases AS main   ON links.CaseID       = main.CaseID
-    INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
-    WHERE links.Notes LIKE N'%Remake Of%'
-    AND main.DateIn >= DATEADD(DAY, -365, GETDATE())
-    AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
-    UNION
-    SELECT DISTINCT linked.CaseID
+    SELECT main.CaseID AS MainCaseID, linked.CaseID AS OG_CaseID
     FROM dbo.CaseLinks AS links
     INNER JOIN dbo.Cases AS main   ON links.CaseID     = main.CaseID
     INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
-    WHERE links.Notes LIKE N'%Remake Of%'
-    AND main.DateIn >= DATEADD(DAY, -365, GETDATE())
-    AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
+    WHERE links.Notes LIKE '%Remake Of%'
+      AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
+      AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
 )
 SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.Description,
        cd.CreateDate, cd.Repository, cd.IsURL, cd.FileCount
 FROM dbo.CaseDocuments AS cd
-INNER JOIN RemakeCases rc ON rc.CaseID = cd.CaseID
 WHERE cd.Deleted = 0
+  AND cd.CaseID IN (
+    SELECT MainCaseID FROM RemakeCases
+    UNION
+    SELECT OG_CaseID  FROM RemakeCases
+  )
 ORDER BY cd.CaseID, cd.CreateDate
 """
 
