@@ -125,8 +125,8 @@ WITH RemakeCases AS (
     AND main.DateIn >= DATEADD(DAY, -365, GETDATE())
     AND main.[Status] IN (N'In Production', N'Invoiced', N'On Hold')
 )
-SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.CreateDate,
-       cd.Repository, cd.IsURL, cd.FileCount
+SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.Description,
+       cd.CreateDate, cd.Repository, cd.IsURL, cd.FileCount
 FROM dbo.CaseDocuments AS cd
 INNER JOIN RemakeCases rc ON rc.CaseID = cd.CaseID
 WHERE cd.Deleted = 0

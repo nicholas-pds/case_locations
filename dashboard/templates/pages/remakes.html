@@ -459,6 +459,9 @@
     font-size: 0.7rem; white-space: nowrap; overflow: hidden;
     text-overflow: ellipsis; max-width: 155px; color: var(--dark);
   }
+  .tip-att-row .att-row-name {
+    max-width: none; white-space: normal; overflow: visible; text-overflow: clip;
+  }
   .att-icon-pdf { color: #C0182B; }
   .att-icon-stl { color: #6B6B6B; }
   .att-icon-file { color: #6B6B6B; }
@@ -829,7 +832,7 @@
                   <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <div class="att-list">
                       <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID).slice(0, 8)" :key="doc.FilePath">
-                        <div class="att-row" :title="doc.SourceFileName" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
+                        <div class="att-row" :title="docDisplayName(doc)" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
                           <div class="att-row-icon">
                             <template x-if="doc.isExternal">
                               <span>&#x1F517;</span>
@@ -841,7 +844,7 @@
                               <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
                             </template>
                           </div>
-                          <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
+                          <span class="att-row-name" x-text="fmtFileName(docDisplayName(doc))"></span>
                         </div>
                       </template>
                       <button class="overflow-btn" @click.stop="showAttachmentsTip(row)">
@@ -1169,7 +1172,7 @@
                   <template x-if="getDocsForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <div class="att-list">
                       <template x-for="doc in getDocsForCase(row.MainCaseID, row.OG_CaseID).slice(0, 8)" :key="doc.FilePath">
-                        <div class="att-row" :title="doc.SourceFileName" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
+                        <div class="att-row" :title="docDisplayName(doc)" @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
                           <div class="att-row-icon">
                             <template x-if="doc.isExternal">
                               <span>&#x1F517;</span>
@@ -1181,7 +1184,7 @@
                               <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
                             </template>
                           </div>
-                          <span class="att-row-name" x-text="fmtFileName(doc.SourceFileName)"></span>
+                          <span class="att-row-name" x-text="fmtFileName(docDisplayName(doc))"></span>
                         </div>
                       </template>
                       <button class="overflow-btn" @click.stop="showAttachmentsTip(row)">
@@ -1692,27 +1695,26 @@
         <template x-if="_tip.type === 'attachments'">
           <div>
             <template x-for="group in _tip.attachmentsGroups" :key="group.label">
-              <template x-if="group.docs.length > 0">
-                <div class="tip-att-group">
-                  <div class="tip-group-label" x-text="group.label"></div>
-                  <template x-for="doc in group.docs" :key="doc.FilePath">
-                    <div class="att-row tip-att-row"
-                         :title="doc.SourceFileName"
-                         @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
-                      <div class="att-row-icon">
-                        <template x-if="doc.isExternal"><span>&#x1F517;</span></template>
-                        <template x-if="doc.isImage && !doc.isExternal">
-                          <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
-                        </template>
-                        <template x-if="!doc.isImage && !doc.isExternal">
-                          <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
-                        </template>
-                      </div>
-                      <span class="att-row-name" x-text="doc.SourceFileName"></span>
+              <div class="tip-att-group">
+                <div class="tip-group-label" x-text="group.label"></div>
+                <template x-for="doc in group.docs" :key="doc.FilePath">
+                  <div class="att-row tip-att-row"
+                       :title="docDisplayName(doc)"
+                       @click.stop="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)">
+                    <div class="att-row-icon">
+                      <template x-if="doc.isExternal"><span>&#x1F517;</span></template>
+                      <template x-if="doc.isImage && !doc.isExternal">
+                        <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
+                      </template>
+                      <template x-if="!doc.isImage && !doc.isExternal">
+                        <span :class="'att-icon-' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                      </template>
                     </div>
-                  </template>
-                </div>
-              </template>
+                    <span class="att-row-name" x-text="docDisplayName(doc)"></span>
+                  </div>
+                </template>
+                <div x-show="group.docs.length === 0" style="font-size:0.75rem;color:#aaa;padding:4px 0 2px;">No files</div>
+              </div>
             </template>
           </div>
         </template>
@@ -2313,6 +2315,9 @@ function remakesPage() {
       if (!note) return '';
       const s = note.replace(/[\r\n\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim();
       return s.length > 120 ? s.slice(0, 120) + '…' : s;
+    },
+    docDisplayName(doc) {
+      return (doc.Description && doc.Description.trim()) ? doc.Description.trim() : (doc.SourceFileName || '');
     },
     fmtFileName(name) {
       if (!name) return '';
