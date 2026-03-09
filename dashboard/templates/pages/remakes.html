@@ -1821,7 +1821,7 @@
 
   <!-- Tooltip overlay -->
   <template x-if="_tip.show">
-    <div>
+    <div @keydown.window.escape="hideTip()">
       <div class="tip-backdrop" @click="hideTip()"></div>
       <div class="tip-card">
         <div class="tip-header">
@@ -2086,7 +2086,7 @@
 
   <!-- Lightbox modal -->
   <template x-if="_lightbox.show">
-    <div class="lb-backdrop" @click.self="hideLightbox()">
+    <div class="lb-backdrop" @click.self="hideLightbox()" @keydown.window.escape="hideLightbox()">
       <div class="lb-modal">
         <div class="lb-header">
           <span class="lb-title" x-text="_lightbox.filename"></span>
