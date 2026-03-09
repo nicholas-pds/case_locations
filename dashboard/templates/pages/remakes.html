@@ -676,7 +676,7 @@
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background: #111;
+    background: #F5F4F2;
     display: flex;
     flex-direction: column;
   }
@@ -686,61 +686,61 @@
     align-items: center;
     padding: 0 24px;
     gap: 16px;
-    background: #1A1A1A;
-    border-bottom: 1px solid #333;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E8E4E0;
     flex-shrink: 0;
   }
-  .pres-counter { font-size: 0.82rem; color: #aaa; white-space: nowrap; min-width: 90px; }
+  .pres-counter { font-size: 0.82rem; color: #6B6B6B; white-space: nowrap; min-width: 90px; }
   .pres-nav { display: flex; gap: 8px; }
   .pres-nav button {
-    background: #2a2a2a; color: #fff; border: 1px solid #444;
+    background: #F0EDE9; color: #1A1A1A; border: 1px solid #D8D4D0;
     border-radius: 5px; padding: 6px 14px; cursor: pointer; font-size: 0.82rem; transition: background 0.12s;
   }
-  .pres-nav button:hover:not(:disabled) { background: var(--red); border-color: var(--red); }
+  .pres-nav button:hover:not(:disabled) { background: var(--red); border-color: var(--red); color: #fff; }
   .pres-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
   .pres-reason {
-    flex: 1; font-size: 1rem; font-weight: 700; color: #fff;
+    flex: 1; font-size: 1rem; font-weight: 700; color: #1A1A1A;
     text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .pres-close {
-    background: #333; color: #fff; border: 1px solid #555;
+    background: #E8E4E0; color: #1A1A1A; border: 1px solid #D8D4D0;
     border-radius: 5px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; transition: background 0.12s;
   }
-  .pres-close:hover { background: var(--red); border-color: var(--red); }
+  .pres-close:hover { background: var(--red); border-color: var(--red); color: #fff; }
 
   .pres-body {
     flex: 1; display: grid; grid-template-columns: 35% 40% 25%;
     overflow: hidden; min-height: 0;
   }
   .pres-col-left {
-    border-right: 1px solid #2a2a2a; overflow-y: auto;
+    border-right: 1px solid #E8E4E0; overflow-y: auto;
     padding: 20px 18px; display: flex; flex-direction: column; gap: 14px;
   }
   .pres-rx-card {
-    background: #1c1c1c; border: 1px solid #2e2e2e; border-radius: 8px; padding: 14px 16px;
+    background: #FFFFFF; border: 1px solid #E8E4E0; border-radius: 8px; padding: 14px 16px;
   }
   .pres-rx-label {
     font-size: 0.68rem; font-weight: 700; color: var(--red);
     text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
   }
-  .pres-rx-casenum { font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 6px; line-height: 1.1; }
-  .pres-rx-practice { font-size: 0.9rem; font-weight: 600; color: #ddd; margin-bottom: 6px; }
-  .pres-rx-meta { font-size: 0.82rem; color: #888; line-height: 1.9; }
-  .pres-rx-meta strong { color: #aaa; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .pres-rx-casenum { font-size: 1.4rem; font-weight: 700; color: #1A1A1A; margin-bottom: 6px; line-height: 1.1; }
+  .pres-rx-practice { font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 6px; }
+  .pres-rx-meta { font-size: 0.82rem; color: #999; line-height: 1.9; }
+  .pres-rx-meta strong { color: #6B6B6B; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
   .pres-rx-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .pres-chip {
-    background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 12px;
-    padding: 3px 10px; font-size: 0.75rem; color: #bbb; font-weight: 600;
+    background: #F0EDE9; border: 1px solid #D8D4D0; border-radius: 12px;
+    padding: 3px 10px; font-size: 0.75rem; color: #444; font-weight: 600;
   }
-  .pres-chip.remake-stat { background: #2d1215; border-color: #5a1a20; color: #e87082; }
-  .pres-chip.status-In-Production { background: #3a2000; border-color: #6a3500; color: #ffa040; }
-  .pres-chip.status-Invoiced      { background: #003a10; border-color: #006020; color: #40c060; }
-  .pres-chip.status-On-Hold       { background: #3a0010; border-color: #6a0020; color: #e04060; }
-  .pres-chip.remake-type { background: #1e1e2e; border-color: #3a3a5e; color: #9090d0; }
-  .pres-chip.full-charge-pres { background: #3a0010; border-color: #6a0020; color: #e04060; }
+  .pres-chip.remake-stat { background: #FFF0F0; border-color: #FFCCD0; color: #C0182B; }
+  .pres-chip.status-In-Production { background: #FFF8E6; border-color: #FFE4A0; color: #8B5E00; }
+  .pres-chip.status-Invoiced      { background: #EDFFF3; border-color: #AAEEC0; color: #1A7A35; }
+  .pres-chip.status-On-Hold       { background: #FFF0F0; border-color: #FFCCD0; color: #C0182B; }
+  .pres-chip.remake-type { background: #F0F0FF; border-color: #C8C8F0; color: #5050A0; }
+  .pres-chip.full-charge-pres { background: #FFF0F0; border-color: #FFCCD0; color: #C0182B; }
 
   .pres-col-mid {
-    border-right: 1px solid #2a2a2a; overflow-y: auto; padding: 20px 18px;
+    border-right: 1px solid #E8E4E0; overflow-y: auto; padding: 20px 18px;
   }
   .pres-att-section-label {
     font-size: 0.68rem; font-weight: 700; color: var(--red);
@@ -753,43 +753,43 @@
   }
   .pres-att-thumb:hover .pres-thumb-img { border-color: var(--red); }
   .pres-thumb-img {
-    width: 110px; height: 110px; border: 2px solid #333; border-radius: 6px;
+    width: 110px; height: 110px; border: 2px solid #E8E4E0; border-radius: 6px;
     overflow: hidden; display: flex; align-items: center; justify-content: center;
-    background: #1c1c1c; transition: border-color 0.15s;
+    background: #FFFFFF; transition: border-color 0.15s;
   }
   .pres-thumb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .pres-thumb-badge { font-size: 0.9rem; font-weight: 800; letter-spacing: 0.05em; }
   .pres-thumb-badge.pdf { color: #e06060; }
-  .pres-thumb-badge.stl { color: #888; }
-  .pres-thumb-badge.link { font-size: 1.3rem; color: #888; }
+  .pres-thumb-badge.stl { color: #999; }
+  .pres-thumb-badge.link { font-size: 1.3rem; color: #999; }
   .pres-thumb-img.thumb-err::after {
     content: attr(data-ext);
-    color: #aaa; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em;
+    color: #6B6B6B; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em;
   }
   .pres-thumb-name {
-    font-size: 0.72rem; color: #aaa; text-align: center;
+    font-size: 0.72rem; color: #6B6B6B; text-align: center;
     word-break: break-word; line-height: 1.3; max-width: 110px;
   }
-  .pres-att-divider { border-top: 1px solid #2a2a2a; margin: 18px 0 14px; }
+  .pres-att-divider { border-top: 1px solid #E8E4E0; margin: 18px 0 14px; }
 
   .pres-see-all-btn {
     display: flex; align-items: center; justify-content: center; width: 110px; height: 110px;
-    border: 2px dashed #444; border-radius: 6px; background: #1a1a1a;
-    color: #888; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    border: 2px dashed #D8D4D0; border-radius: 6px; background: #FAFAF8;
+    color: #999; font-size: 0.78rem; font-weight: 700; cursor: pointer;
     transition: border-color 0.15s, color 0.15s; text-align: center;
   }
   .pres-see-all-btn:hover { border-color: var(--red); color: var(--red); }
 
   .pres-col-right { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
   .pres-panel {
-    border-bottom: 1px solid #2a2a2a; display: flex;
+    border-bottom: 1px solid #E8E4E0; display: flex;
     flex-direction: column; overflow: hidden; min-height: 0;
   }
   .pres-panel-hdr {
     font-size: 0.68rem; font-weight: 700; color: var(--red);
     text-transform: uppercase; letter-spacing: 0.09em;
     padding: 10px 14px 6px; flex-shrink: 0;
-    background: #1c1c1c; border-bottom: 1px solid #2a2a2a;
+    background: #FFFFFF; border-bottom: 1px solid #E8E4E0;
   }
   .pres-panel-body { flex: 1; overflow-y: auto; padding: 10px 14px; min-height: 0; }
   .pres-panel-notes    { flex: 0 0 22%; }
@@ -798,28 +798,23 @@
 
   .pres-note-textarea {
     width: 100%; height: calc(100% - 24px); min-height: 50px;
-    background: #1a1a1a; color: #ddd; border: 1px solid #333; border-radius: 4px;
+    background: #FAFAF8; color: #333; border: 1px solid #E8E4E0; border-radius: 4px;
     padding: 8px; font-size: 0.82rem; resize: none; font-family: inherit;
     box-sizing: border-box; transition: border-color 0.15s;
   }
   .pres-note-textarea:focus { border-color: var(--red); outline: none; }
-  .pres-note-save-badge   { font-size: 0.72rem; color: #50c060; font-weight: 700; margin-top: 4px; }
-  .pres-note-saving-badge { font-size: 0.72rem; color: #888; font-style: italic; margin-top: 4px; }
+  .pres-note-save-badge   { font-size: 0.72rem; color: #1A7A35; font-weight: 700; margin-top: 4px; }
+  .pres-note-saving-badge { font-size: 0.72rem; color: #999; font-style: italic; margin-top: 4px; }
 
-  .pres-call-note { padding: 8px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem; }
+  .pres-call-note { padding: 8px 0; border-bottom: 1px solid #E8E4E0; font-size: 0.82rem; }
   .pres-call-note:last-child { border-bottom: none; }
-  .pres-call-note-meta { color: #888; font-size: 0.75rem; margin-bottom: 4px; }
-  .pres-call-note-text { color: #ccc; line-height: 1.5; }
+  .pres-call-note-meta { color: #999; font-size: 0.75rem; margin-bottom: 4px; }
+  .pres-call-note-text { color: #444; line-height: 1.5; }
 
-  .pres-task-item { padding: 6px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem; color: #ccc; }
+  .pres-task-item { padding: 6px 0; border-bottom: 1px solid #E8E4E0; font-size: 0.82rem; color: #444; }
   .pres-task-item:last-child { border-bottom: none; }
-  .pres-task-name { color: #888; font-weight: 600; }
-  .pres-see-all-tasks {
-    margin-top: 8px; background: #2a2a2a; color: #aaa; border: 1px solid #444;
-    border-radius: 4px; padding: 5px 12px; font-size: 0.78rem; cursor: pointer;
-  }
-  .pres-see-all-tasks:hover { background: var(--red); color: #fff; border-color: var(--red); }
-  .pres-empty { color: #555; font-size: 0.82rem; font-style: italic; }
+  .pres-task-name { color: #6B6B6B; font-weight: 600; }
+  .pres-empty { color: #BBBBBB; font-size: 0.82rem; font-style: italic; }
 </style>
 {% endblock %}
 
@@ -2074,17 +2069,11 @@
             </template>
             <template x-if="presCase && getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 0">
               <div>
-                <template x-for="t in getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).slice(0, 8)" :key="t.Task + t.CompleteDate">
+                <template x-for="t in getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID)" :key="t.Task + t.CompleteDate">
                   <div class="pres-task-item">
                     <span class="pres-task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
                     <span x-text="' – ' + (t.Task || '')"></span>
                   </div>
-                </template>
-                <template x-if="getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 8">
-                  <button class="pres-see-all-tasks"
-                          @click="showTip('tasks', getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID))"
-                          x-text="'See All (' + getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length + ')'">
-                  </button>
                 </template>
               </div>
             </template>
@@ -2385,7 +2374,6 @@ function remakesPage() {
       this._presKeydown = (e) => {
         if (e.key === 'ArrowRight') this.presNext();
         if (e.key === 'ArrowLeft')  this.presPrev();
-        if (e.key === 'Escape')     this.closePres();
       };
       document.addEventListener('keydown', this._presKeydown);
     },
