@@ -165,8 +165,30 @@ async def get_attachment(path: str, thumb: int = 0):
             return Response(data, media_type="image/jpeg", headers=headers)
 
         elif suffix == ".pdf":
-            data = await loop.run_in_executor(None, full_path.read_bytes)
-            return Response(data, media_type="application/pdf", headers=headers)
+            if thumb:
+                import fitz  # PyMuPDF
+                def _make_pdf_thumb():
+                    try:
+                        doc_pdf = fitz.open(str(full_path))
+                        page = doc_pdf[0]
+                        pix = page.get_pixmap(matrix=fitz.Matrix(1, 1))
+                        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                        img.thumbnail((120, 120))
+                        buf = io.BytesIO()
+                        img.save(buf, format="JPEG", quality=75)
+                        doc_pdf.close()
+                        return buf.getvalue()
+                    except Exception:
+                        # Return 1×1 black placeholder so client-side @error fallback triggers
+                        placeholder = Image.new("RGB", (1, 1), (0, 0, 0))
+                        buf = io.BytesIO()
+                        placeholder.save(buf, format="JPEG")
+                        return buf.getvalue()
+                data = await loop.run_in_executor(None, _make_pdf_thumb)
+                return Response(data, media_type="image/jpeg", headers=headers)
+            else:
+                data = await loop.run_in_executor(None, full_path.read_bytes)
+                return Response(data, media_type="application/pdf", headers=headers)
 
         else:
             data = await loop.run_in_executor(None, full_path.read_bytes)

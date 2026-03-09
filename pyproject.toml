@@ -20,4 +20,5 @@ dependencies = [
     "python-multipart>=0.0.9",
     "sse-starlette>=2.0.0",
     "uvicorn[standard]>=0.34.0",
+    "pymupdf>=1.24.0",
 ]

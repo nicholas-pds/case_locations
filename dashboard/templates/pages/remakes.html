@@ -762,6 +762,10 @@
   .pres-thumb-badge.pdf { color: #e06060; }
   .pres-thumb-badge.stl { color: #888; }
   .pres-thumb-badge.link { font-size: 1.3rem; color: #888; }
+  .pres-thumb-img.thumb-err::after {
+    content: attr(data-ext);
+    color: #aaa; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em;
+  }
   .pres-thumb-name {
     font-size: 0.72rem; color: #aaa; text-align: center;
     word-break: break-word; line-height: 1.3; max-width: 110px;
@@ -1962,15 +1966,16 @@
               <div class="pres-att-thumb"
                    @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
                    :title="docDisplayName(doc)">
-                <div class="pres-thumb-img">
+                <div class="pres-thumb-img" :data-ext="(doc.fileType || 'file').toUpperCase()">
                   <template x-if="doc.isExternal">
                     <span class="pres-thumb-badge link">&#x1F517;</span>
                   </template>
-                  <template x-if="doc.isImage && !doc.isExternal">
-                    <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
+                  <template x-if="doc.hasThumb && !doc.isExternal">
+                    <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt=""
+                         @error="$event.target.style.display='none'; $event.target.closest('.pres-thumb-img').classList.add('thumb-err')">
                   </template>
-                  <template x-if="!doc.isImage && !doc.isExternal">
-                    <span :class="'pres-thumb-badge ' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                  <template x-if="!doc.hasThumb && !doc.isExternal">
+                    <span :class="'pres-thumb-badge ' + (doc.fileType || 'file')" x-text="(doc.fileType || 'FILE').toUpperCase()"></span>
                   </template>
                 </div>
                 <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
@@ -1992,15 +1997,16 @@
               <div class="pres-att-thumb"
                    @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
                    :title="docDisplayName(doc)">
-                <div class="pres-thumb-img">
+                <div class="pres-thumb-img" :data-ext="(doc.fileType || 'file').toUpperCase()">
                   <template x-if="doc.isExternal">
                     <span class="pres-thumb-badge link">&#x1F517;</span>
                   </template>
-                  <template x-if="doc.isImage && !doc.isExternal">
-                    <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
+                  <template x-if="doc.hasThumb && !doc.isExternal">
+                    <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt=""
+                         @error="$event.target.style.display='none'; $event.target.closest('.pres-thumb-img').classList.add('thumb-err')">
                   </template>
-                  <template x-if="!doc.isImage && !doc.isExternal">
-                    <span :class="'pres-thumb-badge ' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                  <template x-if="!doc.hasThumb && !doc.isExternal">
+                    <span :class="'pres-thumb-badge ' + (doc.fileType || 'file')" x-text="(doc.fileType || 'FILE').toUpperCase()"></span>
                   </template>
                 </div>
                 <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
@@ -2296,8 +2302,9 @@ function remakesPage() {
             if (!dm[cid]) dm[cid] = [];
             const ext = ((doc.SourceFileName || doc.FilePath || '').split('.').pop() || '').toLowerCase();
             const isImage = ['jpg','jpeg','png','gif','webp'].includes(ext);
+            const hasThumb = isImage || ext === 'pdf';
             const isExternal = doc.FilePath && (doc.FilePath.startsWith('http://') || doc.FilePath.startsWith('https://'));
-            dm[cid].push({ ...doc, fileType: ext, isImage, isExternal });
+            dm[cid].push({ ...doc, fileType: ext, isImage, hasThumb, isExternal });
           }
           this._documentsMapData = dm;
 
