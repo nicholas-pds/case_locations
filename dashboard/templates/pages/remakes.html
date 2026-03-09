@@ -470,7 +470,7 @@
   .lb-backdrop {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.75);
-    z-index: 2000;
+    z-index: 10000;
     display: flex; align-items: center; justify-content: center;
   }
   .lb-modal {
@@ -766,6 +766,8 @@
     font-size: 0.72rem; color: #aaa; text-align: center;
     word-break: break-word; line-height: 1.3; max-width: 110px;
   }
+  .pres-att-divider { border-top: 1px solid #2a2a2a; margin: 18px 0 14px; }
+
   .pres-see-all-btn {
     display: flex; align-items: center; justify-content: center; width: 110px; height: 110px;
     border: 2px dashed #444; border-radius: 6px; background: #1a1a1a;
@@ -1946,15 +1948,17 @@
         </div>
       </div>
 
-      <!-- MIDDLE: Attachments grid -->
+      <!-- MIDDLE: Attachments split by old / new case -->
       <div class="pres-col-mid">
-        <div class="pres-att-section-label">Attachments</div>
-        <template x-if="presCase && getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).length === 0">
+
+        <!-- Old Case Attachments -->
+        <div class="pres-att-section-label">Old Case Attachments</div>
+        <template x-if="presCase && (_documentsMapData[String(presCase.OG_CaseID)] || []).length === 0">
           <div class="pres-empty">No attachments</div>
         </template>
-        <template x-if="presCase && getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 0">
+        <template x-if="presCase && (_documentsMapData[String(presCase.OG_CaseID)] || []).length > 0">
           <div class="pres-att-grid">
-            <template x-for="doc in getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).slice(0, 6)" :key="doc.FilePath">
+            <template x-for="doc in (_documentsMapData[String(presCase.OG_CaseID)] || [])" :key="doc.FilePath">
               <div class="pres-att-thumb"
                    @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
                    :title="docDisplayName(doc)">
@@ -1972,13 +1976,39 @@
                 <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
               </div>
             </template>
-            <template x-if="getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 6">
-              <button class="pres-see-all-btn" @click="showAttachmentsTip(presCase)"
-                      x-text="'+ ' + (getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).length - 6) + ' more'">
-              </button>
+          </div>
+        </template>
+
+        <div class="pres-att-divider"></div>
+
+        <!-- New Case Attachments -->
+        <div class="pres-att-section-label">New Case Attachments</div>
+        <template x-if="presCase && (_documentsMapData[String(presCase.MainCaseID)] || []).length === 0">
+          <div class="pres-empty">No attachments</div>
+        </template>
+        <template x-if="presCase && (_documentsMapData[String(presCase.MainCaseID)] || []).length > 0">
+          <div class="pres-att-grid">
+            <template x-for="doc in (_documentsMapData[String(presCase.MainCaseID)] || [])" :key="doc.FilePath">
+              <div class="pres-att-thumb"
+                   @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
+                   :title="docDisplayName(doc)">
+                <div class="pres-thumb-img">
+                  <template x-if="doc.isExternal">
+                    <span class="pres-thumb-badge link">&#x1F517;</span>
+                  </template>
+                  <template x-if="doc.isImage && !doc.isExternal">
+                    <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
+                  </template>
+                  <template x-if="!doc.isImage && !doc.isExternal">
+                    <span :class="'pres-thumb-badge ' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                  </template>
+                </div>
+                <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
+              </div>
             </template>
           </div>
         </template>
+
       </div>
 
       <!-- RIGHT: 3 stacked panels -->
