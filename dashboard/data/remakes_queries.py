@@ -1,6 +1,7 @@
 """Remakes dashboard data queries and cache management."""
 import sys
 import asyncio
+import json
 import logging
 from pathlib import Path
 from datetime import datetime, date, timedelta
@@ -21,7 +22,17 @@ logger = logging.getLogger("dashboard.data.remakes")
 
 _remakes_last_refresh: Optional[datetime] = None
 _NOTES_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "remake_notes.csv"
+_LD_PATH    = Path(__file__).parent.parent.parent / "User_Inputs" / "remake_ld.csv"
+_LD_EMAILS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "ld_emails.json"
 _EMPLOYEE_LKUPS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "employee_lkups.csv"
+
+_LD_DEPTS = ["CS", "ThreeD", "Lab", "Shipping"]
+_LD_EMAILS_DEFAULT = {
+    "CS":       ["nick@partnersdentalstudio.com"],
+    "ThreeD":   ["nick@partnersdentalstudio.com"],
+    "Lab":      ["nick@partnersdentalstudio.com"],
+    "Shipping": ["nick@partnersdentalstudio.com"],
+}
 
 # ─── SQL Queries ──────────────────────────────────────────────────────────────
 
@@ -327,6 +338,48 @@ def save_remake_note(case_number: str, note_text: str) -> None:
         existing = pd.concat([existing, new_row], ignore_index=True)
     _NOTES_PATH.parent.mkdir(parents=True, exist_ok=True)
     existing.to_csv(_NOTES_PATH, index=False)
+
+
+# ─── L&D storage ──────────────────────────────────────────────────────────────
+
+def load_remake_ld() -> pd.DataFrame:
+    if _LD_PATH.exists():
+        try:
+            return pd.read_csv(_LD_PATH, dtype=str)
+        except Exception as e:
+            logger.warning(f"Failed to read remake_ld.csv: {e}")
+    return pd.DataFrame(columns=["MainCaseNumber", "CS", "ThreeD", "Lab", "Shipping", "LastUpdated"])
+
+
+def save_remake_ld(case_number: str, dept: str, checked: bool) -> None:
+    if dept not in _LD_DEPTS:
+        raise ValueError(f"Unknown dept: {dept}")
+    existing = load_remake_ld()
+    now_str  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    val = "1" if checked else "0"
+    if not existing.empty and case_number in existing["MainCaseNumber"].values:
+        existing.loc[existing["MainCaseNumber"] == case_number, dept]          = val
+        existing.loc[existing["MainCaseNumber"] == case_number, "LastUpdated"] = now_str
+    else:
+        new_row = {c: "0" for c in _LD_DEPTS}
+        new_row.update({"MainCaseNumber": case_number, dept: val, "LastUpdated": now_str})
+        existing = pd.concat([existing, pd.DataFrame([new_row])], ignore_index=True)
+    _LD_PATH.parent.mkdir(parents=True, exist_ok=True)
+    existing.to_csv(_LD_PATH, index=False)
+
+
+def load_ld_emails() -> dict:
+    if _LD_EMAILS_PATH.exists():
+        try:
+            return json.loads(_LD_EMAILS_PATH.read_text())
+        except Exception:
+            pass
+    return dict(_LD_EMAILS_DEFAULT)
+
+
+def save_ld_emails(emails: dict) -> None:
+    _LD_EMAILS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _LD_EMAILS_PATH.write_text(json.dumps(emails, indent=2))
 
 
 # ─── Cache helpers ────────────────────────────────────────────────────────────

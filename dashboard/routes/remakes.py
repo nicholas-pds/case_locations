@@ -15,6 +15,10 @@ from dashboard.data.remakes_queries import (
     get_db_connection,
     load_remake_notes,
     save_remake_note,
+    load_remake_ld,
+    save_remake_ld,
+    load_ld_emails,
+    save_ld_emails,
     get_current_week_bounds,
     get_tasks_for_case,
     get_notes_for_case,
@@ -88,6 +92,17 @@ async def remakes_page(request: Request):
         if row.get("MainCaseNumber")
     }
 
+    # Load L&D flags
+    saved_ld_df = load_remake_ld()
+    saved_ld = {
+        row["MainCaseNumber"]: {k: row.get(k, "0") for k in ["CS", "ThreeD", "Lab", "Shipping"]}
+        for row in _df_to_records(saved_ld_df)
+        if row.get("MainCaseNumber")
+    }
+
+    # Load L&D emails
+    ld_emails = load_ld_emails()
+
     week_start, week_end = get_current_week_bounds()
 
     templates = request.app.state.templates
@@ -100,6 +115,8 @@ async def remakes_page(request: Request):
         "all_records": _df_to_records(all_df),
         "revenue_records": _df_to_records(cached["revenue"]),
         "saved_notes": saved_notes,
+        "saved_ld": saved_ld,
+        "ld_emails": ld_emails,
         "week_start": str(week_start),
         "week_end": str(week_end),
     })
@@ -239,4 +256,36 @@ async def save_note(request: Request):
         return JSONResponse({"status": "ok"})
     except Exception as e:
         logger.error(f"Save note failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@router.post("/remakes/ld")
+async def save_ld(request: Request):
+    body        = await request.json()
+    case_number = body.get("case_number", "")
+    dept        = body.get("dept", "")
+    checked     = bool(body.get("checked", False))
+    if not case_number or not dept:
+        return JSONResponse({"status": "error", "message": "case_number and dept required"}, status_code=400)
+    try:
+        save_remake_ld(case_number, dept, checked)
+        return JSONResponse({"status": "ok"})
+    except ValueError as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
+    except Exception as e:
+        logger.error(f"Save LD failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@router.post("/remakes/ld-emails")
+async def update_ld_emails(request: Request):
+    body = await request.json()
+    emails = body.get("emails", {})
+    if not isinstance(emails, dict):
+        return JSONResponse({"status": "error", "message": "emails must be an object"}, status_code=400)
+    try:
+        save_ld_emails(emails)
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        logger.error(f"Save LD emails failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)

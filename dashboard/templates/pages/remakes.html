@@ -250,7 +250,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.82rem;
-    min-width: 900px;
+    min-width: 980px;
   }
   .remakes-table th {
     background: var(--dark);
@@ -499,6 +499,47 @@
   .note-save-badge   { font-size: 0.72rem; color: #2E7D32; font-weight: 700; margin-top: 3px; }
   .note-saving-badge { font-size: 0.72rem; color: var(--gray); font-style: italic; margin-top: 3px; }
 
+  /* ── L&D Column ── */
+  .col-ld { width:80px; min-width:80px; max-width:80px; vertical-align:top; padding:6px 4px !important; }
+  .ld-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px 2px; }
+  .ld-cb-input { position:absolute; opacity:0; width:0; height:0; pointer-events:none; }
+  .ld-cb-wrap  { display:flex; align-items:center; cursor:pointer; user-select:none; }
+  .ld-cb-box   {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:32px; height:18px; border:1.5px solid var(--border); border-radius:3px;
+    background:#fff; transition:border-color .12s, background .12s;
+    font-size:.62rem; font-weight:700; color:var(--gray);
+    text-transform:uppercase; letter-spacing:.02em;
+  }
+  .ld-cb-input:checked + .ld-cb-box { background:var(--red); border-color:var(--red); color:#fff; }
+  .ld-cb-wrap:hover .ld-cb-box { border-color:var(--red); }
+
+  /* Presentation view — full labels, vertical list */
+  .pres-ld-card { margin-top:8px; }
+  .ld-pres-grid { display:flex; flex-direction:column; gap:6px; }
+  .ld-pres-item { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.82rem; color:var(--dark); }
+  .ld-pres-item .ld-cb-box { width:40px; height:20px; font-size:.65rem; flex-shrink:0; }
+
+  /* Export modal */
+  .ld-export-modal { background:#fff; border-radius:8px; width:340px; max-width:96vw; box-shadow:0 8px 32px rgba(0,0,0,.18); }
+  .ld-export-body  { padding:16px 20px 20px; }
+  .ld-dept-btns    { display:flex; flex-direction:column; gap:8px; }
+  .ld-dept-btn {
+    width:100%; padding:10px 14px; border:1.5px solid var(--border);
+    border-radius:6px; background:#fff; cursor:pointer;
+    font-size:.87rem; font-weight:600; color:var(--dark); text-align:left;
+    transition:border-color .12s, background .12s;
+  }
+  .ld-dept-btn:hover { border-color:var(--red); background:#FFF0F0; color:var(--red); }
+
+  /* Email edit modal */
+  .ld-email-modal { background:#fff; border-radius:8px; width:400px; max-width:96vw; box-shadow:0 8px 32px rgba(0,0,0,.18); }
+  .ld-email-body  { padding:16px 20px 20px; display:flex; flex-direction:column; gap:10px; }
+  .ld-email-row   { display:flex; flex-direction:column; gap:3px; }
+  .ld-email-row label { font-size:.75rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:.06em; }
+  .ld-email-row input { padding:6px 8px; border:1.5px solid var(--border); border-radius:5px; font-size:.83rem; }
+  .ld-email-row input:focus { border-color:var(--red); outline:none; }
+
   @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
@@ -658,7 +699,6 @@
 
   /* ── Presentation View ── */
   .pres-btn {
-    margin-left: auto;
     background: var(--dark);
     color: #fff;
     border: none;
@@ -835,7 +875,10 @@
         <span x-show="message" x-text="message" class="status-msg" x-cloak></span>
       </div>
     </div>
-    <button class="refresh-btn" @click="refresh()" :disabled="loading">Refresh Data</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="pres-btn" style="background:#3A3A3A;font-size:.78rem;padding:6px 11px;" @click="openLDEmails()" title="Edit L&D manager emails">&#x2709; L&amp;D Emails</button>
+      <button class="refresh-btn" @click="refresh()" :disabled="loading">Refresh Data</button>
+    </div>
   </div>
 
   <!-- Tab navigation -->
@@ -872,7 +915,10 @@
       <span class="date-sep" style="margin-left:4px;">
         (<span x-text="filteredMeeting.length"></span> cases)
       </span>
-      <button class="pres-btn" @click="openPres()" x-show="filteredMeeting.length > 0" x-cloak>&#x229E; Presentation View</button>
+      <span style="margin-left:auto; display:flex; gap:8px;" x-show="filteredMeeting.length > 0" x-cloak>
+        <button class="pres-btn" style="background:#3A3A3A;" @click="openLDExport()">&#x21E9; Export L&amp;D CSV</button>
+        <button class="pres-btn" @click="openPres()">&#x229E; Presentation View</button>
+      </span>
     </div>
 
     <!-- Meeting table -->
@@ -896,6 +942,7 @@
               <th class="col-notes">Call Notes / Reason</th>
               <th class="col-attachments">Attachments</th>
               <th class="col-note-final">Final Investigation Notes</th>
+              <th class="col-ld">L&amp;D</th>
             </tr>
           </thead>
           <tbody>
@@ -1027,6 +1074,19 @@
                     <div class="note-saving-badge"
                          x-show="_noteSaveState[row.MainCaseNumber] === 'saving'"
                          x-cloak>Saving…</div>
+                  </div>
+                </td>
+                <!-- L&D -->
+                <td class="col-ld">
+                  <div class="ld-grid">
+                    <template x-for="dept in LD_DEPTS" :key="dept.key">
+                      <label class="ld-cb-wrap" :title="dept.tip">
+                        <input type="checkbox" class="ld-cb-input"
+                               :checked="getLDForCase(row.MainCaseNumber)[dept.key] === '1'"
+                               @change="toggleLD(row.MainCaseNumber, dept.key, $event.target.checked)">
+                        <span class="ld-cb-box" x-text="dept.label"></span>
+                      </label>
+                    </template>
                   </div>
                 </td>
               </tr>
@@ -1236,6 +1296,7 @@
               <th class="col-notes">Call Notes / Reason</th>
               <th class="col-attachments">Attachments</th>
               <th class="col-note-final">Final Investigation Notes</th>
+              <th class="col-ld">L&amp;D</th>
             </tr>
           </thead>
           <tbody>
@@ -1367,6 +1428,19 @@
                     <div class="note-saving-badge"
                          x-show="_noteSaveState[row.MainCaseNumber] === 'saving'"
                          x-cloak>Saving…</div>
+                  </div>
+                </td>
+                <!-- L&D -->
+                <td class="col-ld">
+                  <div class="ld-grid">
+                    <template x-for="dept in LD_DEPTS" :key="dept.key">
+                      <label class="ld-cb-wrap" :title="dept.tip">
+                        <input type="checkbox" class="ld-cb-input"
+                               :checked="getLDForCase(row.MainCaseNumber)[dept.key] === '1'"
+                               @change="toggleLD(row.MainCaseNumber, dept.key, $event.target.checked)">
+                        <span class="ld-cb-box" x-text="dept.label"></span>
+                      </label>
+                    </template>
                   </div>
                 </td>
               </tr>
@@ -1945,6 +2019,22 @@
                   x-text="presCase ? ('$' + presCase.RemakeDiscount) : ''"></span>
           </div>
         </div>
+
+        <!-- L&D card -->
+        <div class="pres-rx-card pres-ld-card" x-show="presCase">
+          <div class="pres-rx-label">L &amp; D</div>
+          <div class="ld-pres-grid">
+            <template x-for="dept in LD_DEPTS" :key="dept.key">
+              <label class="ld-pres-item">
+                <input type="checkbox" class="ld-cb-input"
+                       :checked="presCase && getLDForCase(presCase.MainCaseNumber)[dept.key] === '1'"
+                       @change="presCase && toggleLD(presCase.MainCaseNumber, dept.key, $event.target.checked)">
+                <span class="ld-cb-box" x-text="dept.label"></span>
+                <span x-text="dept.tip"></span>
+              </label>
+            </template>
+          </div>
+        </div>
       </div>
 
       <!-- MIDDLE: Attachments split by old / new case -->
@@ -2111,6 +2201,53 @@
     </div>
   </template>
 
+  <!-- L&D Export modal -->
+  <template x-if="_exportModal.show">
+    <div class="lb-backdrop" @click.self="closeLDExport()" @keydown.window.escape="closeLDExport()">
+      <div class="ld-export-modal">
+        <div class="lb-header">
+          <span class="lb-title">Export L&amp;D CSV</span>
+          <button class="lb-close" @click="closeLDExport()">&#x2715;</button>
+        </div>
+        <div class="ld-export-body">
+          <p style="font-size:.83rem;color:var(--gray);margin:0 0 14px;">
+            Select a department to download a CSV of flagged cases and open a pre-filled email draft.
+          </p>
+          <div class="ld-dept-btns">
+            <button class="ld-dept-btn" @click="exportLD('CS')">Customer Service</button>
+            <button class="ld-dept-btn" @click="exportLD('ThreeD')">3D Team</button>
+            <button class="ld-dept-btn" @click="exportLD('Lab')">Lab Floor</button>
+            <button class="ld-dept-btn" @click="exportLD('Shipping')">Shipping</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- L&D Email edit modal -->
+  <template x-if="_emailModal.show">
+    <div class="lb-backdrop" @click.self="closeLDEmails()" @keydown.window.escape="closeLDEmails()">
+      <div class="ld-email-modal">
+        <div class="lb-header">
+          <span class="lb-title">L&amp;D Manager Emails</span>
+          <button class="lb-close" @click="closeLDEmails()">&#x2715;</button>
+        </div>
+        <div class="ld-email-body">
+          <template x-for="dept in LD_DEPTS" :key="dept.key">
+            <div class="ld-email-row">
+              <label x-text="dept.tip"></label>
+              <input type="text"
+                     :value="(ldEmails[dept.key] || []).join(', ')"
+                     @blur="updateLDEmail(dept.key, $event.target.value)"
+                     placeholder="email@example.com, email2@example.com">
+            </div>
+          </template>
+          <button class="pres-btn" style="margin-top:8px;margin-left:0;" @click="saveLDEmails()">Save</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
 </div><!-- /remakes-page -->
 {% endblock %}
 
@@ -2118,6 +2255,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
+const LD_DEPTS = [
+  { key:'CS',       label:'CS',   tip:'Customer Service' },
+  { key:'ThreeD',   label:'3D',   tip:'3D Team'          },
+  { key:'Lab',      label:'Lab',  tip:'Lab Floor'        },
+  { key:'Shipping', label:'Ship', tip:'Shipping'         },
+];
+
 function remakesPage() {
   return {
     activeTab: 'all',
@@ -2150,6 +2294,11 @@ function remakesPage() {
     allRecords:     {{ all_records | tojson }},
     revenueRecords: {{ revenue_records | tojson }},
     savedNotes:     {{ saved_notes | tojson }},
+    savedLD:        {{ saved_ld | tojson }},
+    ldEmails:       {{ ld_emails | tojson }},
+    _ldSaveState:   {},
+    _exportModal:   { show: false },
+    _emailModal:    { show: false },
 
     _taskMapData: {},
     _noteMapData: {},
@@ -2935,6 +3084,91 @@ function remakesPage() {
       } catch (e) {
         this._noteSaveState[caseNumber] = '';
         console.warn('Note save failed:', e);
+      }
+    },
+
+    // ── L&D persistence ──────────────────────────────────────────
+    getLDForCase(caseNum) {
+      return this.savedLD[caseNum] || { CS:'0', ThreeD:'0', Lab:'0', Shipping:'0' };
+    },
+
+    async toggleLD(caseNumber, dept, checked) {
+      if (!caseNumber) return;
+      if (!this.savedLD[caseNumber])
+        this.savedLD[caseNumber] = { CS:'0', ThreeD:'0', Lab:'0', Shipping:'0' };
+      this.savedLD[caseNumber][dept] = checked ? '1' : '0';  // optimistic
+      try {
+        const res  = await fetch('/remakes/ld', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ case_number: caseNumber, dept, checked }),
+        });
+        const data = await res.json();
+        if (data.status !== 'ok')
+          this.savedLD[caseNumber][dept] = checked ? '0' : '1';  // rollback
+      } catch (e) {
+        this.savedLD[caseNumber][dept] = checked ? '0' : '1';
+        console.warn('LD save failed:', e);
+      }
+    },
+
+    openLDExport()  { this._exportModal.show = true; },
+    closeLDExport() { this._exportModal.show = false; },
+
+    exportLD(dept) {
+      this._exportModal.show = false;
+      const labels = { CS:'Customer Service', ThreeD:'3D Team', Lab:'Lab Floor', Shipping:'Shipping' };
+      const label  = labels[dept] || dept;
+      const rows   = this.filteredMeeting.filter(r => (this.savedLD[r.MainCaseNumber]||{})[dept] === '1');
+      if (!rows.length) { alert('No cases flagged for ' + label); return; }
+
+      // Download CSV
+      const hdrs = ['MainCaseNumber','OG_CaseNumber','PracticeName','SalesPerson',
+                    'Product','RemakeType','Status','ShipDate','InvestigationNotes'];
+      const esc  = v => '"' + String(v||'').replace(/"/g,'""') + '"';
+      const csv  = [hdrs.map(esc).join(','),
+        ...rows.map(r => [
+          r.MainCaseNumber, r.OG_CaseNumber, r.PracticeName, r.SalesPerson,
+          r.Product, r.Remake, r.Status, (r.ShipDate||'').slice(0,10),
+          this.savedNotes[r.MainCaseNumber]||'',
+        ].map(esc).join(','))
+      ].join('\n');
+      const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(new Blob([csv], {type:'text/csv'})),
+        download: `ld_${label.replace(/ /g,'_')}_${new Date().toISOString().slice(0,10)}.csv`,
+      });
+      a.click(); URL.revokeObjectURL(a.href);
+
+      // mailto with capped summary
+      const MAX = 20;
+      const bodyRows = rows.slice(0, MAX).map(r =>
+        `${r.MainCaseNumber} (${r.PracticeName||''}) — ${r.Remake||''}: ${this.savedNotes[r.MainCaseNumber]||'(no notes)'}`
+      );
+      const overflow = rows.length > MAX ? `\n+ ${rows.length - MAX} more (see CSV)` : '';
+      const subject  = encodeURIComponent(`L&D Review — ${label} — ${new Date().toISOString().slice(0,10)}`);
+      const body     = encodeURIComponent(`${label} L&D Cases:\n\n${bodyRows.join('\n')}${overflow}\n\nSee attached CSV for full list.`);
+      const toList   = (this.ldEmails[dept] || []).join(',');
+      window.open(`mailto:${toList}?subject=${subject}&body=${body}`);
+    },
+
+    openLDEmails()  { this._emailModal.show = true; },
+    closeLDEmails() { this._emailModal.show = false; },
+
+    updateLDEmail(dept, value) {
+      const addrs = value.split(',').map(s => s.trim()).filter(Boolean);
+      this.ldEmails[dept] = addrs;
+    },
+
+    async saveLDEmails() {
+      try {
+        const res  = await fetch('/remakes/ld-emails', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ emails: this.ldEmails }),
+        });
+        const data = await res.json();
+        if (data.status === 'ok') this._emailModal.show = false;
+        else alert('Save failed: ' + (data.message || 'unknown error'));
+      } catch (e) {
+        console.warn('LD email save failed:', e);
       }
     },
 
