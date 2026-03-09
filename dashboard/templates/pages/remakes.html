@@ -655,6 +655,165 @@
   .tip-note-item:last-child { border-bottom: none; }
   .tip-note-meta { font-size: 0.78rem; color: var(--gray); margin-bottom: 3px; }
   .tip-note-text { font-size: 0.83rem; color: var(--dark); line-height: 1.45; }
+
+  /* ── Presentation View ── */
+  .pres-btn {
+    margin-left: auto;
+    background: var(--dark);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 15px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .pres-btn:hover { background: var(--red); }
+
+  .pres-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+  }
+  .pres-header {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+    background: #1A1A1A;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+  }
+  .pres-counter { font-size: 0.82rem; color: #aaa; white-space: nowrap; min-width: 90px; }
+  .pres-nav { display: flex; gap: 8px; }
+  .pres-nav button {
+    background: #2a2a2a; color: #fff; border: 1px solid #444;
+    border-radius: 5px; padding: 6px 14px; cursor: pointer; font-size: 0.82rem; transition: background 0.12s;
+  }
+  .pres-nav button:hover:not(:disabled) { background: var(--red); border-color: var(--red); }
+  .pres-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
+  .pres-reason {
+    flex: 1; font-size: 1rem; font-weight: 700; color: #fff;
+    text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pres-close {
+    background: #333; color: #fff; border: 1px solid #555;
+    border-radius: 5px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; transition: background 0.12s;
+  }
+  .pres-close:hover { background: var(--red); border-color: var(--red); }
+
+  .pres-body {
+    flex: 1; display: grid; grid-template-columns: 35% 40% 25%;
+    overflow: hidden; min-height: 0;
+  }
+  .pres-col-left {
+    border-right: 1px solid #2a2a2a; overflow-y: auto;
+    padding: 20px 18px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .pres-rx-card {
+    background: #1c1c1c; border: 1px solid #2e2e2e; border-radius: 8px; padding: 14px 16px;
+  }
+  .pres-rx-label {
+    font-size: 0.68rem; font-weight: 700; color: var(--red);
+    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
+  }
+  .pres-rx-casenum { font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 6px; line-height: 1.1; }
+  .pres-rx-practice { font-size: 0.9rem; font-weight: 600; color: #ddd; margin-bottom: 6px; }
+  .pres-rx-meta { font-size: 0.82rem; color: #888; line-height: 1.9; }
+  .pres-rx-meta strong { color: #aaa; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .pres-rx-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pres-chip {
+    background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 12px;
+    padding: 3px 10px; font-size: 0.75rem; color: #bbb; font-weight: 600;
+  }
+  .pres-chip.remake-stat { background: #2d1215; border-color: #5a1a20; color: #e87082; }
+  .pres-chip.status-In-Production { background: #3a2000; border-color: #6a3500; color: #ffa040; }
+  .pres-chip.status-Invoiced      { background: #003a10; border-color: #006020; color: #40c060; }
+  .pres-chip.status-On-Hold       { background: #3a0010; border-color: #6a0020; color: #e04060; }
+  .pres-chip.remake-type { background: #1e1e2e; border-color: #3a3a5e; color: #9090d0; }
+  .pres-chip.full-charge-pres { background: #3a0010; border-color: #6a0020; color: #e04060; }
+
+  .pres-col-mid {
+    border-right: 1px solid #2a2a2a; overflow-y: auto; padding: 20px 18px;
+  }
+  .pres-att-section-label {
+    font-size: 0.68rem; font-weight: 700; color: var(--red);
+    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 14px;
+  }
+  .pres-att-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .pres-att-thumb {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; cursor: pointer; width: 110px;
+  }
+  .pres-att-thumb:hover .pres-thumb-img { border-color: var(--red); }
+  .pres-thumb-img {
+    width: 110px; height: 110px; border: 2px solid #333; border-radius: 6px;
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
+    background: #1c1c1c; transition: border-color 0.15s;
+  }
+  .pres-thumb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pres-thumb-badge { font-size: 0.9rem; font-weight: 800; letter-spacing: 0.05em; }
+  .pres-thumb-badge.pdf { color: #e06060; }
+  .pres-thumb-badge.stl { color: #888; }
+  .pres-thumb-badge.link { font-size: 1.3rem; color: #888; }
+  .pres-thumb-name {
+    font-size: 0.72rem; color: #aaa; text-align: center;
+    word-break: break-word; line-height: 1.3; max-width: 110px;
+  }
+  .pres-see-all-btn {
+    display: flex; align-items: center; justify-content: center; width: 110px; height: 110px;
+    border: 2px dashed #444; border-radius: 6px; background: #1a1a1a;
+    color: #888; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s; text-align: center;
+  }
+  .pres-see-all-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .pres-col-right { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  .pres-panel {
+    border-bottom: 1px solid #2a2a2a; display: flex;
+    flex-direction: column; overflow: hidden; min-height: 0;
+  }
+  .pres-panel-hdr {
+    font-size: 0.68rem; font-weight: 700; color: var(--red);
+    text-transform: uppercase; letter-spacing: 0.09em;
+    padding: 10px 14px 6px; flex-shrink: 0;
+    background: #1c1c1c; border-bottom: 1px solid #2a2a2a;
+  }
+  .pres-panel-body { flex: 1; overflow-y: auto; padding: 10px 14px; min-height: 0; }
+  .pres-panel-notes    { flex: 0 0 22%; }
+  .pres-panel-callnotes{ flex: 0 0 48%; }
+  .pres-panel-tasks    { flex: 1; border-bottom: none; }
+
+  .pres-note-textarea {
+    width: 100%; height: calc(100% - 24px); min-height: 50px;
+    background: #1a1a1a; color: #ddd; border: 1px solid #333; border-radius: 4px;
+    padding: 8px; font-size: 0.82rem; resize: none; font-family: inherit;
+    box-sizing: border-box; transition: border-color 0.15s;
+  }
+  .pres-note-textarea:focus { border-color: var(--red); outline: none; }
+  .pres-note-save-badge   { font-size: 0.72rem; color: #50c060; font-weight: 700; margin-top: 4px; }
+  .pres-note-saving-badge { font-size: 0.72rem; color: #888; font-style: italic; margin-top: 4px; }
+
+  .pres-call-note { padding: 8px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem; }
+  .pres-call-note:last-child { border-bottom: none; }
+  .pres-call-note-meta { color: #888; font-size: 0.75rem; margin-bottom: 4px; }
+  .pres-call-note-text { color: #ccc; line-height: 1.5; }
+
+  .pres-task-item { padding: 6px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem; color: #ccc; }
+  .pres-task-item:last-child { border-bottom: none; }
+  .pres-task-name { color: #888; font-weight: 600; }
+  .pres-see-all-tasks {
+    margin-top: 8px; background: #2a2a2a; color: #aaa; border: 1px solid #444;
+    border-radius: 4px; padding: 5px 12px; font-size: 0.78rem; cursor: pointer;
+  }
+  .pres-see-all-tasks:hover { background: var(--red); color: #fff; border-color: var(--red); }
+  .pres-empty { color: #555; font-size: 0.82rem; font-style: italic; }
 </style>
 {% endblock %}
 
@@ -712,6 +871,7 @@
       <span class="date-sep" style="margin-left:4px;">
         (<span x-text="filteredMeeting.length"></span> cases)
       </span>
+      <button class="pres-btn" @click="openPres()" x-show="filteredMeeting.length > 0" x-cloak>&#x229E; Presentation View</button>
     </div>
 
     <!-- Meeting table -->
@@ -1722,6 +1882,183 @@
     </div>
   </template>
 
+  <!-- ══════════════════════════════════════════
+       PRESENTATION VIEW OVERLAY
+       ══════════════════════════════════════════ -->
+  <div class="pres-overlay" x-show="presMode" x-cloak>
+
+    <!-- Header bar -->
+    <div class="pres-header">
+      <span class="pres-counter">Case <span x-text="presIndex+1"></span> of <span x-text="filteredMeeting.length"></span></span>
+      <div class="pres-nav">
+        <button @click="presPrev()" :disabled="presIndex===0">&#x2190; Prev</button>
+        <button @click="presNext()" :disabled="presIndex===filteredMeeting.length-1">Next &#x2192;</button>
+      </div>
+      <span class="pres-reason" x-text="presCase ? (presCase.RemakeReason || '') : ''"></span>
+      <button class="pres-close" @click="closePres()">&#x2715; Close</button>
+    </div>
+
+    <!-- Body: 3 columns -->
+    <div class="pres-body">
+
+      <!-- LEFT: Old Rx + New Rx stacked -->
+      <div class="pres-col-left">
+        <!-- OLD RX card -->
+        <div class="pres-rx-card">
+          <div class="pres-rx-label">Old Rx</div>
+          <div class="pres-rx-casenum" x-text="presCase ? (presCase.OG_CaseNumber || '—') : '—'"></div>
+          <div class="pres-rx-practice" x-show="presCase && presCase.PracticeName" x-text="presCase ? (presCase.PracticeName || '') : ''"></div>
+          <div class="pres-rx-meta">
+            <div x-show="presCase && presCase.OG_ShipDate">
+              <strong>Ship</strong> <span x-text="presCase ? (presCase.OG_ShipDate||'').slice(0,10) : ''"></span>
+            </div>
+            <div x-show="presCase && presCase.OG_DueDate">
+              <strong>Due</strong> <span x-text="presCase ? (presCase.OG_DueDate||'').slice(0,10) : ''"></span>
+            </div>
+            <div x-show="presCase && presCase.SalesPerson" x-text="presCase ? (presCase.SalesPerson || '') : ''"></div>
+          </div>
+          <div class="pres-rx-chips">
+            <span class="pres-chip" x-text="presCase ? ((presCase.TotalCases_90Days||0) + ' cases / 90d') : ''"></span>
+            <span class="pres-chip remake-stat" x-text="presCase ? ((presCase.TotalRemakes_90Days||0) + ' remakes') : ''"></span>
+          </div>
+        </div>
+
+        <!-- NEW RX card -->
+        <div class="pres-rx-card">
+          <div class="pres-rx-label">New Rx</div>
+          <div class="pres-rx-casenum" x-text="presCase ? (presCase.MainCaseNumber || '—') : '—'"></div>
+          <div class="pres-rx-meta">
+            <div x-show="presCase && presCase.ShipDate">
+              <strong>Ship</strong> <span x-text="presCase ? (presCase.ShipDate||'').slice(0,10) : ''"></span>
+            </div>
+            <div x-show="presCase && presCase.Product" x-text="presCase ? (presCase.Product || '') : ''"></div>
+          </div>
+          <div class="pres-rx-chips">
+            <span class="pres-chip"
+                  :class="'status-' + (presCase ? (presCase.Status||'').replace(/ /g,'-') : '')"
+                  x-text="presCase ? (presCase.Status || '') : ''"></span>
+            <span class="pres-chip remake-type"
+                  :class="presCase && presCase.Remake === 'Remake Full Charge' ? 'full-charge-pres' : ''"
+                  x-text="presCase ? (presCase.Remake || '') : ''"></span>
+            <span class="pres-chip" x-show="presCase && presCase.RemakeDiscount"
+                  x-text="presCase ? ('$' + presCase.RemakeDiscount) : ''"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE: Attachments grid -->
+      <div class="pres-col-mid">
+        <div class="pres-att-section-label">Attachments</div>
+        <template x-if="presCase && getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).length === 0">
+          <div class="pres-empty">No attachments</div>
+        </template>
+        <template x-if="presCase && getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 0">
+          <div class="pres-att-grid">
+            <template x-for="doc in getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).slice(0, 6)" :key="doc.FilePath">
+              <div class="pres-att-thumb"
+                   @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
+                   :title="docDisplayName(doc)">
+                <div class="pres-thumb-img">
+                  <template x-if="doc.isExternal">
+                    <span class="pres-thumb-badge link">&#x1F517;</span>
+                  </template>
+                  <template x-if="doc.isImage && !doc.isExternal">
+                    <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt="">
+                  </template>
+                  <template x-if="!doc.isImage && !doc.isExternal">
+                    <span :class="'pres-thumb-badge ' + doc.fileType" x-text="doc.fileType.toUpperCase()"></span>
+                  </template>
+                </div>
+                <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
+              </div>
+            </template>
+            <template x-if="getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 6">
+              <button class="pres-see-all-btn" @click="showAttachmentsTip(presCase)"
+                      x-text="'+ ' + (getDocsForCase(presCase.MainCaseID, presCase.OG_CaseID).length - 6) + ' more'">
+              </button>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- RIGHT: 3 stacked panels -->
+      <div class="pres-col-right">
+
+        <!-- Investigation Notes (22%) -->
+        <div class="pres-panel pres-panel-notes">
+          <div class="pres-panel-hdr">Investigation Notes</div>
+          <div class="pres-panel-body">
+            <textarea class="pres-note-textarea"
+                      :value="presCase ? (savedNotes[presCase.MainCaseNumber] || '') : ''"
+                      @blur="presCase && saveNote(presCase.MainCaseNumber, $event.target.value)"
+                      placeholder="Add investigation notes…"></textarea>
+            <div class="pres-note-save-badge"
+                 x-show="presCase && _noteSaveState[presCase.MainCaseNumber] === 'saved'"
+                 x-cloak>Saved &#x2713;</div>
+            <div class="pres-note-saving-badge"
+                 x-show="presCase && _noteSaveState[presCase.MainCaseNumber] === 'saving'"
+                 x-cloak>Saving&#x2026;</div>
+          </div>
+        </div>
+
+        <!-- Call Notes (48%) -->
+        <div class="pres-panel pres-panel-callnotes">
+          <div class="pres-panel-hdr">
+            Call Notes
+            <span style="font-weight:400;color:#666;text-transform:none;letter-spacing:0;"
+                  x-text="presCase ? '(' + getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID).length + ')' : ''"></span>
+          </div>
+          <div class="pres-panel-body">
+            <template x-if="presCase && getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID).length === 0">
+              <div class="pres-empty">No call notes</div>
+            </template>
+            <template x-if="presCase && getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 0">
+              <div>
+                <template x-for="n in getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID)" :key="n.Note + n.UserID">
+                  <div class="pres-call-note">
+                    <div class="pres-call-note-meta" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + fmtNoteDate(n.CallDate) : '')"></div>
+                    <div class="pres-call-note-text" x-html="fmtNote(n.Note)"></div>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Task List (flex:1) -->
+        <div class="pres-panel pres-panel-tasks">
+          <div class="pres-panel-hdr">
+            Task List
+            <span style="font-weight:400;color:#666;text-transform:none;letter-spacing:0;"
+                  x-text="presCase ? '(' + getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length + ')' : ''"></span>
+          </div>
+          <div class="pres-panel-body">
+            <template x-if="presCase && getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length === 0">
+              <div class="pres-empty">No tasks</div>
+            </template>
+            <template x-if="presCase && getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 0">
+              <div>
+                <template x-for="t in getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).slice(0, 8)" :key="t.Task + t.CompleteDate">
+                  <div class="pres-task-item">
+                    <span class="pres-task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
+                    <span x-text="' – ' + (t.Task || '')"></span>
+                  </div>
+                </template>
+                <template x-if="getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 8">
+                  <button class="pres-see-all-tasks"
+                          @click="showTip('tasks', getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID))"
+                          x-text="'See All (' + getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length + ')'">
+                  </button>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+
+      </div><!-- /pres-col-right -->
+    </div><!-- /pres-body -->
+  </div><!-- /pres-overlay -->
+
   <!-- Lightbox modal -->
   <template x-if="_lightbox.show">
     <div class="lb-backdrop" @click.self="hideLightbox()">
@@ -1782,6 +2119,8 @@ function remakesPage() {
     ddStart:   '',
     ddEnd:     '',
     ddExpanded: false,
+    presMode: false,
+    presIndex: 0,
 
     allRecords:     {{ all_records | tojson }},
     revenueRecords: {{ revenue_records | tojson }},
@@ -1998,6 +2337,32 @@ function remakesPage() {
         return true;
       });
     },
+
+    get presCase() { return this.filteredMeeting[this.presIndex] || null; },
+
+    // ── Presentation View methods ────────────────────────────────
+    openPres() {
+      if (this.filteredMeeting.length === 0) return;
+      this.presMode = true;
+      this.presIndex = 0;
+      this._presKeydown = (e) => {
+        if (e.key === 'ArrowRight') this.presNext();
+        if (e.key === 'ArrowLeft')  this.presPrev();
+        if (e.key === 'Escape')     this.closePres();
+      };
+      document.addEventListener('keydown', this._presKeydown);
+    },
+
+    closePres() {
+      this.presMode = false;
+      if (this._presKeydown) {
+        document.removeEventListener('keydown', this._presKeydown);
+        this._presKeydown = null;
+      }
+    },
+
+    presNext() { this.presIndex = Math.min(this.presIndex + 1, this.filteredMeeting.length - 1); },
+    presPrev() { this.presIndex = Math.max(this.presIndex - 1, 0); },
 
     // ── KPI getters ─────────────────────────────────────────────
     get kpiTotalRemakes() {
