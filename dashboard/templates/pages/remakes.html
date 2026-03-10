@@ -1991,7 +1991,7 @@
         <button @click="presPrev()" :disabled="presIndex===0">&#x2190; Prev</button>
         <button @click="presNext()" :disabled="presIndex===filteredMeeting.length-1">Next &#x2192;</button>
       </div>
-      <span class="pres-reason" x-text="presCase ? [presCase.PracticeName, presCase.Product, presCase.RemakeReason].filter(Boolean).join(' | ') : ''"></span>
+      <span class="pres-reason" x-html="presCase ? [presCase.PracticeName, presCase.Product, presCase.RemakeReason].filter(Boolean).join(' <span style=\'color:var(--red)\'>|</span> ') : ''"></span>
       <button class="pres-close" @click="closePres()">&#x2715; Close</button>
     </div>
 
