@@ -731,6 +731,20 @@
     flex-shrink: 0;
   }
   .pres-counter { font-size: 0.82rem; color: #AAAAAA; white-space: nowrap; min-width: 90px; }
+  .pres-jump-input {
+    width: 44px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.82rem;
+    text-align: center;
+    -moz-appearance: textfield;
+  }
+  .pres-jump-input::-webkit-outer-spin-button,
+  .pres-jump-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .pres-jump-input:focus { outline: none; border-color: var(--red); }
   .pres-nav { display: flex; gap: 8px; }
   .pres-nav button {
     background: #333; color: #FFFFFF; border: 1px solid #555;
@@ -1964,12 +1978,20 @@
 
     <!-- Header bar -->
     <div class="pres-header">
-      <span class="pres-counter">Case <span x-text="presIndex+1"></span> of <span x-text="filteredMeeting.length"></span></span>
+      <span class="pres-counter">
+  Case
+  <input class="pres-jump-input" type="number" min="1"
+         :max="filteredMeeting.length"
+         :value="presIndex + 1"
+         @change="presIndex = Math.max(0, Math.min(+$event.target.value - 1, filteredMeeting.length - 1))"
+         @keydown.enter="$event.target.blur()">
+  of <span x-text="filteredMeeting.length"></span>
+</span>
       <div class="pres-nav">
         <button @click="presPrev()" :disabled="presIndex===0">&#x2190; Prev</button>
         <button @click="presNext()" :disabled="presIndex===filteredMeeting.length-1">Next &#x2192;</button>
       </div>
-      <span class="pres-reason" x-text="presCase ? (presCase.RemakeReason || '') : ''"></span>
+      <span class="pres-reason" x-text="presCase ? [presCase.PracticeName, presCase.Product, presCase.RemakeReason].filter(Boolean).join(' | ') : ''"></span>
       <button class="pres-close" @click="closePres()">&#x2715; Close</button>
     </div>
 
@@ -1982,7 +2004,6 @@
         <div class="pres-rx-card">
           <div class="pres-rx-label">Old Rx</div>
           <div class="pres-rx-casenum" x-text="presCase ? (presCase.OG_CaseNumber || '—') : '—'"></div>
-          <div class="pres-rx-practice" x-show="presCase && presCase.PracticeName" x-text="presCase ? (presCase.PracticeName || '') : ''"></div>
           <div class="pres-rx-meta">
             <div x-show="presCase && presCase.OG_ShipDate">
               <strong>Ship</strong> <span x-text="presCase ? (presCase.OG_ShipDate||'').slice(0,10) : ''"></span>
@@ -1990,7 +2011,8 @@
             <div x-show="presCase && presCase.OG_DueDate">
               <strong>Due</strong> <span x-text="presCase ? (presCase.OG_DueDate||'').slice(0,10) : ''"></span>
             </div>
-            <div x-show="presCase && presCase.SalesPerson" x-text="presCase ? (presCase.SalesPerson || '') : ''"></div>
+            <div x-show="presCase && presCase.SalesPerson"
+                 x-text="presCase ? fmtShortName(presCase.SalesPerson || '') : ''"></div>
           </div>
           <div class="pres-rx-chips">
             <span class="pres-chip" x-text="presCase ? ((presCase.TotalCases_90Days||0) + ' cases / 90d') : ''"></span>
@@ -2006,7 +2028,6 @@
             <div x-show="presCase && presCase.ShipDate">
               <strong>Ship</strong> <span x-text="presCase ? (presCase.ShipDate||'').slice(0,10) : ''"></span>
             </div>
-            <div x-show="presCase && presCase.Product" x-text="presCase ? (presCase.Product || '') : ''"></div>
           </div>
           <div class="pres-rx-chips">
             <span class="pres-chip"
@@ -2126,7 +2147,7 @@
         <div class="pres-panel pres-panel-callnotes">
           <div class="pres-panel-hdr">
             Call Notes
-            <span style="font-weight:400;color:#666;text-transform:none;letter-spacing:0;"
+            <span style="font-weight:400;color:var(--red);text-transform:none;letter-spacing:0;"
                   x-text="presCase ? '(' + getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID).length + ')' : ''"></span>
           </div>
           <div class="pres-panel-body">
@@ -2150,7 +2171,7 @@
         <div class="pres-panel pres-panel-tasks">
           <div class="pres-panel-hdr">
             Task List
-            <span style="font-weight:400;color:#666;text-transform:none;letter-spacing:0;"
+            <span style="font-weight:400;color:var(--red);text-transform:none;letter-spacing:0;"
                   x-text="presCase ? '(' + getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length + ')' : ''"></span>
           </div>
           <div class="pres-panel-body">
