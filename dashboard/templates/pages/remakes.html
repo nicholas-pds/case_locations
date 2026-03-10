@@ -2043,7 +2043,7 @@
 
         <!-- L&D card -->
         <div class="pres-rx-card pres-ld-card" x-show="presCase">
-          <div class="pres-rx-label">L &amp; D</div>
+          <div class="pres-rx-label">Learning &amp; Development</div>
           <div class="ld-pres-grid">
             <template x-for="dept in LD_DEPTS" :key="dept.key">
               <label class="ld-pres-item">
@@ -3158,17 +3158,6 @@ function remakesPage() {
         download: `ld_${label.replace(/ /g,'_')}_${new Date().toISOString().slice(0,10)}.csv`,
       });
       a.click(); URL.revokeObjectURL(a.href);
-
-      // mailto with capped summary
-      const MAX = 20;
-      const bodyRows = rows.slice(0, MAX).map(r =>
-        `${r.MainCaseNumber} (${r.PracticeName||''}) — ${r.Remake||''}: ${this.savedNotes[r.MainCaseNumber]||'(no notes)'}`
-      );
-      const overflow = rows.length > MAX ? `\n+ ${rows.length - MAX} more (see CSV)` : '';
-      const subject  = encodeURIComponent(`L&D Review — ${label} — ${new Date().toISOString().slice(0,10)}`);
-      const body     = encodeURIComponent(`${label} L&D Cases:\n\n${bodyRows.join('\n')}${overflow}\n\nSee attached CSV for full list.`);
-      const toList   = (this.ldEmails[dept] || []).join(',');
-      window.open(`mailto:${toList}?subject=${subject}&body=${body}`);
     },
 
     openLDEmails()  { this._emailModal.show = true; },
