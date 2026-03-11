@@ -153,7 +153,7 @@ async def remakes_all_details():
         "tasks": _df_to_records(cached.get("tasks")),
         "notes": _df_to_records(cached.get("notes_text")),
         "documents": _df_to_records(cached.get("documents")),
-    })
+    }, headers={"Cache-Control": "no-store"})
 
 
 @router.get("/remakes/attachment")

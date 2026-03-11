@@ -81,7 +81,7 @@ LEFT JOIN (
 ) AS topProduct ON topProduct.CaseID = linked.CaseID AND topProduct.rn = 1
 WHERE links.Notes LIKE '%Remake Of%'
   AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
-  AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
+  AND main.[Status] NOT IN ('Cancelled')
 ORDER BY main.DateIn DESC
 """
 
@@ -107,7 +107,7 @@ WITH RemakeCases AS (
     INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE '%Remake Of%'
       AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
-      AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
+      AND main.[Status] NOT IN ('Cancelled')
 )
 SELECT th.CaseID, th.Task, th.CompletedBy, CAST(th.CompleteDate AS DATE) AS CompleteDate
 FROM dbo.CaseTasksHistory AS th
@@ -127,7 +127,7 @@ WITH RemakeCases AS (
     INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE '%Remake Of%'
       AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
-      AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
+      AND main.[Status] NOT IN ('Cancelled')
 )
 SELECT cd.CaseID, cd.FilePath, cd.SourceFileName, cd.Description,
        cd.CreateDate, cd.Repository, cd.IsURL, cd.FileCount
@@ -149,7 +149,7 @@ WITH RemakeCases AS (
     INNER JOIN dbo.Cases AS linked ON links.LinkCaseID = linked.CaseID
     WHERE links.Notes LIKE '%Remake Of%'
       AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
-      AND main.[Status] IN ('In Production', 'Invoiced', 'On Hold')
+      AND main.[Status] NOT IN ('Cancelled')
 ), AllCaseIDs AS (
     SELECT MainCaseID AS CaseID FROM RemakeCases
     UNION
@@ -436,7 +436,7 @@ async def refresh_remakes_cache() -> dict:
     """Run all 4 queries in parallel, store in cache.
     Each query opens its own connection. Sets _remakes_last_refresh."""
     global _remakes_last_refresh
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     def _run(fn, max_retries: int = 3, base_delay: float = 0.5):
         last_exc = None
