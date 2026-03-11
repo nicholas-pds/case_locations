@@ -166,7 +166,7 @@ function printPage() {
 </html>`);
   win.document.close();
   win.focus();
-  win.print();
+  win.onload = function() { win.print(); };
 }
 </script>
 {% endblock %}
