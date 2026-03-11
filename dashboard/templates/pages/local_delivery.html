@@ -5,12 +5,36 @@
 <div>
   <div class="page-header">
     <h1 class="page-title">Local Delivery Cases</h1>
-    <div class="date-nav">
-      <a href="/local-delivery?date_str={{ prev_date }}" class="date-nav-btn">&larr; {{ prev_date_label }}</a>
-      <span class="date-nav-current">
-        {{ selected_label }}{% if not is_today %} ({{ selected_date_display }}){% endif %}
-      </span>
-      <a href="/local-delivery?date_str={{ next_date }}" class="date-nav-btn">{{ next_date_label }} &rarr;</a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="exportPDF()" style="
+        padding:6px 14px;
+        background:#C0182B;
+        color:#fff;
+        border:none;
+        border-radius:4px;
+        font-size:13px;
+        font-weight:600;
+        cursor:pointer;
+        font-family:inherit;
+      ">Export PDF</button>
+      <button onclick="printPage()" style="
+        padding:6px 14px;
+        background:#fff;
+        color:#1A1A1A;
+        border:1px solid #ccc;
+        border-radius:4px;
+        font-size:13px;
+        font-weight:600;
+        cursor:pointer;
+        font-family:inherit;
+      ">Print</button>
+      <div class="date-nav">
+        <a href="/local-delivery?date_str={{ prev_date }}" class="date-nav-btn">&larr; {{ prev_date_label }}</a>
+        <span class="date-nav-current">
+          {{ selected_label }}{% if not is_today %} ({{ selected_date_display }}){% endif %}
+        </span>
+        <a href="/local-delivery?date_str={{ next_date }}" class="date-nav-btn">{{ next_date_label }} &rarr;</a>
+      </div>
     </div>
   </div>
 
@@ -27,4 +51,136 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+function exportPDF() {
+  const selectedLabel = {{ selected_label | tojson }};
+  const selectedDateDisplay = {{ selected_date_display | tojson }};
+  const isToday = {{ 'true' if is_today else 'false' }};
+
+  const dateStr = isToday ? selectedLabel : (selectedLabel + ' (' + selectedDateDisplay + ')');
+
+  // Build filename date MMDDYYYY
+  let fileDate;
+  try {
+    const d = new Date(selectedDateDisplay);
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    fileDate = mm + dd + d.getFullYear();
+  } catch(e) {
+    const now = new Date();
+    fileDate = String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + now.getFullYear();
+  }
+
+  const contentEl = document.getElementById('local-delivery-content');
+  const origTable = contentEl ? contentEl.querySelector('table') : null;
+  if (!origTable) { alert('No table data to export.'); return; }
+  const clonedTable = origTable.cloneNode(true);
+
+  clonedTable.style.cssText = 'width:100%;border-collapse:collapse;font-family:Poppins,sans-serif;font-size:10pt;';
+  clonedTable.querySelectorAll('th').forEach(th => {
+    th.style.cssText = 'background:#1A1A1A;color:#fff;padding:6px 8px;text-align:left;font-weight:600;border:1px solid #ccc;font-size:9pt;';
+  });
+  clonedTable.querySelectorAll('td').forEach(td => {
+    td.style.cssText = 'padding:5px 8px;border:1px solid #ddd;vertical-align:top;';
+  });
+  clonedTable.querySelectorAll('tbody tr').forEach((tr, i) => {
+    tr.style.pageBreakInside = 'avoid';
+    tr.style.backgroundColor = i % 2 === 0 ? '#ffffff' : '#f2f2f2';
+  });
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'font-family:Poppins,sans-serif;padding:0;';
+
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
+
+  const logoImg = document.createElement('img');
+  logoImg.src = window.location.origin + '/static/logo.png';
+  logoImg.style.cssText = 'height:40px;width:auto;';
+
+  const titleEl = document.createElement('div');
+  titleEl.style.cssText = 'font-size:14pt;font-weight:700;color:#1A1A1A;text-align:center;flex:1;';
+  titleEl.textContent = 'Local Delivery Cases';
+
+  const dateEl = document.createElement('div');
+  dateEl.style.cssText = 'font-size:10pt;color:#555;text-align:right;min-width:160px;';
+  dateEl.textContent = dateStr;
+
+  header.appendChild(logoImg);
+  header.appendChild(titleEl);
+  header.appendChild(dateEl);
+
+  const hr = document.createElement('hr');
+  hr.style.cssText = 'border:none;border-top:2px solid #1A1A1A;margin:8px 0 12px 0;';
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(hr);
+  wrapper.appendChild(clonedTable);
+
+  html2pdf().set({
+    margin:      [18, 18, 18, 18],
+    filename:    'local_delivery_' + fileDate + '.pdf',
+    image:       { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF:       { orientation: 'landscape', unit: 'pt', format: 'letter' },
+    pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
+  }).from(wrapper).save();
+}
+
+function printPage() {
+  const selectedLabel = {{ selected_label | tojson }};
+  const selectedDateDisplay = {{ selected_date_display | tojson }};
+  const isToday = {{ 'true' if is_today else 'false' }};
+  const dateStr = isToday ? selectedLabel : (selectedLabel + ' (' + selectedDateDisplay + ')');
+
+  const contentEl = document.getElementById('local-delivery-content');
+  const origTable = contentEl ? contentEl.querySelector('table') : null;
+  if (!origTable) { alert('No table data to print.'); return; }
+  const clonedTable = origTable.cloneNode(true);
+
+  clonedTable.querySelectorAll('tbody tr').forEach((tr, i) => {
+    tr.style.backgroundColor = i % 2 === 0 ? '#ffffff' : '#f2f2f2';
+  });
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Local Delivery Cases — ${dateStr}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Poppins, sans-serif; font-size: 10pt; color: #1A1A1A; padding: 18pt; }
+    .print-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8pt; }
+    .print-header img { height: 36pt; width: auto; }
+    .print-header .title { font-size: 14pt; font-weight: 700; text-align: center; flex: 1; }
+    .print-header .date { font-size: 10pt; color: #555; text-align: right; min-width: 140pt; }
+    hr { border: none; border-top: 2px solid #1A1A1A; margin: 8pt 0 12pt; }
+    table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    th { background: #1A1A1A; color: #fff; padding: 5pt 7pt; text-align: left; font-weight: 600; border: 1px solid #ccc; }
+    td { padding: 4pt 7pt; border: 1px solid #ddd; vertical-align: top; }
+    tr { page-break-inside: avoid; }
+    @page { size: letter landscape; margin: 18pt; }
+  </style>
+</head>
+<body>
+  <div class="print-header">
+    <img src="${window.location.origin}/static/logo.png" alt="Logo">
+    <div class="title">Local Delivery Cases</div>
+    <div class="date">${dateStr}</div>
+  </div>
+  <hr>
+  ${clonedTable.outerHTML}
+</body>
+</html>`);
+  win.document.close();
+  win.focus();
+  win.print();
+}
+</script>
 {% endblock %}
