@@ -57,23 +57,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 function exportPDF() {
-  const selectedLabel = {{ selected_label | tojson }};
-  const selectedDateDisplay = {{ selected_date_display | tojson }};
-  const isToday = {{ 'true' if is_today else 'false' }};
-
-  const dateStr = isToday ? selectedLabel : (selectedLabel + ' (' + selectedDateDisplay + ')');
-
-  // Build filename date MMDDYYYY
-  let fileDate;
-  try {
-    const d = new Date(selectedDateDisplay);
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    fileDate = mm + dd + d.getFullYear();
-  } catch(e) {
-    const now = new Date();
-    fileDate = String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + now.getFullYear();
-  }
+  const iso = {{ selected_date | tojson }};  // YYYY-MM-DD
+  const [yyyy, mm, dd] = iso.split('-');
+  const dateStr = mm + '-' + dd + '-' + yyyy;
+  const fileDate = mm + dd + yyyy;
 
   const contentEl = document.getElementById('local-delivery-content');
   const origTable = contentEl ? contentEl.querySelector('table') : null;
@@ -132,10 +119,9 @@ function exportPDF() {
 }
 
 function printPage() {
-  const selectedLabel = {{ selected_label | tojson }};
-  const selectedDateDisplay = {{ selected_date_display | tojson }};
-  const isToday = {{ 'true' if is_today else 'false' }};
-  const dateStr = isToday ? selectedLabel : (selectedLabel + ' (' + selectedDateDisplay + ')');
+  const iso = {{ selected_date | tojson }};  // YYYY-MM-DD
+  const [yyyy, mm, dd] = iso.split('-');
+  const dateStr = mm + '-' + dd + '-' + yyyy;
 
   const contentEl = document.getElementById('local-delivery-content');
   const origTable = contentEl ? contentEl.querySelector('table') : null;
