@@ -8,6 +8,7 @@ from datetime import datetime, date, timedelta
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor
 
+import time
 import pandas as pd
 import pyodbc
 
@@ -437,12 +438,25 @@ async def refresh_remakes_cache() -> dict:
     global _remakes_last_refresh
     loop = asyncio.get_event_loop()
 
-    def _run(fn):
-        conn = get_db_connection()
-        try:
-            return fn(conn)
-        finally:
-            conn.close()
+    def _run(fn, max_retries: int = 3, base_delay: float = 0.5):
+        last_exc = None
+        for attempt in range(max_retries):
+            conn = get_db_connection()
+            try:
+                return fn(conn)
+            except pyodbc.Error as e:
+                if e.args[0] == "40001":  # deadlock victim
+                    last_exc = e
+                    conn.close()
+                    time.sleep(base_delay * (attempt + 1))  # 0.5s, 1.0s, 1.5s
+                    continue
+                raise
+            finally:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+        raise last_exc
 
     with ThreadPoolExecutor(max_workers=5) as pool:
         all_df, revenue_df, tasks_df, notes_df, docs_df = await asyncio.gather(
