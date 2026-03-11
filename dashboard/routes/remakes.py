@@ -15,6 +15,8 @@ from dashboard.data.remakes_queries import (
     get_db_connection,
     load_remake_notes,
     save_remake_note,
+    save_follow_up_note,
+    save_case_completed,
     load_remake_ld,
     save_remake_ld,
     load_ld_emails,
@@ -91,6 +93,16 @@ async def remakes_page(request: Request):
         for row in _df_to_records(saved_notes_df)
         if row.get("MainCaseNumber")
     }
+    saved_follow_up_notes = {
+        row["MainCaseNumber"]: row.get("FollowUpNote", "")
+        for row in _df_to_records(saved_notes_df)
+        if row.get("MainCaseNumber")
+    }
+    completed_cases = {
+        row["MainCaseNumber"]: row.get("Completed", "0")
+        for row in _df_to_records(saved_notes_df)
+        if row.get("MainCaseNumber")
+    }
 
     # Load L&D flags
     saved_ld_df = load_remake_ld()
@@ -115,6 +127,8 @@ async def remakes_page(request: Request):
         "all_records": _df_to_records(all_df),
         "revenue_records": _df_to_records(cached["revenue"]),
         "saved_notes": saved_notes,
+        "saved_follow_up_notes": saved_follow_up_notes,
+        "completed_cases": completed_cases,
         "saved_ld": saved_ld,
         "ld_emails": ld_emails,
         "week_start": str(week_start),
@@ -274,6 +288,36 @@ async def save_ld(request: Request):
         return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
     except Exception as e:
         logger.error(f"Save LD failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@router.post("/remakes/follow-up-notes")
+async def save_follow_up_note_route(request: Request):
+    try:
+        body = await request.json()
+        case_number = body.get("case_number", "")
+        note_text = body.get("note", "")
+        if not case_number:
+            return JSONResponse({"status": "error", "message": "case_number required"}, status_code=400)
+        save_follow_up_note(case_number, note_text)
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        logger.error(f"Save follow-up note failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@router.post("/remakes/completed")
+async def save_completed_route(request: Request):
+    try:
+        body = await request.json()
+        case_number = body.get("case_number", "")
+        completed = bool(body.get("completed", False))
+        if not case_number:
+            return JSONResponse({"status": "error", "message": "case_number required"}, status_code=400)
+        save_case_completed(case_number, completed)
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        logger.error(f"Save completed failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 

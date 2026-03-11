@@ -316,10 +316,14 @@ def load_remake_notes() -> pd.DataFrame:
     Returns empty DataFrame with expected columns if file missing."""
     if _NOTES_PATH.exists():
         try:
-            return pd.read_csv(_NOTES_PATH, dtype=str)
+            df = pd.read_csv(_NOTES_PATH, dtype=str)
+            for col, default in [("FollowUpNote", ""), ("Completed", "0")]:
+                if col not in df.columns:
+                    df[col] = default
+            return df
         except Exception as e:
             logger.warning(f"Failed to read remake_notes.csv: {e}")
-    return pd.DataFrame(columns=["MainCaseNumber", "Note", "LastUpdated"])
+    return pd.DataFrame(columns=["MainCaseNumber", "Note", "FollowUpNote", "Completed", "LastUpdated"])
 
 
 def save_remake_note(case_number: str, note_text: str) -> None:
@@ -333,6 +337,49 @@ def save_remake_note(case_number: str, note_text: str) -> None:
         new_row = pd.DataFrame([{
             "MainCaseNumber": case_number,
             "Note": note_text,
+            "FollowUpNote": "",
+            "Completed": "0",
+            "LastUpdated": now_str,
+        }])
+        existing = pd.concat([existing, new_row], ignore_index=True)
+    _NOTES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    existing.to_csv(_NOTES_PATH, index=False)
+
+
+def save_follow_up_note(case_number: str, note_text: str) -> None:
+    """Upsert a follow-up note by MainCaseNumber. Creates file if needed."""
+    existing = load_remake_notes()
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if not existing.empty and case_number in existing["MainCaseNumber"].values:
+        existing.loc[existing["MainCaseNumber"] == case_number, "FollowUpNote"] = note_text
+        existing.loc[existing["MainCaseNumber"] == case_number, "LastUpdated"] = now_str
+    else:
+        new_row = pd.DataFrame([{
+            "MainCaseNumber": case_number,
+            "Note": "",
+            "FollowUpNote": note_text,
+            "Completed": "0",
+            "LastUpdated": now_str,
+        }])
+        existing = pd.concat([existing, new_row], ignore_index=True)
+    _NOTES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    existing.to_csv(_NOTES_PATH, index=False)
+
+
+def save_case_completed(case_number: str, completed: bool) -> None:
+    """Upsert completed flag by MainCaseNumber. Creates file if needed."""
+    existing = load_remake_notes()
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    val = "1" if completed else "0"
+    if not existing.empty and case_number in existing["MainCaseNumber"].values:
+        existing.loc[existing["MainCaseNumber"] == case_number, "Completed"] = val
+        existing.loc[existing["MainCaseNumber"] == case_number, "LastUpdated"] = now_str
+    else:
+        new_row = pd.DataFrame([{
+            "MainCaseNumber": case_number,
+            "Note": "",
+            "FollowUpNote": "",
+            "Completed": val,
             "LastUpdated": now_str,
         }])
         existing = pd.concat([existing, new_row], ignore_index=True)

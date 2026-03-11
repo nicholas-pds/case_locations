@@ -577,6 +577,39 @@
   /* ── Drill Down filter trigger buttons ── */
   .dd-filter-btn { border: 1px solid var(--border); background: var(--light); border-radius: 4px; padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer; }
   .dd-filter-btn.dd-filter-active { border-color: var(--red); color: var(--red); }
+
+  /* ── AM done button ── */
+  .am-done-btn {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--red);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .am-done-btn.checked { background: var(--red); border-color: var(--red); color: #fff; }
+
+  /* ── AM types inline filter popup ── */
+  .am-filter-popup {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 200;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 180px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
   .dd-clear-btn { border: 1px solid var(--red); color: var(--red); background: transparent; border-radius: 4px; padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer; }
   .dd-clear-btn:hover { background: var(--red); color: #fff; }
 
@@ -1479,7 +1512,26 @@
       <span class="date-sep" x-show="amPreset==='custom'">to</span>
       <input type="date" class="date-input" x-model="amEnd"   x-show="amPreset==='custom'" @change="amPreset='custom'">
       <input type="text" class="date-input" x-model="searchQuery" placeholder="Search case #…" style="width:140px;margin-left:8px;">
-      <button class="preset-btn" @click="exportAM()" style="margin-left:auto;">Export CSV</button>
+      <div style="position:relative;">
+        <button @click="amOpenFilter = amOpenFilter==='types' ? null : 'types'"
+                class="dd-filter-btn" :class="{'dd-filter-active': amSelTypes.length}">
+          Types<template x-if="amSelTypes.length"> (<span x-text="amSelTypes.length"></span>)</template> ▾
+        </button>
+        <div class="am-filter-popup" x-show="amOpenFilter==='types'" @click.outside="amOpenFilter=null" x-cloak>
+          <template x-for="t in amTypes" :key="t">
+            <button @click="amSelTypes.includes(t) ? amSelTypes.splice(amSelTypes.indexOf(t),1) : amSelTypes.push(t)"
+                    class="dd-chip" :class="{selected: amSelTypes.includes(t)}">
+              <span x-text="t"></span>
+              <span class="chip-x" x-show="amSelTypes.includes(t)">✕</span>
+            </button>
+          </template>
+        </div>
+      </div>
+      <button class="preset-btn" :class="{active: showCompleted}"
+              @click="showCompleted = !showCompleted" style="margin-left:auto;">
+        <span x-text="showCompleted ? 'Hide Completed' : 'Show Completed'"></span>
+      </button>
+      <button class="preset-btn" @click="exportAM()">Export CSV</button>
     </div>
 
     <template x-if="filteredAM.length > 0">
@@ -1491,6 +1543,8 @@
               <th style="width:140px;">New Rx</th>
               <th style="width:120px;">Remake Type</th>
               <th>Investigation Notes</th>
+              <th>Follow-Up Notes</th>
+              <th style="width:48px; text-align:center;">Done</th>
             </tr>
           </thead>
           <tbody>
@@ -1528,6 +1582,25 @@
                               placeholder="Add investigation notes…"></textarea>
                     <div class="note-save-badge" x-show="_noteSaveState[row.MainCaseNumber]==='saved'" x-cloak>Saved ✓</div>
                   </div>
+                </td>
+                <!-- Follow-Up Notes (AM only) -->
+                <td class="col-note-final">
+                  <div style="position:relative;">
+                    <textarea class="note-textarea"
+                              :value="savedFollowUpNotes[row.MainCaseNumber] || ''"
+                              @blur="saveFollowUpNote(row.MainCaseNumber, $event.target.value)"
+                              placeholder="Add follow-up notes…"></textarea>
+                    <div class="note-save-badge" x-show="_followUpSaveState[row.MainCaseNumber]==='saved'" x-cloak>Saved ✓</div>
+                  </div>
+                </td>
+                <!-- Done checkbox -->
+                <td style="text-align:center; vertical-align:middle;">
+                  <button class="am-done-btn"
+                          :class="{checked: completedCases[row.MainCaseNumber]==='1'}"
+                          @click="saveCompleted(row.MainCaseNumber, completedCases[row.MainCaseNumber]!=='1')"
+                          title="Mark as done">
+                    <span x-text="completedCases[row.MainCaseNumber]==='1' ? '✓' : ''"></span>
+                  </button>
                 </td>
               </tr>
             </template>
@@ -2315,11 +2388,17 @@ function remakesPage() {
     allRecords:     {{ all_records | tojson }},
     revenueRecords: {{ revenue_records | tojson }},
     savedNotes:     {{ saved_notes | tojson }},
+    savedFollowUpNotes: {{ saved_follow_up_notes | tojson }},
+    completedCases:     {{ completed_cases | tojson }},
     savedLD:        {{ saved_ld | tojson }},
     ldEmails:       {{ ld_emails | tojson }},
     _ldSaveState:   {},
     _exportModal:   { show: false },
     _emailModal:    { show: false },
+
+    showCompleted:  false,
+    amSelTypes:     [],
+    amOpenFilter:   null,
 
     _taskMapData: {},
     _noteMapData: {},
@@ -2329,6 +2408,7 @@ function remakesPage() {
     _chartRaf: null,
     _ddChartRaf: null,
     _noteSaveState: {},
+    _followUpSaveState: {},
     _tip: { show: false, type: '', items: [] },
 
     // ── Week anchor helpers ──────────────────────────────────────
@@ -2493,6 +2573,13 @@ function remakesPage() {
       return [...seen].sort();
     },
 
+    get amTypes() {
+      const am = this.activeTab, s = new Set();
+      for (const r of this.allRecords)
+        if (r.SalesPerson === am && r.Remake) s.add(r.Remake);
+      return [...s].sort();
+    },
+
     // ── Exclusion helper ─────────────────────────────────────────
     _excluded(r) {
       return r.Remake === 'Remake Full Charge' || r.Remake === 'Remake NC Courtesy';
@@ -2528,6 +2615,8 @@ function remakesPage() {
         if (r.SalesPerson !== am) return false;
         const d = (r.DateIn || '').slice(0, 10);
         if (d < this.amStart || d > this.amEnd) return false;
+        if (!this.showCompleted && this.completedCases[r.MainCaseNumber] === '1') return false;
+        if (this.amSelTypes.length && !this.amSelTypes.includes(r.Remake)) return false;
         if (q) return (r.MainCaseNumber||'').toLowerCase().includes(q)
                     || (r.OG_CaseNumber||'').toLowerCase().includes(q);
         return true;
@@ -2992,7 +3081,7 @@ function remakesPage() {
     // ── AM export ────────────────────────────────────────────────
     exportAM() {
       const rows = this.filteredAM;
-      const headers = ['Old Rx', 'Practice', 'OG Ship Date', 'New Rx', 'Ship Date', 'Status', 'Remake Type', 'Discount', 'Investigation Note'];
+      const headers = ['Old Rx', 'Practice', 'OG Ship Date', 'New Rx', 'Ship Date', 'Status', 'Remake Type', 'Discount', 'Investigation Note', 'Follow-Up Note', 'Completed'];
       const esc = v => '"' + String(v || '').replace(/"/g, '""') + '"';
       const lines = [headers.map(esc).join(',')];
       for (const r of rows) {
@@ -3001,6 +3090,8 @@ function remakesPage() {
           r.MainCaseNumber, (r.ShipDate||'').slice(0,10), r.Status,
           r.Remake, r.RemakeDiscount || '',
           this.savedNotes[r.MainCaseNumber] || '',
+          this.savedFollowUpNotes[r.MainCaseNumber] || '',
+          this.completedCases[r.MainCaseNumber] === '1' ? 'Yes' : 'No',
         ].map(esc).join(','));
       }
       const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
@@ -3106,6 +3197,40 @@ function remakesPage() {
         this._noteSaveState[caseNumber] = '';
         console.warn('Note save failed:', e);
       }
+    },
+
+    // ── Follow-up note persistence ───────────────────────────────
+    async saveFollowUpNote(caseNumber, noteText) {
+      if (!caseNumber) return;
+      this._followUpSaveState[caseNumber] = 'saving';
+      try {
+        const res  = await fetch('/remakes/follow-up-notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ case_number: caseNumber, note: noteText }),
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          this.savedFollowUpNotes[caseNumber] = noteText;
+          this._followUpSaveState[caseNumber] = 'saved';
+          setTimeout(() => { this._followUpSaveState[caseNumber] = ''; }, 2000);
+        } else {
+          this._followUpSaveState[caseNumber] = '';
+        }
+      } catch (e) {
+        this._followUpSaveState[caseNumber] = '';
+        console.warn('Follow-up note save failed:', e);
+      }
+    },
+
+    // ── Done toggle persistence ───────────────────────────────────
+    async saveCompleted(caseNumber, checked) {
+      this.completedCases[caseNumber] = checked ? '1' : '0';
+      await fetch('/remakes/completed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ case_number: caseNumber, completed: checked }),
+      });
     },
 
     // ── L&D persistence ──────────────────────────────────────────
