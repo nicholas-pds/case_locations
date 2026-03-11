@@ -2601,10 +2601,10 @@ function remakesPage() {
       const s = this.meetingStart, e = this.meetingEnd, q = this.searchQuery.trim().toLowerCase();
       return this.allRecords.filter(r => {
         if (this._excluded(r)) return false;
-        const d = (r.DateIn || '').slice(0, 10);
-        if (d < s || d > e) return false;
         if (q) return (r.MainCaseNumber||'').toLowerCase().includes(q)
                     || (r.OG_CaseNumber||'').toLowerCase().includes(q);
+        const d = (r.DateIn || '').slice(0, 10);
+        if (d < s || d > e) return false;
         return true;
       });
     },
@@ -2612,10 +2612,10 @@ function remakesPage() {
     get filteredAll() {
       const s = this.allStart, e = this.allEnd, q = this.searchQuery.trim().toLowerCase();
       return this.allRecords.filter(r => {
-        const d = (r.DateIn || '').slice(0, 10);
-        if (d < s || d > e) return false;
         if (q) return (r.MainCaseNumber||'').toLowerCase().includes(q)
                     || (r.OG_CaseNumber||'').toLowerCase().includes(q);
+        const d = (r.DateIn || '').slice(0, 10);
+        if (d < s || d > e) return false;
         return true;
       });
     },
@@ -2624,12 +2624,12 @@ function remakesPage() {
       const am = this.activeTab, q = this.searchQuery.trim().toLowerCase();
       return this.allRecords.filter(r => {
         if (r.SalesPerson !== am) return false;
+        if (q) return (r.MainCaseNumber||'').toLowerCase().includes(q)
+                    || (r.OG_CaseNumber||'').toLowerCase().includes(q);
         const d = (r.DateIn || '').slice(0, 10);
         if (d < this.amStart || d > this.amEnd) return false;
         if (!this.showCompleted && this.completedCases[r.MainCaseNumber] === '1' && !this.completingRows[r.MainCaseNumber]) return false;
         if (this.amSelTypes.length && !this.amSelTypes.includes(r.Remake)) return false;
-        if (q) return (r.MainCaseNumber||'').toLowerCase().includes(q)
-                    || (r.OG_CaseNumber||'').toLowerCase().includes(q);
         return true;
       });
     },
