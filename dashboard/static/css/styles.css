@@ -863,18 +863,18 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
 }
 .date-nav-btn {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: #fff;
   text-decoration: none;
   padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-card);
+  border-radius: 4px;
+  border: none;
+  background: #C0182B;
   transition: all 0.2s;
 }
 .date-nav-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: #a01424;
+  color: #fff;
 }
 .date-nav-current {
   font-size: 16px;

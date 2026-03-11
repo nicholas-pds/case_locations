@@ -6,6 +6,17 @@
   <div class="page-header">
     <h1 class="page-title">Local Delivery Cases</h1>
     <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="printPage()" style="
+        padding:6px 14px;
+        background:#C0182B;
+        color:#fff;
+        border:none;
+        border-radius:4px;
+        font-size:13px;
+        font-weight:600;
+        cursor:pointer;
+        font-family:inherit;
+      ">Print</button>
       <button onclick="exportPDF()" style="
         padding:6px 14px;
         background:#C0182B;
@@ -17,17 +28,6 @@
         cursor:pointer;
         font-family:inherit;
       ">Export PDF</button>
-      <button onclick="printPage()" style="
-        padding:6px 14px;
-        background:#fff;
-        color:#1A1A1A;
-        border:1px solid #ccc;
-        border-radius:4px;
-        font-size:13px;
-        font-weight:600;
-        cursor:pointer;
-        font-family:inherit;
-      ">Print</button>
       <div class="date-nav">
         <a href="/local-delivery?date_str={{ prev_date }}" class="date-nav-btn">&larr; {{ prev_date_label }}</a>
         <span class="date-nav-current">
