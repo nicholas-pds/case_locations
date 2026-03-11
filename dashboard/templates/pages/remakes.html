@@ -964,7 +964,7 @@
       <input type="date" class="date-input" x-model="meetingStart" x-show="meetingPreset==='custom'" @change="meetingPreset='custom'">
       <span class="date-sep" x-show="meetingPreset==='custom'">to</span>
       <input type="date" class="date-input" x-model="meetingEnd"   x-show="meetingPreset==='custom'" @change="meetingPreset='custom'">
-      <input type="text" class="date-input" x-model.debounce.300ms="searchQuery" placeholder="Search case #…" style="width:140px;">
+      <input type="text" class="date-input" x-model.debounce.500ms="searchQuery" placeholder="Search case #…" style="width:140px;">
       <span class="date-sep" style="margin-left:4px;">
         (<span x-text="filteredMeeting.length"></span> cases)
       </span>
@@ -1165,7 +1165,7 @@
       <input type="date" class="date-input" x-model="allStart" @change="allPreset='custom'" x-show="allPreset==='custom'">
       <span class="date-sep" x-show="allPreset==='custom'">to</span>
       <input type="date" class="date-input" x-model="allEnd" @change="allPreset='custom'" x-show="allPreset==='custom'">
-      <input type="text" class="date-input" x-model.debounce.300ms="searchQuery" placeholder="Search case #…" style="width:140px;">
+      <input type="text" class="date-input" x-model.debounce.500ms="searchQuery" placeholder="Search case #…" style="width:140px;">
       <span class="date-sep">
         (<span x-text="filteredAll.length"></span> cases)
       </span>
@@ -1517,7 +1517,7 @@
       <input type="date" class="date-input" x-model="amStart" x-show="amPreset==='custom'" @change="amPreset='custom'">
       <span class="date-sep" x-show="amPreset==='custom'">to</span>
       <input type="date" class="date-input" x-model="amEnd"   x-show="amPreset==='custom'" @change="amPreset='custom'">
-      <input type="text" class="date-input" x-model.debounce.300ms="searchQuery" placeholder="Search case #…" style="width:140px;margin-left:8px;">
+      <input type="text" class="date-input" x-model.debounce.500ms="searchQuery" placeholder="Search case #…" style="width:140px;margin-left:8px;">
       <div style="position:relative;">
         <button @click="amOpenFilter = amOpenFilter==='types' ? null : 'types'"
                 class="dd-filter-btn" :class="{'dd-filter-active': amSelTypes.length}">
