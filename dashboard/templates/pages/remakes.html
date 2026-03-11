@@ -1533,6 +1533,10 @@
           </template>
         </div>
       </div>
+      <button x-show="amSelTypes.length" @click="amSelTypes = []"
+              class="dd-filter-btn dd-filter-active" style="font-size:0.75rem;" x-cloak>
+        Clear filters ✕
+      </button>
       <button class="preset-btn" :class="{active: showCompleted}"
               @click="showCompleted = !showCompleted" style="margin-left:auto;">
         <span x-text="showCompleted ? 'Hide Completed' : 'Show Completed'"></span>
