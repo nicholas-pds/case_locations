@@ -591,6 +591,12 @@
     transition: background 0.15s, border-color 0.15s;
   }
   .am-done-btn.checked { background: var(--red); border-color: var(--red); color: #fff; }
+  @keyframes row-fade-out {
+    0%   { opacity: 1; background-color: transparent; }
+    25%  { opacity: 0.85; background-color: #fdecea; }
+    100% { opacity: 0; background-color: #fdecea; }
+  }
+  .row-completing { animation: row-fade-out 0.6s ease-in forwards; pointer-events: none; }
 
   /* ── AM types inline filter popup ── */
   .am-filter-popup {
@@ -1549,7 +1555,7 @@
           </thead>
           <tbody>
             <template x-for="row in filteredAM" :key="row.MainCaseNumber">
-              <tr>
+              <tr :class="{'row-completing': completingRows[row.MainCaseNumber]}">
                 <!-- Old Rx -->
                 <td class="og-rx-cell">
                   <div class="og-case-num" x-text="row.OG_CaseNumber || '—'"></div>
@@ -2396,6 +2402,7 @@ function remakesPage() {
     _exportModal:   { show: false },
     _emailModal:    { show: false },
 
+    completingRows: {},
     showCompleted:  false,
     amSelTypes:     [],
     amOpenFilter:   null,
@@ -2615,7 +2622,7 @@ function remakesPage() {
         if (r.SalesPerson !== am) return false;
         const d = (r.DateIn || '').slice(0, 10);
         if (d < this.amStart || d > this.amEnd) return false;
-        if (!this.showCompleted && this.completedCases[r.MainCaseNumber] === '1') return false;
+        if (!this.showCompleted && this.completedCases[r.MainCaseNumber] === '1' && !this.completingRows[r.MainCaseNumber]) return false;
         if (this.amSelTypes.length && !this.amSelTypes.includes(r.Remake)) return false;
         if (q) return (r.MainCaseNumber||'').toLowerCase().includes(q)
                     || (r.OG_CaseNumber||'').toLowerCase().includes(q);
@@ -3226,6 +3233,10 @@ function remakesPage() {
     // ── Done toggle persistence ───────────────────────────────────
     async saveCompleted(caseNumber, checked) {
       this.completedCases[caseNumber] = checked ? '1' : '0';
+      if (checked) {
+        this.completingRows[caseNumber] = true;
+        setTimeout(() => { delete this.completingRows[caseNumber]; }, 700);
+      }
       await fetch('/remakes/completed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
