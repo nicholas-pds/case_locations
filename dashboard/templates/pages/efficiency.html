@@ -40,6 +40,7 @@
   <!-- Tabs -->
   <div class="eff-tabs">
     <button class="eff-tab" :class="{ active: activeTab === 'daily' }" @click="activeTab = 'daily'">Daily EFF</button>
+    <button class="eff-tab" :class="{ active: activeTab === 'week' }" @click="activeTab = 'week'">Week EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === 'mm' }" @click="activeTab = 'mm'">MM EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === 'noon' }" @click="activeTab = 'noon'">Noon EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === '3pm' }" @click="activeTab = '3pm'">3PM EFF</button>
@@ -240,6 +241,118 @@
       </div>
     </template>
   </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- WEEK EFF TAB                                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="activeTab === 'week'">
+    <div class="eff-filter-bar">
+      <select class="eff-filter-select" x-model="weekTeam">
+        <option value="">All Teams</option>
+        {% for team in teams %}
+        <option value="{{ team }}">{{ team }}</option>
+        {% endfor %}
+      </select>
+      <button class="eff-clear-btn" @click="weekTeam=''" x-show="weekTeam">Clear</button>
+    </div>
+
+    <!-- Teams Summary Grid -->
+    <template x-if="filteredWeekRows().length > 0">
+      <div class="eff-section">
+        <div class="eff-section-title">Weekly Efficiency (Last 12 Weeks)</div>
+        <div class="eff-mm-wrap">
+          <table class="eff-mm-table">
+            <thead>
+              <tr>
+                <th>Teams</th>
+                {% for col in week_eff_cols %}
+                <th>{{ week_eff_labels[col] }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="ts in weekTeamsSummary()" :key="'wkts-'+ts.team">
+                <tr>
+                  <td x-text="ts.team"></td>
+                  {% for col in week_eff_cols %}
+                  <td :class="'eff-' + mmEffTierClass(ts['{{ col }}'])"
+                      x-text="formatMmEff(ts['{{ col }}'])"></td>
+                  {% endfor %}
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </template>
+
+    <!-- Per-Team Detail Sections -->
+    <template x-for="section in weekTeamSections()" :key="'wksec-'+section.team">
+      <div class="eff-section">
+        <div class="eff-section-title" x-text="section.team"></div>
+        <div class="eff-mm-wrap">
+          <table class="eff-mm-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                {% for col in week_eff_cols %}
+                <th>{{ week_eff_labels[col] }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="row in section.rows" :key="'wk-'+row['MT Name']">
+                <tr>
+                  <td x-text="shortName(row['MT Name'])"></td>
+                  {% for col in week_eff_cols %}
+                  <td :class="'eff-' + mmEffTierClass(row['{{ col }}'])"
+                      x-text="formatMmEff(row['{{ col }}'])"></td>
+                  {% endfor %}
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </template>
+
+    <!-- Empty State -->
+    <div x-show="filteredWeekRows().length === 0" class="eff-empty">
+      <div class="eff-empty-icon">📊</div>
+      <div class="eff-empty-text">No weekly data — upload a Gusto CSV to get started</div>
+    </div>
+
+    <!-- Footer -->
+    <template x-if="filteredWeekRows().length > 0">
+      <div class="eff-footer">
+        <div>Partners Dental Solutions — Internal Use Only</div>
+        <div class="eff-legend">
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-green)"></span>
+            ≥120%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-green-light)"></span>
+            80–119%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-yellow)"></span>
+            65–79%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-orange)"></span>
+            50–64%
+          </span>
+          <span class="eff-legend-item">
+            <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
+            &lt;50%
+          </span>
+        </div>
+        <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
+      </div>
+    </template>
+  </div>
+
 
   <!-- ═══════════════════════════════════════════ -->
   <!-- MM EFF TAB                                  -->
@@ -698,6 +811,10 @@ function efficiencyPage() {
     mmRows: {{ agg_records | tojson }},
     mmTeam: '',
 
+    // Week EFF state
+    weekEffCols: {{ week_eff_cols | tojson }},
+    weekTeam: '',
+
     // Midday state
     noonRows: {{ noon_records | tojson }},
     pm3Rows: {{ pm3_records | tojson }},
@@ -903,6 +1020,47 @@ function efficiencyPage() {
 
     mmTeamSections() {
       const rows = this.filteredMMRows();
+      const teams = {};
+      rows.forEach(r => {
+        const t = r.Team || 'No Team';
+        if (!teams[t]) teams[t] = [];
+        teams[t].push(r);
+      });
+      return Object.keys(teams).sort().map(team => ({
+        team,
+        rows: teams[team].sort((a, b) => String(a['MT Name'] || '').localeCompare(String(b['MT Name'] || '')))
+      }));
+    },
+
+    // ─── Week EFF ─────────────────────────────────
+    filteredWeekRows() {
+      let rows = this.mmRows.filter(r => r.Team !== 'z_Not On Report');
+      if (this.weekTeam) rows = rows.filter(r => r.Team === this.weekTeam);
+      return rows;
+    },
+
+    weekTeamsSummary() {
+      const rows = this.filteredWeekRows();
+      const teams = {};
+      rows.forEach(r => {
+        const t = r.Team || 'No Team';
+        if (!teams[t]) teams[t] = [];
+        teams[t].push(r);
+      });
+      const effCols = this.weekEffCols;
+      return Object.keys(teams).sort().map(team => {
+        const tr = teams[team];
+        const summary = { team };
+        effCols.forEach(col => {
+          const vals = tr.map(r => r[col]).filter(v => v !== 'x' && v !== null && v !== undefined && !isNaN(Number(v)));
+          summary[col] = vals.length > 0 ? vals.reduce((s, v) => s + Number(v), 0) / vals.length : 'x';
+        });
+        return summary;
+      });
+    },
+
+    weekTeamSections() {
+      const rows = this.filteredWeekRows();
       const teams = {};
       rows.forEach(r => {
         const t = r.Team || 'No Team';

@@ -221,6 +221,20 @@ def stage3_combine(task_df: pd.DataFrame, gusto_df: pd.DataFrame) -> pd.DataFram
 # Stage 4: Multi-Period Aggregated Efficiency
 # ─────────────────────────────────────────────
 
+def _get_week_range(n: int, reference: date) -> tuple[date, date]:
+    """Return (Mon, Fri) of the work week N weeks ago.
+    n=0 = current week (Monday through reference, capped at Friday).
+    n=1 = last complete Mon–Fri week.
+    """
+    days_since_monday = reference.weekday()  # 0=Mon, 6=Sun
+    current_monday = reference - timedelta(days=days_since_monday)
+    week_monday = current_monday - timedelta(weeks=n)
+    week_friday = week_monday + timedelta(days=4)
+    if n == 0:
+        return (week_monday, min(reference, week_friday))
+    return (week_monday, week_friday)
+
+
 def _get_business_days_ago(n: int, reference: date) -> date:
     """Return the date N business days before reference, skipping weekends and holidays."""
     from src.holidays import get_all_company_holidays
@@ -293,6 +307,11 @@ def stage4_aggregated(all_daily_df: pd.DataFrame, reference: date = None) -> pd.
                 month_end = date(year_ref, month_ref + 1, 1) - timedelta(days=1)
             label = "Efficiency_Previous_Month" if m == 1 else f"Efficiency_{m}_Months_Ago"
             row[label] = _eff_for_period(df, name, month_start, month_end)
+
+        # Weekly columns: current week + 11 prior weeks
+        for n in range(12):
+            week_start, week_end = _get_week_range(n, reference)
+            row[f"Efficiency_Week_{n}"] = _eff_for_period(df, name, week_start, week_end)
 
         rows.append(row)
 

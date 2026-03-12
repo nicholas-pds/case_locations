@@ -73,8 +73,20 @@ async def efficiency_page(request: Request):
 
     # Get MM EFF column labels (all efficiency period columns)
     mm_eff_cols = []
+    week_eff_cols = []
+    week_eff_labels = {}
     if not agg_df.empty:
-        mm_eff_cols = [c for c in agg_df.columns if c.startswith("Efficiency_")]
+        all_eff_cols = [c for c in agg_df.columns if c.startswith("Efficiency_")]
+        mm_eff_cols = [c for c in all_eff_cols if not c.startswith("Efficiency_Week_")]
+        week_eff_cols = [c for c in all_eff_cols if c.startswith("Efficiency_Week_")]
+        for col in week_eff_cols:
+            n = int(col.replace("Efficiency_Week_", ""))
+            if n == 0:
+                week_eff_labels[col] = "Curr Week"
+            elif n == 1:
+                week_eff_labels[col] = "1 Wk Ago"
+            else:
+                week_eff_labels[col] = f"{n} Wks Ago"
 
     # Available dates (sorted desc) and latest date for default filter
     available_dates = []
@@ -110,6 +122,8 @@ async def efficiency_page(request: Request):
         "constants_records": constants_records,
         "teams": teams,
         "mm_eff_cols": mm_eff_cols,
+        "week_eff_cols": week_eff_cols,
+        "week_eff_labels": week_eff_labels,
         "available_dates": available_dates,
         "latest_date": latest_date,
     })
