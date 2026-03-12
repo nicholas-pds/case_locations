@@ -47,6 +47,9 @@ output/
 !User_Inputs/tech_constants.csv
 !User_Inputs/revenue_goals.csv
 
+# Efficiency data (runtime-generated, not source controlled)
+dashboard/data/efficiency_data/*.parquet
+
 # Other common ignores
 *.log
 *.bak

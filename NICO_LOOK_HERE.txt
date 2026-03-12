@@ -1,0 +1,66 @@
+=====================================================================
+  VM INSTRUCTIONS — Run these BEFORE and AFTER git pull
+  (Fix for efficiency data being wiped on every git pull)
+=====================================================================
+
+BACKGROUND:
+  daily.parquet and aggregated.parquet were tracked by git.
+  Every git pull on the VM was overwriting them with the old
+  committed version, wiping all uploaded Gusto data.
+  This commit fixes that — but you must follow the steps below
+  ONE TIME to safely transition.
+
+---------------------------------------------------------------------
+STEP 1 — BACKUP (do this BEFORE git pull)
+---------------------------------------------------------------------
+
+On the VM, open a command prompt in the repo folder and run:
+
+  copy "dashboard\data\efficiency_data\daily.parquet" "dashboard\data\efficiency_data\daily.parquet.save"
+  copy "dashboard\data\efficiency_data\aggregated.parquet" "dashboard\data\efficiency_data\aggregated.parquet.save"
+
+---------------------------------------------------------------------
+STEP 2 — GIT PULL
+---------------------------------------------------------------------
+
+  git pull
+
+Git will delete the parquet files from disk because they are no
+longer tracked. That is expected — do not panic.
+
+---------------------------------------------------------------------
+STEP 3 — RESTORE (do this AFTER git pull)
+---------------------------------------------------------------------
+
+  copy "dashboard\data\efficiency_data\daily.parquet.save" "dashboard\data\efficiency_data\daily.parquet"
+  copy "dashboard\data\efficiency_data\aggregated.parquet.save" "dashboard\data\efficiency_data\aggregated.parquet"
+
+---------------------------------------------------------------------
+STEP 4 — VERIFY
+---------------------------------------------------------------------
+
+Check that both files exist:
+
+  dir dashboard\data\efficiency_data\
+
+You should see daily.parquet and aggregated.parquet.
+
+After this, git will NEVER touch these files again on any future
+git pull. All Gusto CSV uploads are safe going forward.
+
+---------------------------------------------------------------------
+STEP 5 — RECOVER MISSING DATA
+---------------------------------------------------------------------
+
+Re-upload each missing daily Gusto CSV through the Upload Gusto CSV
+button in the app. Dates to re-upload:
+
+  2026-02-18 through 2026-03-10 (any days that were previously lost)
+
+Order does not matter. The merge logic upserts by date so uploading
+the same file twice is safe.
+
+=====================================================================
+  You only need to do these steps ONE TIME.
+  Future git pulls will not affect the parquet files.
+=====================================================================

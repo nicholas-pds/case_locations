@@ -55,6 +55,8 @@ def load_daily() -> pd.DataFrame:
 
 
 def save_daily(df: pd.DataFrame) -> None:
+    if _DAILY_PATH.exists():
+        _DAILY_PATH.replace(_DAILY_PATH.with_suffix(".parquet.bak"))
     df.to_parquet(_DAILY_PATH, index=False)
     logger.info(f"Saved daily efficiency data: {len(df)} rows")
 
