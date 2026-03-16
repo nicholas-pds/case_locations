@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+import csv
+import io
+from datetime import date
+from fastapi import APIRouter, Query, Request
+from fastapi.responses import HTMLResponse, StreamingResponse
 from dashboard.data.cache import cache
 
 router = APIRouter()
@@ -25,3 +28,32 @@ async def airway_hold_page(request: Request):
         "metadata": metadata,
         "active_page": "airway-hold",
     })
+
+
+@router.get("/airway-hold/export")
+async def airway_hold_export(hold_status: str = Query(default="")):
+    df = await cache.get("airway_hold_status")
+    if df is None or df.empty:
+        records = []
+    else:
+        filtered = df.copy()
+        if hold_status:
+            filtered = filtered[filtered["HoldStatus"] == hold_status]
+        records = filtered.to_dict("records")
+
+    columns = ["CaseNumber", "PanNumber", "DoctorName", "PracticeName", "PatientName",
+                "CreateDate", "ShipDate", "HoldDate", "HoldStatus", "HoldReason",
+                "FollowUpType", "FollowUpDate"]
+
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=columns, extrasaction="ignore", lineterminator="\n")
+    writer.writeheader()
+    for row in records:
+        writer.writerow({col: (row.get(col, "") or "") for col in columns})
+
+    filename = f"airway_hold_{date.today().isoformat()}.csv"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

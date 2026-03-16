@@ -23,6 +23,12 @@
     <option value="{{ hs }}">{{ hs }}</option>
     {% endfor %}
   </select>
+  <a class="btn btn-view-all"
+     :href="'/airway-hold/export?hold_status=' + encodeURIComponent(document.querySelector('[name=hold_status]')?.value || '')"
+     style="text-decoration:none; vertical-align:middle;"
+     download>
+    Export CSV
+  </a>
 </div>
 
 <div class="table-container airway-hold-sticky">
@@ -54,8 +60,8 @@ function airwaySort() {
       const rows = Array.from(tbody.querySelectorAll('tr'));
       const dir = this.dir === 'asc' ? 1 : -1;
       rows.sort((a, b) => {
-        const aText = (a.cells[colIdx]?.textContent || '').trim();
-        const bText = (b.cells[colIdx]?.textContent || '').trim();
+        const aText = a.cells[colIdx]?.dataset?.sort ?? (a.cells[colIdx]?.textContent || '').trim();
+        const bText = b.cells[colIdx]?.dataset?.sort ?? (b.cells[colIdx]?.textContent || '').trim();
         const aNum = parseFloat(aText);
         const bNum = parseFloat(bText);
         if (!isNaN(aNum) && !isNaN(bNum)) return (aNum - bNum) * dir;

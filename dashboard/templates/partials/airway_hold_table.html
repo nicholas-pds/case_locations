@@ -48,13 +48,13 @@
         <td>{{ case.get('DoctorName', '') }}</td>
         <td>{{ case.get('PracticeName', '') }}</td>
         <td>{{ case.get('PatientName', '') }}</td>
-        <td>{{ case.get('CreateDate', '') | fmt_date }}</td>
-        <td>{{ case.get('ShipDate', '') | fmt_date }}</td>
-        <td>{{ case.get('HoldDate', '') | fmt_date }}</td>
+        <td data-sort="{{ case.get('CreateDate', '') }}">{{ case.get('CreateDate', '') | fmt_date }}</td>
+        <td data-sort="{{ case.get('ShipDate', '') }}">{{ case.get('ShipDate', '') | fmt_date }}</td>
+        <td data-sort="{{ case.get('HoldDate', '') }}">{{ case.get('HoldDate', '') | fmt_date }}</td>
         <td>{{ case.get('HoldStatus', '') }}</td>
         <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ case.get('HoldReason', '') }}">{{ case.get('HoldReason', '') }}</td>
         <td>{{ case.get('FollowUpType', '') }}</td>
-        <td>{{ case.get('FollowUpDate', '') }}</td>
+        <td data-sort="{{ case.get('FollowUpDate', '') }}">{{ case.get('FollowUpDate', '') }}</td>
       </tr>
       {% endfor %}
     </tbody>
