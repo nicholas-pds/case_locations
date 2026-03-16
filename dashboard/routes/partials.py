@@ -289,17 +289,21 @@ async def airway_table(request: Request, location: str = None, ship_date: str = 
 
 @router.get("/airway-hold-table", response_class=HTMLResponse)
 async def airway_hold_table(request: Request, hold_status: list[str] = Query(default=[])):
-    df = await cache.get("airway_hold_status")
-    if df is not None and not df.empty:
+    full_df = await cache.get("airway_hold_status")
+    if full_df is not None and not full_df.empty and 'HoldStatus' in full_df.columns:
+        status_counts_json = json.dumps(full_df.groupby('HoldStatus').size().to_dict())
+        df = full_df.copy()
         if hold_status:
             df = df[df['HoldStatus'].isin(hold_status)]
         cases = df.to_dict('records')
     else:
+        status_counts_json = json.dumps({})
         cases = []
     templates = request.app.state.templates
     return templates.TemplateResponse("partials/airway_hold_table.html", {
         "request": request,
         "cases": cases,
+        "status_counts_json": status_counts_json,
     })
 
 

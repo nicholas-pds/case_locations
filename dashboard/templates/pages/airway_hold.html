@@ -5,26 +5,24 @@
 {% block content %}
 <div x-data="airwayHoldPage()">
 
-<div class="page-header">
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
   <h1 class="page-title">Airway Hold Status Report</h1>
+  <button class="btn-export-csv" @click="doExport()">&#8595; Export CSV</button>
 </div>
 
 <!-- Hold Status Tiles -->
 <div class="hold-tiles">
   {% for hs in hold_status_order %}
   <div class="hold-tile" :class="{ 'hold-tile--active': selected.includes('{{ hs }}') }" @click="toggle('{{ hs }}')">
-    <div class="hold-tile__count">{{ status_counts.get(hs, 0) }}</div>
+    <div class="hold-tile__count" x-text="counts['{{ hs }}'] ?? 0"></div>
     <div class="hold-tile__label">{{ hs }}</div>
   </div>
   {% endfor %}
 </div>
 
-<!-- Action Bar -->
-<div class="hold-action-bar">
-  <button class="btn btn-reset" x-show="selected.length > 0" @click="clearAll()" style="display:none">
-    Clear Filters &times;
-  </button>
-  <button class="btn-export-csv" @click="doExport()">&#8595; Export CSV</button>
+<!-- Clear Filters -->
+<div x-show="selected.length > 0" style="margin-bottom:0.5rem; display:none">
+  <button class="btn btn-reset" @click="clearAll()">Clear Filters &times;</button>
 </div>
 
 <div class="table-container airway-hold-sticky">
@@ -80,6 +78,17 @@ function airwaySort() {
 function airwayHoldPage() {
   return {
     selected: [],
+    counts: {},
+    init() {
+      this._readCounts();
+      document.body.addEventListener('htmx:afterSwap', (e) => {
+        if (e.detail.target.id === 'airway-hold-content') this._readCounts();
+      });
+    },
+    _readCounts() {
+      const el = document.getElementById('hold-counts');
+      if (el) this.counts = JSON.parse(el.dataset.json || '{}');
+    },
     toggle(status) {
       const idx = this.selected.indexOf(status);
       if (idx >= 0) this.selected.splice(idx, 1);
