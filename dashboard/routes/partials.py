@@ -288,11 +288,11 @@ async def airway_table(request: Request, location: str = None, ship_date: str = 
 
 
 @router.get("/airway-hold-table", response_class=HTMLResponse)
-async def airway_hold_table(request: Request, hold_status: str = None):
+async def airway_hold_table(request: Request, hold_status: list[str] = Query(default=[])):
     df = await cache.get("airway_hold_status")
     if df is not None and not df.empty:
         if hold_status:
-            df = df[df['HoldStatus'] == hold_status]
+            df = df[df['HoldStatus'].isin(hold_status)]
         cases = df.to_dict('records')
     else:
         cases = []

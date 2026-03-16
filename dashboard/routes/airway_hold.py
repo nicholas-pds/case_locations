@@ -7,6 +7,13 @@ from dashboard.data.cache import cache
 
 router = APIRouter()
 
+HOLD_STATUS_ORDER = [
+    'Waiting on Scan(s)',
+    'How to Proceed',
+    'Email Planning Approval',
+    'Zoom Planning Approval',
+]
+
 
 @router.get("/airway-hold", response_class=HTMLResponse)
 async def airway_hold_page(request: Request):
@@ -17,14 +24,18 @@ async def airway_hold_page(request: Request):
 
     # Get unique values for filters
     hold_statuses = []
+    status_counts = {}
     if df is not None and not df.empty and 'HoldStatus' in df.columns:
         hold_statuses = sorted(df['HoldStatus'].dropna().unique().tolist())
+        status_counts = df.groupby('HoldStatus').size().to_dict()
 
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/airway_hold.html", {
         "request": request,
         "cases": cases,
         "hold_statuses": hold_statuses,
+        "status_counts": status_counts,
+        "hold_status_order": HOLD_STATUS_ORDER,
         "metadata": metadata,
         "active_page": "airway-hold",
     })

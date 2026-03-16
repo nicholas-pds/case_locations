@@ -185,3 +185,72 @@
   font-size: 10px;
   margin-left: 4px;
 }
+
+/* === KPI Scorecard Row === */
+.kpi-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.kpi-card {
+  flex: 1;
+  min-width: 160px;
+  background: var(--light);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-top: 3px solid var(--border);
+  user-select: none;
+}
+.kpi-card:hover {
+  border-top-color: var(--airway-primary);
+  background: var(--airway-light);
+}
+.kpi-card.kpi-active {
+  border-top-color: var(--red);
+  background: #FFF0F0;
+}
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.kpi-card.kpi-active .kpi-label { color: var(--red); }
+.kpi-count {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1;
+}
+.kpi-card.kpi-active .kpi-count { color: var(--red); }
+
+/* === Clear Filters Button === */
+.btn-clear {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.btn-clear:hover { background: #FFF0F0; }
+
+/* === Export CSV Button === */
+.btn-export {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--dark);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.btn-export:hover { border-color: var(--gray); }
