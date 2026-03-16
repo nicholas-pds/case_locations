@@ -48,6 +48,8 @@ function airwaySort() {
   return {
     col: null,
     dir: 'asc',
+    _root: null,
+    init() { this._root = this.$el; },
     sort(colIdx) {
       if (this.col === colIdx) {
         this.dir = this.dir === 'asc' ? 'desc' : 'asc';
@@ -55,13 +57,16 @@ function airwaySort() {
         this.col = colIdx;
         this.dir = 'asc';
       }
-      const tbody = this.$el.querySelector('tbody');
+      const tbody = this._root?.querySelector('tbody');
       if (!tbody) return;
       const rows = Array.from(tbody.querySelectorAll('tr'));
       const dir = this.dir === 'asc' ? 1 : -1;
       rows.sort((a, b) => {
         const aText = a.cells[colIdx]?.dataset?.sort ?? (a.cells[colIdx]?.textContent || '').trim();
         const bText = b.cells[colIdx]?.dataset?.sort ?? (b.cells[colIdx]?.textContent || '').trim();
+        // ISO dates (YYYY-MM-DD) sort correctly as strings — skip numeric path
+        const dateRe = /^\d{4}-\d{2}-\d{2}/;
+        if (dateRe.test(aText) && dateRe.test(bText)) return aText.localeCompare(bText) * dir;
         const aNum = parseFloat(aText);
         const bNum = parseFloat(bText);
         if (!isNaN(aNum) && !isNaN(bNum)) return (aNum - bNum) * dir;
