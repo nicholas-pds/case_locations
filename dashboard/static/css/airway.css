@@ -186,48 +186,65 @@
   margin-left: 4px;
 }
 
-/* === KPI Scorecard Row === */
-.kpi-row {
+/* === Hold Status Tiles === */
+.hold-tiles {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
+  margin-bottom: 16px;
 }
-.kpi-card {
+
+.hold-tile {
   flex: 1;
-  min-width: 160px;
-  background: var(--light);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 16px;
+  min-width: 170px;
+  background: #fff;
+  border: 2px solid var(--airway-primary);
+  border-radius: 10px;
+  padding: 16px 20px;
   cursor: pointer;
-  transition: all 0.15s;
-  border-top: 3px solid var(--border);
+  transition: background 0.18s, box-shadow 0.18s, transform 0.18s, border-color 0.18s;
   user-select: none;
 }
-.kpi-card:hover {
-  border-top-color: var(--airway-primary);
+.hold-tile:hover {
   background: var(--airway-light);
+  box-shadow: 0 4px 14px rgba(233, 30, 99, 0.18);
+  transform: translateY(-2px);
 }
-.kpi-card.kpi-active {
-  border-top-color: var(--red);
-  background: #FFF0F0;
+.hold-tile.hold-tile--active {
+  background: var(--airway-primary);
+  border-color: var(--airway-dark);
 }
-.kpi-label {
+
+.hold-tile__count {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--airway-primary);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.hold-tile--active .hold-tile__count {
+  color: #fff;
+}
+
+.hold-tile__label {
   font-size: 11px;
   font-weight: 600;
-  color: var(--gray);
+  color: var(--airway-text);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  letter-spacing: 0.6px;
+  line-height: 1.3;
 }
-.kpi-card.kpi-active .kpi-label { color: var(--red); }
-.kpi-count {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--dark);
-  line-height: 1;
+.hold-tile--active .hold-tile__label {
+  color: rgba(255, 255, 255, 0.88);
 }
-.kpi-card.kpi-active .kpi-count { color: var(--red); }
+
+/* === Hold Page Action Bar === */
+.hold-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
 
 /* === Clear Filters Button === */
 .btn-clear {
@@ -243,14 +260,17 @@
 .btn-clear:hover { background: #FFF0F0; }
 
 /* === Export CSV Button === */
-.btn-export {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--dark);
-  padding: 6px 14px;
+.btn-export-csv {
+  background: var(--airway-primary);
+  border: none;
+  color: #fff;
+  padding: 7px 16px;
   border-radius: 4px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  cursor: pointer;
   white-space: nowrap;
+  transition: background 0.15s;
+  margin-left: auto;
 }
-.btn-export:hover { border-color: var(--gray); }
+.btn-export-csv:hover { background: var(--airway-dark); }

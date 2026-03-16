@@ -9,46 +9,28 @@
   <h1 class="page-title">Airway Hold Status Report</h1>
 </div>
 
-<!-- KPI Scorecard Row -->
-<div class="kpi-row mb-16">
+<!-- Hold Status Tiles -->
+<div class="hold-tiles">
   {% for hs in hold_status_order %}
-  <div class="kpi-card" :class="{ 'kpi-active': selected.includes('{{ hs }}') }" @click="toggle('{{ hs }}')">
-    <div class="kpi-label">{{ hs }}</div>
-    <div class="kpi-count">{{ status_counts.get(hs, 0) }}</div>
+  <div class="hold-tile" :class="{ 'hold-tile--active': selected.includes('{{ hs }}') }" @click="toggle('{{ hs }}')">
+    <div class="hold-tile__count">{{ status_counts.get(hs, 0) }}</div>
+    <div class="hold-tile__label">{{ hs }}</div>
   </div>
   {% endfor %}
 </div>
 
-<!-- Filter Bar -->
-<div class="filter-bar mb-24" style="display:flex; align-items:center; gap:8px;">
-  <button class="btn btn-reset" @click="clearAll()">
-    Reset Filters
-  </button>
-  <select name="hold_status" class="filter-select"
-          hx-get="/partials/airway-hold-table"
-          hx-trigger="change"
-          hx-target="#airway-hold-content"
-          @change="selected = []"
-          :style="$el.value === '' ? 'color: #C0182B; font-weight:600;' : ''">
-    <option value="">All Hold Statuses</option>
-    {% for hs in hold_statuses %}
-    <option value="{{ hs }}">{{ hs }}</option>
-    {% endfor %}
-  </select>
-  <button class="btn btn-clear" x-show="selected.length > 0" @click="clearCards()" style="display:none">
+<!-- Action Bar -->
+<div class="hold-action-bar">
+  <button class="btn btn-reset" x-show="selected.length > 0" @click="clearAll()" style="display:none">
     Clear Filters &times;
   </button>
-  <!-- Export CSV — pushed to far right -->
-  <a class="btn btn-export" style="margin-left:auto; text-decoration:none;"
-     :href="'/airway-hold/export?hold_status=' + encodeURIComponent(document.querySelector('[name=hold_status]')?.value || '')"
-     download>Export CSV</a>
+  <button class="btn-export-csv" @click="doExport()">&#8595; Export CSV</button>
 </div>
 
 <div class="table-container airway-hold-sticky">
   <div id="airway-hold-content"
        hx-get="/partials/airway-hold-table"
        hx-trigger="sse:data-refreshed"
-       hx-include="[name='hold_status']"
        hx-swap="innerHTML">
     {% include "partials/airway_hold_table.html" %}
   </div>
@@ -79,7 +61,6 @@ function airwaySort() {
       rows.sort((a, b) => {
         const aText = a.cells[colIdx]?.dataset?.sort ?? (a.cells[colIdx]?.textContent || '').trim();
         const bText = b.cells[colIdx]?.dataset?.sort ?? (b.cells[colIdx]?.textContent || '').trim();
-        // ISO dates (YYYY-MM-DD) sort correctly as strings — skip numeric path
         const dateRe = /^\d{4}-\d{2}-\d{2}/;
         if (dateRe.test(aText) && dateRe.test(bText)) return aText.localeCompare(bText) * dir;
         const aNum = parseFloat(aText);
@@ -103,18 +84,15 @@ function airwayHoldPage() {
       const idx = this.selected.indexOf(status);
       if (idx >= 0) this.selected.splice(idx, 1);
       else this.selected.push(status);
-      // Clear dropdown when using card filters
-      document.querySelector('[name=hold_status]').value = '';
-      this._refreshTable();
-    },
-    clearCards() {
-      this.selected = [];
       this._refreshTable();
     },
     clearAll() {
       this.selected = [];
-      document.querySelector('[name=hold_status]').value = '';
       this._refreshTable();
+    },
+    doExport() {
+      const params = this.selected.map(s => 'hold_status=' + encodeURIComponent(s)).join('&');
+      window.location.href = '/airway-hold/export' + (params ? '?' + params : '');
     },
     _refreshTable() {
       const params = this.selected.map(s => 'hold_status=' + encodeURIComponent(s)).join('&');

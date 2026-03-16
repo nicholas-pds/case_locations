@@ -42,14 +42,14 @@ async def airway_hold_page(request: Request):
 
 
 @router.get("/airway-hold/export")
-async def airway_hold_export(hold_status: str = Query(default="")):
+async def airway_hold_export(hold_status: list[str] = Query(default=[])):
     df = await cache.get("airway_hold_status")
     if df is None or df.empty:
         records = []
     else:
         filtered = df.copy()
         if hold_status:
-            filtered = filtered[filtered["HoldStatus"] == hold_status]
+            filtered = filtered[filtered["HoldStatus"].isin(hold_status)]
         records = filtered.to_dict("records")
 
     columns = ["CaseNumber", "PanNumber", "DoctorName", "PracticeName", "PatientName",
