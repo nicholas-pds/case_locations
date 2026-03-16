@@ -46,12 +46,6 @@ function airwayHoldPage() {
     dir: 'asc',
     init() {
       this._readCounts();
-      document.body.addEventListener('htmx:afterSwap', (e) => {
-        if (e.detail.target.id === 'airway-hold-content') {
-          this._readCounts();
-          this.$nextTick(() => this._applySort());
-        }
-      });
       document.body.addEventListener('sse:data-refreshed', () => this._refreshTable());
     },
     _readCounts() {
@@ -105,9 +99,14 @@ function airwayHoldPage() {
       const params = this.selected.map(s => 'hold_status=' + encodeURIComponent(s)).join('&');
       window.location.href = '/airway-hold/export' + (params ? '?' + params : '');
     },
-    _refreshTable() {
+    async _refreshTable() {
       const params = this.selected.map(s => 'hold_status=' + encodeURIComponent(s)).join('&');
-      htmx.ajax('GET', '/partials/airway-hold-table' + (params ? '?' + params : ''), '#airway-hold-content');
+      await htmx.ajax('GET', '/partials/airway-hold-table' + (params ? '?' + params : ''), {
+        target: '#airway-hold-content',
+        swap: 'innerHTML'
+      });
+      this._readCounts();
+      this._applySort();
     }
   };
 }
