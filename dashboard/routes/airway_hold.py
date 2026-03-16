@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 from datetime import date
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -29,12 +30,15 @@ async def airway_hold_page(request: Request):
         hold_statuses = sorted(df['HoldStatus'].dropna().unique().tolist())
         status_counts = df.groupby('HoldStatus').size().to_dict()
 
+    status_counts_json = json.dumps(status_counts)
+
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/airway_hold.html", {
         "request": request,
         "cases": cases,
         "hold_statuses": hold_statuses,
         "status_counts": status_counts,
+        "status_counts_json": status_counts_json,
         "hold_status_order": HOLD_STATUS_ORDER,
         "metadata": metadata,
         "active_page": "airway-hold",
