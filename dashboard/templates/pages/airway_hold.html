@@ -25,11 +25,56 @@
   <button class="btn btn-reset" @click="clearAll()">Clear Filters &times;</button>
 </div>
 
+<!-- Inline data block -->
+<script id="airway-data" type="application/json">
+{"rows": {{ cases_json | safe }}, "counts": {{ status_counts_json | safe }}}
+</script>
+
 <div class="table-container airway-hold-sticky">
-  <div id="airway-hold-content"
-       hx-get="/partials/airway-hold-table"
-       hx-swap="innerHTML">
-    {% include "partials/airway_hold_table.html" %}
+  <div class="table-scroll">
+    <table class="airway-table">
+      <thead>
+        <tr>
+          <th @click="sort(0)" class="sortable-th">Case # <span x-text="indicator(0)"></span></th>
+          <th @click="sort(1)" class="sortable-th">Pan # <span x-text="indicator(1)"></span></th>
+          <th @click="sort(2)" class="sortable-th">Doctor <span x-text="indicator(2)"></span></th>
+          <th @click="sort(3)" class="sortable-th">Practice <span x-text="indicator(3)"></span></th>
+          <th @click="sort(4)" class="sortable-th">Patient <span x-text="indicator(4)"></span></th>
+          <th @click="sort(5)" class="sortable-th">Create Date <span x-text="indicator(5)"></span></th>
+          <th @click="sort(6)" class="sortable-th">Ship Date <span x-text="indicator(6)"></span></th>
+          <th @click="sort(7)" class="sortable-th">Hold Date <span x-text="indicator(7)"></span></th>
+          <th @click="sort(8)" class="sortable-th">Hold Status <span x-text="indicator(8)"></span></th>
+          <th @click="sort(9)" class="sortable-th">Hold Reason <span x-text="indicator(9)"></span></th>
+          <th @click="sort(10)" class="sortable-th">Type <span x-text="indicator(10)"></span></th>
+          <th @click="sort(11)" class="sortable-th">Follow-Up Date <span x-text="indicator(11)"></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(row, i) in displayRows" :key="i">
+          <tr>
+            <td class="mono" x-text="row.CaseNumber"></td>
+            <td class="mono" x-text="row.PanNumber"></td>
+            <td x-text="row.DoctorName"></td>
+            <td x-text="row.PracticeName"></td>
+            <td x-text="row.PatientName"></td>
+            <td x-text="fmtDate(row.CreateDate)"></td>
+            <td x-text="fmtDate(row.ShipDate)"></td>
+            <td x-text="fmtDate(row.HoldDate)"></td>
+            <td x-text="row.HoldStatus"></td>
+            <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                :title="row.HoldReason" x-text="row.HoldReason"></td>
+            <td x-text="row.FollowUpType"></td>
+            <td x-text="row.FollowUpDate"></td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+    <div class="empty-state" x-show="displayRows.length === 0" style="display:none">
+      <p>No airway hold cases found</p>
+    </div>
+  </div>
+  <div class="table-footer">
+    <span x-text="displayRows.length + ' cases'"></span>
   </div>
 </div>
 
@@ -39,19 +84,64 @@
 {% block extra_js %}
 <script>
 function airwayHoldPage() {
+  const COL_KEYS = ['CaseNumber','PanNumber','DoctorName','PracticeName','PatientName',
+                    'CreateDate','ShipDate','HoldDate','HoldStatus','HoldReason','FollowUpType','FollowUpDate'];
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}/;
+
   return {
-    selected: [],
+    allRows: [],
     counts: {},
+    selected: [],
     col: null,
     dir: 'asc',
+
+    get displayRows() {
+      let rows = this.allRows;
+      if (this.selected.length > 0) {
+        rows = rows.filter(r => this.selected.includes(r.HoldStatus));
+      }
+      if (this.col !== null) {
+        const key = COL_KEYS[this.col];
+        const dir = this.dir === 'asc' ? 1 : -1;
+        rows = [...rows].sort((a, b) => {
+          const av = String(a[key] ?? '');
+          const bv = String(b[key] ?? '');
+          if (DATE_RE.test(av) && DATE_RE.test(bv)) return av.localeCompare(bv) * dir;
+          const an = parseFloat(av), bn = parseFloat(bv);
+          if (!isNaN(an) && !isNaN(bn)) return (an - bn) * dir;
+          return av.localeCompare(bv) * dir;
+        });
+      }
+      return rows;
+    },
+
+    fmtDate(val) {
+      if (!val) return '';
+      const m = String(val).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!m) return val;
+      return parseInt(m[2]) + '/' + parseInt(m[3]);
+    },
+
     init() {
-      this._readCounts();
-      document.body.addEventListener('sse:data-refreshed', () => this._refreshTable());
+      const el = document.getElementById('airway-data');
+      if (el) {
+        const data = JSON.parse(el.textContent);
+        this.allRows = data.rows;
+        this.counts = data.counts;
+      }
+      document.body.addEventListener('sse:data-refreshed', () => this._refreshData());
     },
-    _readCounts() {
-      const el = document.getElementById('hold-counts');
-      if (el) this.counts = JSON.parse(el.dataset.json || '{}');
+
+    async _refreshData() {
+      try {
+        const resp = await fetch('/airway-hold/data');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        this.allRows = data.rows;
+        this.counts = data.counts;
+      } catch (e) {}
     },
+
     sort(colIdx) {
       if (this.col === colIdx) {
         this.dir = this.dir === 'asc' ? 'desc' : 'asc';
@@ -59,54 +149,26 @@ function airwayHoldPage() {
         this.col = colIdx;
         this.dir = 'asc';
       }
-      this._applySort();
     },
-    _applySort() {
-      if (this.col === null) return;
-      const root = document.getElementById('airway-hold-content');
-      const tbody = root?.querySelector('tbody');
-      if (!tbody) return;
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      const dir = this.dir === 'asc' ? 1 : -1;
-      const colIdx = this.col;
-      rows.sort((a, b) => {
-        const aText = a.cells[colIdx]?.dataset?.sort ?? (a.cells[colIdx]?.textContent || '').trim();
-        const bText = b.cells[colIdx]?.dataset?.sort ?? (b.cells[colIdx]?.textContent || '').trim();
-        const dateRe = /^\d{4}-\d{2}-\d{2}/;
-        if (dateRe.test(aText) && dateRe.test(bText)) return aText.localeCompare(bText) * dir;
-        const aNum = parseFloat(aText);
-        const bNum = parseFloat(bText);
-        if (!isNaN(aNum) && !isNaN(bNum)) return (aNum - bNum) * dir;
-        return aText.localeCompare(bText) * dir;
-      });
-      rows.forEach(r => tbody.appendChild(r));
-    },
+
     indicator(colIdx) {
       if (this.col !== colIdx) return '';
       return this.dir === 'asc' ? '\u25B2' : '\u25BC';
     },
+
     toggle(status) {
       const idx = this.selected.indexOf(status);
       if (idx >= 0) this.selected.splice(idx, 1);
       else this.selected.push(status);
-      this._refreshTable();
     },
+
     clearAll() {
       this.selected = [];
-      this._refreshTable();
     },
+
     doExport() {
       const params = this.selected.map(s => 'hold_status=' + encodeURIComponent(s)).join('&');
       window.location.href = '/airway-hold/export' + (params ? '?' + params : '');
-    },
-    async _refreshTable() {
-      const params = this.selected.map(s => 'hold_status=' + encodeURIComponent(s)).join('&');
-      await htmx.ajax('GET', '/partials/airway-hold-table' + (params ? '?' + params : ''), {
-        target: '#airway-hold-content',
-        swap: 'innerHTML'
-      });
-      this._readCounts();
-      this._applySort();
     }
   };
 }

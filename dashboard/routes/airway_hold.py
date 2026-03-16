@@ -31,11 +31,13 @@ async def airway_hold_page(request: Request):
         status_counts = df.groupby('HoldStatus').size().to_dict()
 
     status_counts_json = json.dumps(status_counts)
+    cases_json = json.dumps(cases, default=str)
 
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/airway_hold.html", {
         "request": request,
         "cases": cases,
+        "cases_json": cases_json,
         "hold_statuses": hold_statuses,
         "status_counts": status_counts,
         "status_counts_json": status_counts_json,
@@ -43,6 +45,19 @@ async def airway_hold_page(request: Request):
         "metadata": metadata,
         "active_page": "airway-hold",
     })
+
+
+@router.get("/airway-hold/data")
+async def airway_hold_data():
+    from fastapi.responses import JSONResponse
+    df = await cache.get("airway_hold_status")
+    if df is not None and not df.empty and 'HoldStatus' in df.columns:
+        counts = df.groupby('HoldStatus').size().to_dict()
+        rows = df.to_dict('records')
+    else:
+        counts = {}
+        rows = []
+    return JSONResponse(content=json.loads(json.dumps({"rows": rows, "counts": counts}, default=str)))
 
 
 @router.get("/airway-hold/export")
