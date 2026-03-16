@@ -38,12 +38,26 @@
 
 {% block extra_js %}
 <script>
-function airwaySort() {
+function airwayHoldPage() {
   return {
+    selected: [],
+    counts: {},
     col: null,
     dir: 'asc',
-    _root: null,
-    init() { this._root = this.$el; },
+    init() {
+      this._readCounts();
+      document.body.addEventListener('htmx:afterSwap', (e) => {
+        if (e.detail.target.id === 'airway-hold-content') {
+          this._readCounts();
+          this.$nextTick(() => this._applySort());
+        }
+      });
+      document.body.addEventListener('sse:data-refreshed', () => this._refreshTable());
+    },
+    _readCounts() {
+      const el = document.getElementById('hold-counts');
+      if (el) this.counts = JSON.parse(el.dataset.json || '{}');
+    },
     sort(colIdx) {
       if (this.col === colIdx) {
         this.dir = this.dir === 'asc' ? 'desc' : 'asc';
@@ -51,10 +65,16 @@ function airwaySort() {
         this.col = colIdx;
         this.dir = 'asc';
       }
-      const tbody = this._root?.querySelector('tbody');
+      this._applySort();
+    },
+    _applySort() {
+      if (this.col === null) return;
+      const root = document.getElementById('airway-hold-content');
+      const tbody = root?.querySelector('tbody');
       if (!tbody) return;
       const rows = Array.from(tbody.querySelectorAll('tr'));
       const dir = this.dir === 'asc' ? 1 : -1;
+      const colIdx = this.col;
       rows.sort((a, b) => {
         const aText = a.cells[colIdx]?.dataset?.sort ?? (a.cells[colIdx]?.textContent || '').trim();
         const bText = b.cells[colIdx]?.dataset?.sort ?? (b.cells[colIdx]?.textContent || '').trim();
@@ -70,24 +90,6 @@ function airwaySort() {
     indicator(colIdx) {
       if (this.col !== colIdx) return '';
       return this.dir === 'asc' ? '\u25B2' : '\u25BC';
-    }
-  };
-}
-
-function airwayHoldPage() {
-  return {
-    selected: [],
-    counts: {},
-    init() {
-      this._readCounts();
-      document.body.addEventListener('htmx:afterSwap', (e) => {
-        if (e.detail.target.id === 'airway-hold-content') this._readCounts();
-      });
-      document.body.addEventListener('sse:data-refreshed', () => this._refreshTable());
-    },
-    _readCounts() {
-      const el = document.getElementById('hold-counts');
-      if (el) this.counts = JSON.parse(el.dataset.json || '{}');
     },
     toggle(status) {
       const idx = this.selected.indexOf(status);
