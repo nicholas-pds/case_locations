@@ -2146,63 +2146,55 @@
 
         <!-- Old Case Attachments -->
         <div class="pres-att-section-label">Old Case Attachments</div>
-        <template x-if="presCase && presOGDocs.length === 0">
-          <div class="pres-empty">No attachments</div>
-        </template>
-        <template x-if="presCase && presOGDocs.length > 0">
-          <div class="pres-att-grid">
-            <template x-for="doc in presOGDocs" :key="doc.FilePath">
-              <div class="pres-att-thumb"
-                   @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
-                   :title="docDisplayName(doc)">
-                <div class="pres-thumb-img" :data-ext="(doc.fileType || 'file').toUpperCase()">
-                  <template x-if="doc.isExternal">
-                    <span class="pres-thumb-badge link">&#x1F517;</span>
-                  </template>
-                  <template x-if="doc.hasThumb && !doc.isExternal">
-                    <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt=""
-                         @error="$event.target.style.display='none'; $event.target.closest('.pres-thumb-img').classList.add('thumb-err')">
-                  </template>
-                  <template x-if="!doc.hasThumb && !doc.isExternal">
-                    <span :class="'pres-thumb-badge ' + (doc.fileType || 'file')" x-text="(doc.fileType || 'FILE').toUpperCase()"></span>
-                  </template>
-                </div>
-                <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
+        <div x-show="presCase && presOGDocs.length === 0" class="pres-empty">No attachments</div>
+        <div x-show="presCase && presOGDocs.length > 0" class="pres-att-grid">
+          <template x-for="doc in presOGDocs" :key="doc.FilePath">
+            <div class="pres-att-thumb"
+                 @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
+                 :title="docDisplayName(doc)">
+              <div class="pres-thumb-img" :data-ext="(doc.fileType || 'file').toUpperCase()">
+                <template x-if="doc.isExternal">
+                  <span class="pres-thumb-badge link">&#x1F517;</span>
+                </template>
+                <template x-if="doc.hasThumb && !doc.isExternal">
+                  <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt=""
+                       @error="$event.target.style.display='none'; $event.target.closest('.pres-thumb-img').classList.add('thumb-err')">
+                </template>
+                <template x-if="!doc.hasThumb && !doc.isExternal">
+                  <span :class="'pres-thumb-badge ' + (doc.fileType || 'file')" x-text="(doc.fileType || 'FILE').toUpperCase()"></span>
+                </template>
               </div>
-            </template>
-          </div>
-        </template>
+              <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
+            </div>
+          </template>
+        </div>
 
         <div class="pres-att-divider"></div>
 
         <!-- New Case Attachments -->
         <div class="pres-att-section-label">New Case Attachments</div>
-        <template x-if="presCase && presMainDocs.length === 0">
-          <div class="pres-empty">No attachments</div>
-        </template>
-        <template x-if="presCase && presMainDocs.length > 0">
-          <div class="pres-att-grid">
-            <template x-for="doc in presMainDocs" :key="doc.FilePath">
-              <div class="pres-att-thumb"
-                   @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
-                   :title="docDisplayName(doc)">
-                <div class="pres-thumb-img" :data-ext="(doc.fileType || 'file').toUpperCase()">
-                  <template x-if="doc.isExternal">
-                    <span class="pres-thumb-badge link">&#x1F517;</span>
-                  </template>
-                  <template x-if="doc.hasThumb && !doc.isExternal">
-                    <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt=""
-                         @error="$event.target.style.display='none'; $event.target.closest('.pres-thumb-img').classList.add('thumb-err')">
-                  </template>
-                  <template x-if="!doc.hasThumb && !doc.isExternal">
-                    <span :class="'pres-thumb-badge ' + (doc.fileType || 'file')" x-text="(doc.fileType || 'FILE').toUpperCase()"></span>
-                  </template>
-                </div>
-                <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
+        <div x-show="presCase && presMainDocs.length === 0" class="pres-empty">No attachments</div>
+        <div x-show="presCase && presMainDocs.length > 0" class="pres-att-grid">
+          <template x-for="doc in presMainDocs" :key="doc.FilePath">
+            <div class="pres-att-thumb"
+                 @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
+                 :title="docDisplayName(doc)">
+              <div class="pres-thumb-img" :data-ext="(doc.fileType || 'file').toUpperCase()">
+                <template x-if="doc.isExternal">
+                  <span class="pres-thumb-badge link">&#x1F517;</span>
+                </template>
+                <template x-if="doc.hasThumb && !doc.isExternal">
+                  <img :src="'/remakes/attachment?path=' + encodeURIComponent(doc.FilePath) + '&thumb=1'" loading="lazy" alt=""
+                       @error="$event.target.style.display='none'; $event.target.closest('.pres-thumb-img').classList.add('thumb-err')">
+                </template>
+                <template x-if="!doc.hasThumb && !doc.isExternal">
+                  <span :class="'pres-thumb-badge ' + (doc.fileType || 'file')" x-text="(doc.fileType || 'FILE').toUpperCase()"></span>
+                </template>
               </div>
-            </template>
-          </div>
-        </template>
+              <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
+            </div>
+          </template>
+        </div>
 
       </div>
 
