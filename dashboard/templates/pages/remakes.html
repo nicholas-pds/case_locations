@@ -2146,12 +2146,12 @@
 
         <!-- Old Case Attachments -->
         <div class="pres-att-section-label">Old Case Attachments</div>
-        <template x-if="presCase && (_documentsMapData[String(presCase.OG_CaseID)] || []).length === 0">
+        <template x-if="presCase && getOGCaseDocs().length === 0">
           <div class="pres-empty">No attachments</div>
         </template>
-        <template x-if="presCase && (_documentsMapData[String(presCase.OG_CaseID)] || []).length > 0">
+        <template x-if="presCase && getOGCaseDocs().length > 0">
           <div class="pres-att-grid">
-            <template x-for="doc in (_documentsMapData[String(presCase.OG_CaseID)] || [])" :key="doc.FilePath">
+            <template x-for="doc in getOGCaseDocs()" :key="doc.FilePath">
               <div class="pres-att-thumb"
                    @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
                    :title="docDisplayName(doc)">
@@ -2177,12 +2177,12 @@
 
         <!-- New Case Attachments -->
         <div class="pres-att-section-label">New Case Attachments</div>
-        <template x-if="presCase && (_documentsMapData[String(presCase.MainCaseID)] || []).length === 0">
+        <template x-if="presCase && getMainCaseDocs().length === 0">
           <div class="pres-empty">No attachments</div>
         </template>
-        <template x-if="presCase && (_documentsMapData[String(presCase.MainCaseID)] || []).length > 0">
+        <template x-if="presCase && getMainCaseDocs().length > 0">
           <div class="pres-att-grid">
-            <template x-for="doc in (_documentsMapData[String(presCase.MainCaseID)] || [])" :key="doc.FilePath">
+            <template x-for="doc in getMainCaseDocs()" :key="doc.FilePath">
               <div class="pres-att-thumb"
                    @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
                    :title="docDisplayName(doc)">
@@ -2931,6 +2931,14 @@ function remakesPage() {
       this._tip = { show: false, type: '', items: [] };
     },
 
+    getOGCaseDocs() {
+      if (!this.presCase || !this.presCase.OG_CaseID) return [];
+      return this._documentsMapData[String(this.presCase.OG_CaseID)] || [];
+    },
+    getMainCaseDocs() {
+      if (!this.presCase || !this.presCase.MainCaseID) return [];
+      return this._documentsMapData[String(this.presCase.MainCaseID)] || [];
+    },
     getDocsForCase(mainId, ogId) {
       const seen = new Set();
       const docs = [];
