@@ -1343,8 +1343,10 @@ function efficiencyPage() {
         html += `<div style="width:65px; min-width:65px; font-weight:700; font-size:9px; color:#C00; padding-top:3px;">ALL</div>`;
         html += `<div style="flex:1;">${this._pdfTable(
           ['Date','People','EFF','Cases','Tasks','Duration','Work Hrs'],
-          [[summary.date, summary.people, this._pdfEffCell(summary.eff), summary.cases, summary.tasks, summary.duration.toFixed(1), summary.hours.toFixed(1)]]
+          [[summary.date, summary.people, this._pdfEffCell(summary.eff), summary.cases, summary.tasks, summary.duration.toFixed(1), summary.hours.toFixed(1)]],
+          [20, 12, 15, 12, 12, 15, 14]
         )}</div>`;
+        html += `<div style="width:65px; min-width:65px;"></div>`;
         html += `</div>`;
 
         // Teams table
@@ -1353,7 +1355,8 @@ function efficiencyPage() {
         ]);
         html += `<div style="display:flex; align-items:flex-start; page-break-inside:avoid; margin-bottom:6px;">`;
         html += `<div style="width:65px; min-width:65px; font-weight:700; font-size:9px; color:#C00; padding-top:3px;">Teams</div>`;
-        html += `<div style="flex:1;">${this._pdfTable(['Group','People','EFF','Cases','Tasks','Duration','Work Hrs'], teamRows)}</div>`;
+        html += `<div style="flex:1;">${this._pdfTable(['Group','People','EFF','Cases','Tasks','Duration','Work Hrs'], teamRows, [22, 12, 14, 12, 12, 14, 14])}</div>`;
+        html += `<div style="width:65px; min-width:65px;"></div>`;
         html += `</div>`;
 
         // Per-team sections (single-column flex rows)
@@ -1366,7 +1369,8 @@ function efficiencyPage() {
           ]);
           html += `<div style="display:flex; align-items:flex-start; page-break-inside:avoid; margin-bottom:4px;">`;
           html += `<div style="width:65px; min-width:65px; font-weight:700; font-size:8px; color:#C00; padding-top:3px;">${sec.team}</div>`;
-          html += `<div style="flex:1;">${this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows)}</div>`;
+          html += `<div style="flex:1;">${this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows, [22, 16, 15, 15, 16, 16])}</div>`;
+          html += `<div style="width:65px; min-width:65px;"></div>`;
           html += `</div>`;
         });
 
@@ -1380,7 +1384,8 @@ function efficiencyPage() {
           ]);
           html += `<div style="display:flex; align-items:flex-start; page-break-inside:avoid; margin-bottom:4px;">`;
           html += `<div style="width:65px; min-width:65px; font-weight:700; font-size:9px; color:#C00; padding-top:3px;">Training</div>`;
-          html += `<div style="flex:1;">${this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows)}</div>`;
+          html += `<div style="flex:1;">${this._pdfTable(['Name','EFF','Cases','Tasks','Duration','Work Hrs'], rows, [22, 16, 15, 15, 16, 16])}</div>`;
+          html += `<div style="width:65px; min-width:65px;"></div>`;
           html += `</div>`;
         }
 
@@ -1476,13 +1481,18 @@ function efficiencyPage() {
       return colors[tier] || '#000';
     },
 
-    _pdfTable(headers, rows) {
-      let h = `<table style="width:100%; border-collapse:collapse; font-size:7px; margin-bottom:3px; page-break-inside:avoid;">`;
+    _pdfTable(headers, rows, colWidths = null) {
+      const fixedStyle = colWidths ? ' table-layout:fixed;' : '';
+      let h = `<table style="width:100%; border-collapse:collapse; font-size:9px; margin-bottom:3px; page-break-inside:avoid;${fixedStyle}">`;
+      if (colWidths) {
+        h += `<colgroup>`;
+        colWidths.forEach(w => { h += `<col style="width:${w}%">`; });
+        h += `</colgroup>`;
+      }
       h += `<thead><tr>`;
       headers.forEach((hdr, idx) => {
         const align = idx === 0 ? 'left' : 'center';
-        const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
-        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:1px 2px; text-align:${align}; ${nowrap} font-size:6px;">${hdr}</th>`;
+        h += `<th style="border:1px solid #333; background:#C00; color:#fff; padding:2px 4px; text-align:${align}; font-size:8px;">${hdr}</th>`;
       });
       h += `</tr></thead><tbody>`;
       rows.forEach((cells, i) => {
@@ -1490,8 +1500,7 @@ function efficiencyPage() {
         h += `<tr>`;
         cells.forEach((c, idx) => {
           const align = idx === 0 ? 'left' : 'center';
-          const nowrap = idx === 0 ? 'white-space:nowrap;' : '';
-          h += `<td style="border:1px solid #999; padding:1px 2px; background:${bg}; font-size:7px; text-align:${align}; ${nowrap}">${c}</td>`;
+          h += `<td style="border:1px solid #999; padding:2px 4px; background:${bg}; font-size:9px; text-align:${align};">${c}</td>`;
         });
         h += `</tr>`;
       });
