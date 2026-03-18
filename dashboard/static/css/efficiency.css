@@ -485,17 +485,17 @@
 }
 
 .eff-person-table thead {
-  background: var(--eff-surface);
+  background: #C0182B;
 }
 
 .eff-person-table th {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--eff-muted);
+  color: #ffffff;
   text-align: right;
   padding: 7px 10px;
-  border-bottom: 1px solid var(--eff-border);
+  border-bottom: none;
   font-weight: 500;
 }
 
