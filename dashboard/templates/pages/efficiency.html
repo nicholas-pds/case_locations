@@ -721,7 +721,7 @@
   <!-- EDIT EMPLOYEES MODAL                       -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="showEmployeesModal" x-cloak class="eff-modal-overlay" @click.self="showEmployeesModal = false">
-    <div class="eff-modal" style="max-width:1100px;">
+    <div class="eff-modal" style="max-width:780px; min-width:720px; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
       <div class="eff-modal-header">
         <h3 class="eff-modal-title">Edit Employees</h3>
         <button @click="showEmployeesModal = false" class="eff-modal-close">&times;</button>
@@ -730,31 +730,26 @@
         <input type="text" x-model="employeesFilter" placeholder="Filter by name, team, department..."
                class="eff-modal-input" style="max-width:300px;">
       </div>
-      <table class="eff-modal-table" style="font-size:11px;">
+      <div style="overflow-y:auto; max-height:55vh;">
+      <table class="eff-modal-table" style="font-size:11px; width:100%; border-collapse:collapse;">
         <thead>
           <tr>
-            <th style="width:55px;">Emp ID</th>
-            <th>Last Name</th>
-            <th>First Name</th>
-            <th>MT Name</th>
-            <th>Department</th>
-            <th>Gusto Name</th>
-            <th style="width:110px;">Team</th>
-            <th style="width:55px;">Training</th>
-            <th style="width:30px;"></th>
+            <th style="width:80px; min-width:80px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Emp ID</th>
+            <th style="width:160px; min-width:160px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">MT Name</th>
+            <th style="width:180px; min-width:180px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Gusto Name</th>
+            <th style="width:150px; min-width:150px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Team</th>
+            <th style="width:90px; min-width:90px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Training</th>
+            <th style="width:40px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;"></th>
           </tr>
         </thead>
         <tbody>
           <template x-for="(row, idx) in filteredEmployees()" :key="'emp-'+idx">
-            <tr>
-              <td><input type="text" x-model="row['Employee ID']" class="eff-modal-input" style="text-align:center;"></td>
-              <td><input type="text" x-model="row['Last Name']" class="eff-modal-input"></td>
-              <td><input type="text" x-model="row['First Name']" class="eff-modal-input"></td>
-              <td><input type="text" x-model="row['MT Name']" class="eff-modal-input"></td>
-              <td><input type="text" x-model="row.Department" class="eff-modal-input"></td>
-              <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input"></td>
+            <tr style="transition:background 0.1s;" @mouseenter="$el.style.background='#f9f9f9'" @mouseleave="$el.style.background=''">
+              <td><input type="text" x-model="row['Employee ID']" class="eff-modal-input" style="width:100%; text-align:center;"></td>
+              <td><input type="text" x-model="row['MT Name']" class="eff-modal-input" style="width:100%;"></td>
+              <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input" style="width:100%;"></td>
               <td>
-                <select x-model="row.Team" class="eff-modal-select">
+                <select x-model="row.Team" class="eff-modal-select" style="width:100%;">
                   <option value="">—</option>
                   <option value="3D Design">3D Design</option>
                   <option value="3D Manufacturing">3D Manufacturing</option>
@@ -771,7 +766,7 @@
                 </select>
               </td>
               <td>
-                <select x-model="row['Training Plan']" class="eff-modal-select">
+                <select x-model="row['Training Plan']" class="eff-modal-select" style="width:100%;">
                   <option value="0">0</option>
                   <option value="1">1</option>
                 </select>
@@ -783,8 +778,9 @@
           </template>
         </tbody>
       </table>
+      </div>
       <div class="eff-modal-footer">
-        <button @click="employeesData.push({'Employee ID':'', 'Last Name':'', 'First Name':'', 'MT Name':'', Department:'', 'Gusto Name':'', Team':'z_Not On Report', 'Training Plan':'0'})"
+        <button @click="employeesData.push({'Employee ID':'', 'MT Name':'', 'Gusto Name':'', 'Team':'z_Not On Report', 'Training Plan':'0'})"
                 class="eff-modal-btn eff-modal-btn-secondary">+ Add Row</button>
         <button @click="saveEmployees()" class="eff-modal-btn eff-modal-btn-primary" :disabled="employeesSaving"
                 x-text="employeesSaving ? 'Saving...' : 'Save Employees'"></button>

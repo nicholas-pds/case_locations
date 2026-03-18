@@ -122,10 +122,7 @@ def save_tech_constants(df: pd.DataFrame) -> None:
 # Employee Lookups (CSV-based)
 # ─────────────────────────────────────────────
 
-_EMPLOYEE_COLS = [
-    "Employee ID", "Last Name", "First Name", "MT Name",
-    "Department", "Gusto Name", "Team", "Training Plan",
-]
+_EMPLOYEE_COLS = ["Employee ID", "MT Name", "Gusto Name", "Team", "Training Plan"]
 
 
 def load_employee_lkups() -> pd.DataFrame:

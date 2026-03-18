@@ -223,10 +223,7 @@ async def save_employees(request: Request):
     try:
         data = await request.json()
         df = pd.DataFrame(data)
-        required = [
-            "Employee ID", "Last Name", "First Name", "MT Name",
-            "Department", "Gusto Name", "Team", "Training Plan",
-        ]
+        required = ["Employee ID", "MT Name", "Gusto Name", "Team", "Training Plan"]
         for col in required:
             if col not in df.columns:
                 return JSONResponse(
