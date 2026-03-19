@@ -1217,7 +1217,7 @@ function efficiencyPage() {
         if (data.status === 'ok') {
           this.gonculating = true;
           this.showEmployeesModal = false;
-          setTimeout(() => window.location.reload(), 500);
+          setTimeout(() => window.location.reload(), 1500);
         } else {
           this.employeesError = data.message || 'Save failed';
         }
