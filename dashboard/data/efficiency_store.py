@@ -1,5 +1,7 @@
 """Parquet-based persistence for efficiency data."""
 import logging
+import shutil
+from datetime import datetime
 from pathlib import Path
 import pandas as pd
 
@@ -11,6 +13,8 @@ _DATA_DIR.mkdir(exist_ok=True)
 
 _DAILY_PATH = _DATA_DIR / "daily.parquet"
 _AGGREGATED_PATH = _DATA_DIR / "aggregated.parquet"
+_BACKUP_DIR = _DATA_DIR / "backups"
+_MAX_BACKUPS = 7
 _NOON_PATH = _DATA_DIR / "noon.parquet"
 _3PM_PATH = _DATA_DIR / "3pm.parquet"
 
@@ -55,8 +59,38 @@ def load_daily() -> pd.DataFrame:
 
 
 def save_daily(df: pd.DataFrame) -> None:
+    # Guard: never overwrite non-empty parquet with empty DataFrame
+    if df.empty:
+        if _DAILY_PATH.exists():
+            logger.error("save_daily: refusing to overwrite existing parquet with empty DataFrame — aborting save")
+            return
+        # Nothing to save and nothing to overwrite — silently skip
+        return
+
     if _DAILY_PATH.exists():
+        existing_rows = len(pd.read_parquet(_DAILY_PATH))
+        new_rows = len(df)
+
+        # Warn on dramatic row loss (but still save — could be intentional date range)
+        if existing_rows > 0 and new_rows < existing_rows * 0.5:
+            logger.warning(
+                f"save_daily: new data has {new_rows} rows vs existing {existing_rows} — "
+                f"that's a {100 * (1 - new_rows/existing_rows):.0f}% reduction"
+            )
+
+        # Timestamped backup
+        _BACKUP_DIR.mkdir(exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        shutil.copy2(_DAILY_PATH, _BACKUP_DIR / f"daily_{ts}.parquet")
+
+        # Prune: keep only the last _MAX_BACKUPS
+        old_backups = sorted(_BACKUP_DIR.glob("daily_*.parquet"))
+        for old in old_backups[:-_MAX_BACKUPS]:
+            old.unlink()
+
+        # Keep single .bak for quick manual restore
         _DAILY_PATH.replace(_DAILY_PATH.with_suffix(".parquet.bak"))
+
     df.to_parquet(_DAILY_PATH, index=False)
     logger.info(f"Saved daily efficiency data: {len(df)} rows")
 
