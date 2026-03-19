@@ -428,12 +428,17 @@ def reprocess_with_employee_lkups() -> dict:
     lkups = load_employee_lkups()
     if not lkups.empty:
         lkups["EmployeeID"] = lkups["Employee ID"].astype(str).str.strip()
+        # FIX: coerce Training Plan to int before mapping (CSV loads as str)
+        lkups["Training Plan"] = pd.to_numeric(lkups["Training Plan"], errors="coerce").fillna(0).astype(int)
         lkup_map = lkups.set_index("EmployeeID")[["MT Name", "Team", "Training Plan"]]
 
         daily["EmployeeID"] = daily["EmployeeID"].astype(str).str.strip()
         for col in ["MT Name", "Team", "Training Plan"]:
             if col in lkup_map.columns:
                 daily[col] = daily["EmployeeID"].map(lkup_map[col]).fillna(daily[col])
+
+        # FIX: force Training Plan to int to heal any pre-existing parquet corruption
+        daily["Training Plan"] = pd.to_numeric(daily["Training Plan"], errors="coerce").fillna(0).astype(int)
 
         save_daily(daily)
 
