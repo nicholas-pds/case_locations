@@ -231,7 +231,9 @@ async def save_employees(request: Request):
                     status_code=400,
                 )
         save_employee_lkups(df)
-        return JSONResponse(content={"status": "ok", "rows": len(df)})
+        from dashboard.data.efficiency_processing import reprocess_with_employee_lkups
+        result = reprocess_with_employee_lkups()
+        return JSONResponse(content={"status": "ok", "rows": len(df), **result})
     except Exception as e:
         logger.error(f"Save employees failed: {e}")
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)

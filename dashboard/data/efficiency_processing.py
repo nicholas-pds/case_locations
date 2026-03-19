@@ -411,6 +411,38 @@ def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
 # Full Upload Orchestration
 # ─────────────────────────────────────────────
 
+def reprocess_with_employee_lkups() -> dict:
+    """
+    Re-apply updated employee lookups to existing daily.parquet,
+    then re-run Stage 4 aggregation.
+    Called after saving employee lookup edits.
+    """
+    from dashboard.data.efficiency_store import (
+        load_daily, save_daily, save_aggregated, load_employee_lkups
+    )
+
+    daily = load_daily()
+    if daily.empty:
+        return {"status": "ok", "message": "No daily data to reprocess", "rows": 0}
+
+    lkups = load_employee_lkups()
+    if not lkups.empty:
+        lkups["EmployeeID"] = lkups["Employee ID"].astype(str).str.strip()
+        lkup_map = lkups.set_index("EmployeeID")[["MT Name", "Team", "Training Plan"]]
+
+        daily["EmployeeID"] = daily["EmployeeID"].astype(str).str.strip()
+        for col in ["MT Name", "Team", "Training Plan"]:
+            if col in lkup_map.columns:
+                daily[col] = daily["EmployeeID"].map(lkup_map[col]).fillna(daily[col])
+
+        save_daily(daily)
+
+    agg = stage4_aggregated(daily)
+    save_aggregated(agg)
+
+    return {"status": "ok", "rows": len(daily), "aggregated_rows": len(agg)}
+
+
 def run_full_upload(gusto_bytes: bytes, filename: str) -> dict:
     """
     Orchestrate the full upload pipeline (Stages 1–4).
