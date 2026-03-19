@@ -2,7 +2,7 @@
 {% block title %}Efficiency{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/efficiency.css?v=6">
+<link rel="stylesheet" href="/static/css/efficiency.css?v=7">
 {% endblock %}
 
 {% block content %}
@@ -790,6 +790,14 @@
     </div>
   </div>
 
+  <!-- Gonculating loading overlay -->
+  <div x-show="gonculating" x-cloak class="eff-gonculating-overlay">
+    <div class="eff-gonculating-content">
+      <span class="eff-gonculating-text">Gonculating...</span>
+      <div class="eff-gonculating-spinner"></div>
+    </div>
+  </div>
+
 </div><!-- end x-data -->
 
 <script>
@@ -832,6 +840,7 @@ function efficiencyPage() {
     // Upload state
     uploadStatus: '',
     uploadError: false,
+    gonculating: false,
 
     // Efficiency column names for MM
     mmEffCols: {{ mm_eff_cols | tojson }},
@@ -1206,6 +1215,7 @@ function efficiencyPage() {
         });
         const data = await resp.json();
         if (data.status === 'ok') {
+          this.gonculating = true;
           this.showEmployeesModal = false;
           setTimeout(() => window.location.reload(), 500);
         } else {
@@ -1221,7 +1231,8 @@ function efficiencyPage() {
     async uploadGusto(event) {
       const file = event.target.files[0];
       if (!file) return;
-      this.uploadStatus = 'Uploading...';
+      this.gonculating = true;
+      this.uploadStatus = '';
       this.uploadError = false;
 
       const formData = new FormData();
@@ -1235,10 +1246,12 @@ function efficiencyPage() {
           this.uploadError = false;
           setTimeout(() => window.location.reload(), 1500);
         } else {
+          this.gonculating = false;
           this.uploadStatus = `Error: ${data.message}`;
           this.uploadError = true;
         }
       } catch (e) {
+        this.gonculating = false;
         this.uploadStatus = 'Upload failed — check console';
         this.uploadError = true;
       }
