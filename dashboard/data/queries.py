@@ -34,7 +34,7 @@ def fetch_case_locations() -> pd.DataFrame:
 
     # Replace Airway -> MARPE in Category
     if 'Category' in df.columns:
-        df['Category'] = df['Category'].replace('Airway', 'MARPE')
+        df['Category'] = df['Category'].replace({'Airway': 'MARPE', 'Lab to lab': 'Lab to Lab'})
         df['Category'] = df['Category'].fillna('Other')
 
         # Filter out MARPE rows in planning stages
