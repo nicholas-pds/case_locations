@@ -153,88 +153,159 @@ function exportTilesPDF() {
   var dateStr = now.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   var timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
 
-  // Preload logo first — html2canvas requires images to be loaded before capture
+  // Preload logo
   var logoImg = new Image();
-  logoImg.style.cssText = 'height:44px; display:block; margin-bottom:8px;';
+  logoImg.onload = logoImg.onerror = doExport;
+  logoImg.src = '/static/logo.png';
 
   function doExport() {
-    // Wrapper — off-screen so it doesn't flash on the page
-    var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'background:#fff; padding:24px; width:1050px; position:fixed; top:0; left:0; z-index:9999;';
+    // Layout constants (logical pixels at 1x; canvas is drawn at SCALE×)
+    var SCALE    = 2;
+    var PAGE_W   = 1050;
+    var PAD      = 24;
+    var COL_W    = 140;
+    var GAP      = 12;
+    var COLS     = Math.floor((PAGE_W - PAD * 2 + GAP) / (COL_W + GAP)); // 6
+    var DS       = 80;   // donut size
+    var CARD_PAD = 16;
+    var DOT_H    = 14;
+    var MAX_DOTS = 6;
+    var CARD_H   = CARD_PAD + DS + 8 + 20 + 6 + MAX_DOTS * DOT_H + CARD_PAD; // 230px
 
-    wrapper.appendChild(logoImg);
+    // Read card data directly from live DOM — no cloning, no html2canvas
+    var cards = Array.from(
+      document.getElementById('location-grid').querySelectorAll('.location-card')
+    );
 
-    // Date + time line
-    var dateLine = document.createElement('div');
-    dateLine.style.cssText = 'font-size:13px; color:#666; margin-bottom:4px; font-family:sans-serif;';
-    dateLine.textContent = dateStr + '  \u2014  ' + timeStr;
-    wrapper.appendChild(dateLine);
+    var ROWS     = Math.ceil(cards.length / COLS);
+    var HDR_H    = 100;
+    var CANVAS_H = HDR_H + PAD + ROWS * (CARD_H + GAP) + PAD;
 
-    // Filter line
-    var filterLine = document.createElement('div');
-    filterLine.style.cssText = 'font-size:14px; font-weight:600; color:#333; margin-bottom:16px; font-family:sans-serif; padding-bottom:12px; border-bottom:2px solid #C0182B;';
-    filterLine.textContent = 'Filters: ' + filterText;
-    wrapper.appendChild(filterLine);
+    // Create canvas
+    var c   = document.createElement('canvas');
+    c.width  = PAGE_W  * SCALE;
+    c.height = CANVAS_H * SCALE;
+    var ctx  = c.getContext('2d');
+    ctx.scale(SCALE, SCALE);
 
-    // Clone grid
-    var grid = document.getElementById('location-grid');
-    var gridClone = grid.cloneNode(true);
-    ['id','hx-get','hx-trigger','hx-include','hx-swap'].forEach(function(a) { gridClone.removeAttribute(a); });
-    gridClone.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:12px;';
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, PAGE_W, CANVAS_H);
 
-    // Inline styles on cards
-    gridClone.querySelectorAll('.location-card').forEach(function(card) {
-      card.style.cssText = 'background:#fff; border-radius:8px; padding:16px 12px; text-align:center; border:2px solid transparent; box-shadow:0 1px 4px rgba(0,0,0,0.08);';
-      card.removeAttribute('@click');
-    });
-    gridClone.querySelectorAll('.location-name').forEach(function(el) {
-      el.style.cssText = 'font-size:11px; font-weight:600; color:#1A1A1A; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
-    });
-    gridClone.querySelectorAll('.cat-dots').forEach(function(el) {
-      el.style.cssText = 'display:flex; flex-direction:column; gap:2px; margin-top:6px; align-items:flex-start;';
-    });
-    gridClone.querySelectorAll('.cat-dot').forEach(function(el) {
-      el.style.cssText = 'display:inline-flex; align-items:center; gap:3px; font-size:10px; color:#6B6B6B; padding:1px 4px; cursor:default;';
-      el.removeAttribute('@click.stop');
-    });
-    gridClone.querySelectorAll('.cat-dot-color').forEach(function(el) {
-      el.style.cssText = (el.getAttribute('style') || '') + '; width:8px; height:8px; border-radius:50%; flex-shrink:0; display:inline-block;';
-    });
+    var y = PAD;
 
-    // Replace each .donut with a canvas
-    gridClone.querySelectorAll('.donut').forEach(function(donutDiv) {
-      var segsAttr = donutDiv.getAttribute('data-segments');
-      var segments = segsAttr ? JSON.parse(segsAttr) : [];
-      var total = parseInt(donutDiv.getAttribute('data-total') || '0', 10);
-      var statusColor = donutDiv.getAttribute('data-status-color') || '#27AE60';
-      var canvas = drawDonutCanvas(segments, total, statusColor);
-      donutDiv.parentNode.replaceChild(canvas, donutDiv);
-    });
+    // Logo
+    if (logoImg.naturalWidth && logoImg.naturalHeight) {
+      var logoH = 44;
+      var logoW = logoImg.naturalWidth * logoH / logoImg.naturalHeight;
+      ctx.drawImage(logoImg, PAD, y, logoW, logoH);
+      y += logoH + 8;
+    }
 
-    wrapper.appendChild(gridClone);
+    // Date/time
+    ctx.font         = '13px sans-serif';
+    ctx.fillStyle    = '#666666';
+    ctx.textBaseline = 'top';
+    ctx.fillText(dateStr + '  \u2014  ' + timeStr, PAD, y);
+    y += 20;
 
-    document.body.appendChild(wrapper);
+    // Filter line text
+    ctx.font      = 'bold 14px sans-serif';
+    ctx.fillStyle = '#333333';
+    ctx.fillText('Filters: ' + filterText, PAD, y);
+    y += 20;
 
-    setTimeout(function() {
-      html2pdf().set({
-        margin: [8, 8, 8, 8],
-        filename: 'case_locations_tiles.pdf',
-        image: {type: 'png', quality: 1},
-        html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0},
-        jsPDF: {unit: 'mm', format: 'letter', orientation: 'landscape'},
-        pagebreak: {mode: ['avoid-all']}
-      }).from(wrapper).save().then(function() {
-        document.body.removeChild(wrapper);
-      }).catch(function(err) {
-        console.error('PDF export failed:', err);
-        if (wrapper.parentNode) document.body.removeChild(wrapper);
+    // Red rule
+    ctx.strokeStyle = '#C0182B';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(PAD, y); ctx.lineTo(PAGE_W - PAD, y);
+    ctx.stroke();
+    y += PAD;
+
+    // Draw each card
+    cards.forEach(function(card, i) {
+      var col = i % COLS;
+      var row = Math.floor(i / COLS);
+      var cx  = PAD + col * (COL_W + GAP);
+      var cy  = y + row * (CARD_H + GAP);
+
+      // Card background
+      ctx.fillStyle   = '#ffffff';
+      ctx.strokeStyle = '#E5E5E5';
+      ctx.lineWidth   = 1;
+      roundRect(ctx, cx, cy, COL_W, CARD_H, 8);
+      ctx.fill(); ctx.stroke();
+
+      // Donut
+      var donutEl = card.querySelector('.donut');
+      if (donutEl) {
+        var segsAttr   = donutEl.getAttribute('data-segments');
+        var segments   = segsAttr ? JSON.parse(segsAttr) : [];
+        var total      = parseInt(donutEl.getAttribute('data-total') || '0', 10);
+        var statusColor= donutEl.getAttribute('data-status-color') || '#27AE60';
+        var donutC     = drawDonutCanvas(segments, total, statusColor);
+        var dx = cx + (COL_W - DS) / 2;
+        var dy = cy + CARD_PAD;
+        // Status ring
+        ctx.beginPath();
+        ctx.arc(dx + DS/2, dy + DS/2, DS/2 + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = statusColor;
+        ctx.lineWidth   = 3;
+        ctx.stroke();
+        ctx.drawImage(donutC, dx, dy, DS, DS);
+      }
+
+      // Location name
+      var nameEl = card.querySelector('.location-name');
+      var nameText = nameEl ? nameEl.textContent.trim() : '';
+      if (nameText.length > 18) nameText = nameText.substring(0, 17) + '\u2026';
+      ctx.font      = 'bold 11px sans-serif';
+      ctx.fillStyle = '#1A1A1A';
+      ctx.textAlign = 'center';
+      ctx.fillText(nameText, cx + COL_W / 2, cy + CARD_PAD + DS + 10);
+
+      // Category dots
+      var dots = Array.from(card.querySelectorAll('.cat-dot')).slice(0, MAX_DOTS);
+      var dotY0 = cy + CARD_PAD + DS + 10 + 16;
+      dots.forEach(function(dot, di) {
+        var dy2      = dotY0 + di * DOT_H;
+        var colorEl  = dot.querySelector('.cat-dot-color');
+        var dotColor = colorEl ? colorEl.style.background : '#B0BEC5';
+        ctx.beginPath();
+        ctx.arc(cx + 10, dy2 + 4, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = dotColor;
+        ctx.fill();
+        var txt = dot.textContent.trim();
+        if (txt.length > 20) txt = txt.substring(0, 19) + '\u2026';
+        ctx.font      = '9px sans-serif';
+        ctx.fillStyle = '#6B6B6B';
+        ctx.textAlign = 'left';
+        ctx.fillText(txt, cx + 18, dy2 + 9);
       });
-    }, 100);
-  }
 
-  logoImg.onload = doExport;
-  logoImg.onerror = doExport;  // proceed without logo if it fails to load
-  logoImg.src = '/static/logo.png';
+      ctx.textAlign = 'left';
+    });
+
+    // Build PDF with jsPDF directly (no html2canvas)
+    var jsPDF    = window.jspdf.jsPDF;
+    var pdf      = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'letter'});
+    var margin   = 8;
+    var pageW    = pdf.internal.pageSize.getWidth();
+    var pageH    = pdf.internal.pageSize.getHeight();
+    var contentW = pageW - margin * 2;
+    var contentH = pageH - margin * 2;
+    var imgData  = c.toDataURL('image/png');
+    var pdfImgW  = contentW;
+    var pdfImgH  = pdfImgW * (c.height / c.width);
+    var numPages = Math.ceil(pdfImgH / contentH);
+
+    for (var p = 0; p < numPages; p++) {
+      if (p > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', margin, margin - p * contentH, pdfImgW, pdfImgH);
+    }
+    pdf.save('case_locations_tiles.pdf');
+  }
 }
 
 function drawDonutCanvas(segments, total, statusColor) {
@@ -282,6 +353,20 @@ function drawDonutCanvas(segments, total, statusColor) {
   ctx.fillText(total.toString(), cx, cy);
 
   return canvas;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 </script>
 {% endblock %}
