@@ -289,22 +289,33 @@ function exportTilesPDF() {
       ctx.textAlign = 'left';
     });
 
-    // Build PDF with jsPDF directly (no html2canvas)
-    var jsPDF    = window.jspdf.jsPDF;
-    var pdf      = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'letter'});
-    var margin   = 8;
-    var pageW    = pdf.internal.pageSize.getWidth();
-    var pageH    = pdf.internal.pageSize.getHeight();
-    var contentW = pageW - margin * 2;
-    var contentH = pageH - margin * 2;
-    var imgData  = c.toDataURL('image/png');
-    var pdfImgW  = contentW;
-    var pdfImgH  = pdfImgW * (c.height / c.width);
-    var numPages = Math.ceil(pdfImgH / contentH);
+    // Build PDF — slice canvas at row boundaries (3 rows per page) to avoid card cutoffs
+    var jsPDF        = window.jspdf.jsPDF;
+    var pdf          = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'letter'});
+    var margin       = 8;
+    var contentW     = pdf.internal.pageSize.getWidth() - margin * 2;
+    var ROWS_PER_PAGE = 3;
 
-    for (var p = 0; p < numPages; p++) {
+    // Page split points in logical canvas pixels
+    var splits = [0];
+    for (var r = ROWS_PER_PAGE; r < ROWS; r += ROWS_PER_PAGE) {
+      splits.push(HDR_H + PAD + r * (CARD_H + GAP));
+    }
+    splits.push(CANVAS_H);
+
+    for (var p = 0; p < splits.length - 1; p++) {
       if (p > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', margin, margin - p * contentH, pdfImgW, pdfImgH);
+      var srcY = splits[p];
+      var srcH = splits[p + 1] - srcY;
+
+      // Clip this page's slice from the main canvas
+      var pc = document.createElement('canvas');
+      pc.width  = c.width;
+      pc.height = srcH * SCALE;
+      pc.getContext('2d').drawImage(c, 0, srcY * SCALE, c.width, srcH * SCALE, 0, 0, c.width, srcH * SCALE);
+
+      var pdfH = srcH / PAGE_W * contentW;
+      pdf.addImage(pc.toDataURL('image/png'), 'PNG', margin, margin, contentW, pdfH);
     }
     pdf.save('case_locations_tiles.pdf');
   }
