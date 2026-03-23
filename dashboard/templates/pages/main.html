@@ -160,7 +160,7 @@ function exportTilesPDF() {
   function doExport() {
     // Wrapper — off-screen so it doesn't flash on the page
     var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'background:#fff; padding:24px; width:1050px; position:fixed; top:0; left:0; visibility:hidden; z-index:-1;';
+    wrapper.style.cssText = 'background:#fff; padding:24px; width:1050px; position:fixed; top:0; left:0; z-index:1; pointer-events:none;';
 
     wrapper.appendChild(logoImg);
 
@@ -212,6 +212,11 @@ function exportTilesPDF() {
     });
 
     wrapper.appendChild(gridClone);
+
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;font-size:16px;font-weight:600;';
+    overlay.textContent = 'Generating PDF\u2026';
+    document.body.appendChild(overlay);
     document.body.appendChild(wrapper);
 
     html2pdf().set({
@@ -223,9 +228,11 @@ function exportTilesPDF() {
       pagebreak: {mode: ['avoid-all']}
     }).from(wrapper).save().then(function() {
       document.body.removeChild(wrapper);
+      document.body.removeChild(overlay);
     }).catch(function(err) {
       console.error('PDF export failed:', err);
       if (wrapper.parentNode) document.body.removeChild(wrapper);
+      if (overlay.parentNode) document.body.removeChild(overlay);
     });
   }
 
