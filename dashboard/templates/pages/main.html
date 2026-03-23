@@ -160,7 +160,7 @@ function exportTilesPDF() {
   function doExport() {
     // Wrapper — off-screen so it doesn't flash on the page
     var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'background:#fff; padding:24px; width:1050px; position:absolute; left:-9999px; top:0;';
+    wrapper.style.cssText = 'background:#fff; padding:24px; width:1050px; position:fixed; top:0; left:0; visibility:hidden; z-index:-1;';
 
     wrapper.appendChild(logoImg);
 
