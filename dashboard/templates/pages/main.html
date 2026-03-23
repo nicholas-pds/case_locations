@@ -136,7 +136,7 @@
 {% block extra_js %}
 <script>
 function exportTilesPDF() {
-  // Build filter label
+  // Collect filters
   var filters = [];
   var alpineData = Alpine.$data(document.querySelector('[x-data]'));
   if (alpineData.activeFilter) {
@@ -148,66 +148,130 @@ function exportTilesPDF() {
   if (alpineData.selectedShipDate) filters.push('Ship Date: ' + alpineData.selectedShipDate);
   var filterText = filters.length ? filters.join('  |  ') : 'All Cases';
 
-  // Create a wrapper div for PDF content
+  // Date + time
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  var timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
+
+  // Wrapper
   var wrapper = document.createElement('div');
-  wrapper.id = 'pdf-export-wrapper';
-  wrapper.style.cssText = 'background:#fff; padding:24px; width:900px; position:absolute; left:0; top:0; z-index:99999;';
+  wrapper.style.cssText = 'background:#fff; padding:24px; width:1050px; position:fixed; left:0; top:0; z-index:99999;';
 
   // Logo
   var logo = document.createElement('img');
   logo.src = '/static/logo.png';
-  logo.style.cssText = 'height:50px; display:block; margin-bottom:8px;';
+  logo.style.cssText = 'height:44px; display:block; margin-bottom:8px;';
   wrapper.appendChild(logo);
 
-  // Date
+  // Date + time line
   var dateLine = document.createElement('div');
   dateLine.style.cssText = 'font-size:13px; color:#666; margin-bottom:4px; font-family:sans-serif;';
-  dateLine.textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  dateLine.textContent = dateStr + '  \u2014  ' + timeStr;
   wrapper.appendChild(dateLine);
 
-  // Filter label
+  // Filter line
   var filterLine = document.createElement('div');
-  filterLine.style.cssText = 'font-size:14px; font-weight:600; color:#333; margin-bottom:16px; font-family:sans-serif; padding-bottom:12px; border-bottom:2px solid #e53935;';
-  filterLine.textContent = filterText;
+  filterLine.style.cssText = 'font-size:14px; font-weight:600; color:#333; margin-bottom:16px; font-family:sans-serif; padding-bottom:12px; border-bottom:2px solid #C0182B;';
+  filterLine.textContent = 'Filters: ' + filterText;
   wrapper.appendChild(filterLine);
 
-  // Clone the location grid
+  // Clone grid
   var grid = document.getElementById('location-grid');
   var gridClone = grid.cloneNode(true);
-  gridClone.removeAttribute('id');
-  gridClone.removeAttribute('hx-get');
-  gridClone.removeAttribute('hx-trigger');
-  gridClone.removeAttribute('hx-include');
-  gridClone.removeAttribute('hx-swap');
-  wrapper.appendChild(gridClone);
+  ['id','hx-get','hx-trigger','hx-include','hx-swap'].forEach(function(a) { gridClone.removeAttribute(a); });
+  gridClone.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:12px;';
 
+  // Inline styles on cards
+  gridClone.querySelectorAll('.location-card').forEach(function(card) {
+    card.style.cssText = 'background:#fff; border-radius:8px; padding:16px 12px; text-align:center; border:2px solid transparent; box-shadow:0 1px 4px rgba(0,0,0,0.08);';
+    card.removeAttribute('@click');
+  });
+  gridClone.querySelectorAll('.location-name').forEach(function(el) {
+    el.style.cssText = 'font-size:11px; font-weight:600; color:#1A1A1A; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+  });
+  gridClone.querySelectorAll('.cat-dots').forEach(function(el) {
+    el.style.cssText = 'display:flex; flex-direction:column; gap:2px; margin-top:6px; align-items:flex-start;';
+  });
+  gridClone.querySelectorAll('.cat-dot').forEach(function(el) {
+    el.style.cssText = 'display:inline-flex; align-items:center; gap:3px; font-size:10px; color:#6B6B6B; padding:1px 4px; cursor:default;';
+    el.removeAttribute('@click.stop');
+  });
+  gridClone.querySelectorAll('.cat-dot-color').forEach(function(el) {
+    el.style.cssText = (el.getAttribute('style') || '') + '; width:8px; height:8px; border-radius:50%; flex-shrink:0; display:inline-block;';
+  });
+
+  // Replace each .donut with a canvas
+  gridClone.querySelectorAll('.donut').forEach(function(donutDiv) {
+    var segsAttr = donutDiv.getAttribute('data-segments');
+    var segments = segsAttr ? JSON.parse(segsAttr) : [];
+    var total = parseInt(donutDiv.getAttribute('data-total') || '0', 10);
+    var statusColor = donutDiv.getAttribute('data-status-color') || '#27AE60';
+    var canvas = drawDonutCanvas(segments, total, statusColor);
+    donutDiv.parentNode.replaceChild(canvas, donutDiv);
+  });
+
+  wrapper.appendChild(gridClone);
   document.body.appendChild(wrapper);
 
-  // Preload logo then generate
-  var logoImg = new Image();
-  logoImg.src = '/static/logo.png';
-  logoImg.onload = doGenerate;
-  logoImg.onerror = doGenerate;
-  if (logoImg.complete) doGenerate();
+  html2pdf().set({
+    margin: [8, 8, 8, 8],
+    filename: 'case_locations_tiles.pdf',
+    image: {type: 'png', quality: 1},
+    html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0},
+    jsPDF: {unit: 'mm', format: 'letter', orientation: 'landscape'},
+    pagebreak: {mode: ['avoid-all']}
+  }).from(wrapper).save().then(function() {
+    document.body.removeChild(wrapper);
+  }).catch(function() {
+    if (wrapper.parentNode) document.body.removeChild(wrapper);
+  });
+}
 
-  var done = false;
-  function doGenerate() {
-    if (done) return;
-    done = true;
+function drawDonutCanvas(segments, total, statusColor) {
+  var SIZE = 80;
+  var OUTER_R = 37;
+  var INNER_R = 27;
+  var canvas = document.createElement('canvas');
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  canvas.style.cssText = 'width:' + SIZE + 'px; height:' + SIZE + 'px; border-radius:50%; box-shadow:0 0 0 3px ' + statusColor + '; margin:0 auto 8px; display:block;';
+  var ctx = canvas.getContext('2d');
+  var cx = SIZE / 2, cy = SIZE / 2;
 
-    html2pdf().set({
-      margin: [10, 10, 10, 10],
-      filename: 'case_locations_tiles.pdf',
-      image: {type: 'png', quality: 1},
-      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0},
-      jsPDF: {unit: 'mm', format: 'letter', orientation: 'portrait'},
-      pagebreak: {mode: ['avoid-all']}
-    }).from(wrapper).save().then(function() {
-      document.body.removeChild(wrapper);
-    }).catch(function() {
-      if (wrapper.parentNode) document.body.removeChild(wrapper);
+  if (!segments || segments.length === 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, OUTER_R, 0, Math.PI * 2);
+    ctx.fillStyle = '#D5D8DC';
+    ctx.fill();
+  } else {
+    var startAngle = -Math.PI / 2;
+    segments.forEach(function(seg) {
+      var endAngle = startAngle + (seg.deg * Math.PI / 180);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, OUTER_R, startAngle, endAngle);
+      ctx.closePath();
+      ctx.fillStyle = seg.color;
+      ctx.fill();
+      startAngle = endAngle;
     });
   }
+
+  // White donut hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, INNER_R, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  // Count text
+  var fontSize = total > 99 ? 13 : total > 9 ? 17 : 21;
+  ctx.fillStyle = '#1A1A1A';
+  ctx.font = 'bold ' + fontSize + 'px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(total.toString(), cx, cy);
+
+  return canvas;
 }
 </script>
 {% endblock %}
