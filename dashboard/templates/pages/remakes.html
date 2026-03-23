@@ -2150,7 +2150,7 @@
           <template x-for="group in groupedPreferences(presPreferences)" :key="group.dept">
             <div class="pres-pref-group">
               <div class="pres-pref-dept" x-text="group.dept"></div>
-              <template x-for="p in group.items" :key="p.Preference">
+              <template x-for="(p, i) in group.items" :key="group.dept + '_' + i">
                 <div class="pres-pref-item">
                   <span class="pres-pref-name" x-text="p.Preference + ':'"></span><span x-text="p.PreferenceValue"></span>
                 </div>
