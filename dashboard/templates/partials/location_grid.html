@@ -20,7 +20,7 @@
   <div class="location-card"
        @click="selectedLocation = '{{ loc.name }}'; selectedCategory = ''; $nextTick(() => { htmx.trigger('#case-table-content', 'filter-changed'); htmx.trigger('#location-grid', 'filter-changed'); })">
     <div class="donut"
-         data-segments="{{ ns.seg_list | tojson | e }}"
+         data-segments='{{ ns.seg_list | tojson }}'
          data-total="{{ loc.total }}"
          data-status-color="{{ status_color }}"
          style="background: conic-gradient({{ ns.segments | join(', ') }}); box-shadow: 0 0 0 3px {{ status_color }}; border-radius: 50%;">
