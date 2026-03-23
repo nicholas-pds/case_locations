@@ -57,7 +57,9 @@ SELECT
     ISNULL(T2.Cases,   0)         AS TotalCases_90Days,
     ISNULL(T2.Remakes, 0)         AS TotalRemakes_90Days,
     cust.SalesPerson,
-    topProduct.Description        AS Product
+    topProduct.Description        AS Product,
+    linked.CustomerID             AS OG_CustomerID,
+    linked.WorkOrderNotes         AS OG_WorkOrderNotes
 FROM dbo.CaseLinks AS links
 INNER JOIN dbo.Cases     AS main   ON links.CaseID     = main.CaseID
 INNER JOIN dbo.Cases     AS linked ON links.LinkCaseID = linked.CaseID
@@ -83,6 +85,12 @@ WHERE links.Notes LIKE '%Remake Of%'
   AND main.DateIn >= DATEADD(DAY, -365, CAST(GETDATE() AS DATE))
   AND main.[Status] NOT IN ('Cancelled')
 ORDER BY main.DateIn DESC
+"""
+
+_PREFERENCES_SQL = """
+SELECT customerID, Department, Preference, PreferenceValue
+FROM [dbo].[DepartmentPreferences]
+ORDER BY customerID, Department, CreateDate DESC
 """
 
 _REVENUE_BY_DAY_SQL = """
@@ -228,6 +236,10 @@ def get_case_tasks(conn) -> pd.DataFrame:
 
 def get_call_notes(conn) -> pd.DataFrame:
     return pd.read_sql(_CALL_NOTES_SQL, conn)
+
+
+def get_preferences(conn) -> pd.DataFrame:
+    return pd.read_sql(_PREFERENCES_SQL, conn)
 
 
 def get_case_documents(conn) -> pd.DataFrame:
@@ -433,7 +445,7 @@ def save_ld_emails(emails: dict) -> None:
 # ─── Cache helpers ────────────────────────────────────────────────────────────
 
 async def refresh_remakes_cache() -> dict:
-    """Run all 4 queries in parallel, store in cache.
+    """Run all queries in parallel, store in cache.
     Each query opens its own connection. Sets _remakes_last_refresh."""
     global _remakes_last_refresh
     loop = asyncio.get_running_loop()
@@ -458,13 +470,14 @@ async def refresh_remakes_cache() -> dict:
                     pass
         raise last_exc
 
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        all_df, revenue_df, tasks_df, notes_df, docs_df = await asyncio.gather(
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        all_df, revenue_df, tasks_df, notes_df, docs_df, prefs_df = await asyncio.gather(
             loop.run_in_executor(pool, _run, get_all_remakes),
             loop.run_in_executor(pool, _run, get_revenue_by_day),
             loop.run_in_executor(pool, _run, get_case_tasks),
             loop.run_in_executor(pool, _run, get_call_notes),
             loop.run_in_executor(pool, _run, get_case_documents),
+            loop.run_in_executor(pool, _run, get_preferences),
         )
 
     tasks_df = _apply_employee_names(tasks_df, "CompletedBy", "CompletedByName")
@@ -475,6 +488,7 @@ async def refresh_remakes_cache() -> dict:
     await cache.set("remakes_tasks", tasks_df)
     await cache.set("remakes_notes_text", notes_df)
     await cache.set("remakes_documents", docs_df)
+    await cache.set("remakes_preferences", prefs_df)
     _remakes_last_refresh = datetime.now()
 
     return {
@@ -483,6 +497,7 @@ async def refresh_remakes_cache() -> dict:
         "tasks_rows": len(tasks_df),
         "notes_rows": len(notes_df),
         "docs_rows": len(docs_df),
+        "prefs_rows": len(prefs_df),
     }
 
 
@@ -494,6 +509,7 @@ def get_cached_remakes() -> dict:
         "tasks": cache.get_sync("remakes_tasks"),
         "notes_text": cache.get_sync("remakes_notes_text"),
         "documents": cache.get_sync("remakes_documents"),
+        "preferences": cache.get_sync("remakes_preferences"),
         "last_refresh": _remakes_last_refresh,
     }
 
