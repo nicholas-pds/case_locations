@@ -163,14 +163,14 @@ function exportTilesPDF() {
     var SCALE    = 2;
     var PAGE_W   = 1050;
     var PAD      = 24;
-    var COL_W    = 140;
+    var COL_W    = 105;
     var GAP      = 12;
-    var COLS     = Math.floor((PAGE_W - PAD * 2 + GAP) / (COL_W + GAP)); // 6
-    var DS       = 80;   // donut size
-    var CARD_PAD = 16;
+    var COLS     = Math.floor((PAGE_W - PAD * 2 + GAP) / (COL_W + GAP)); // 8
+    var DS       = 60;   // donut size
+    var CARD_PAD = 12;
     var DOT_H    = 14;
     var MAX_DOTS = 6;
-    var CARD_H   = CARD_PAD + DS + 8 + 20 + 6 + MAX_DOTS * DOT_H + CARD_PAD; // 230px
+    var CARD_H   = CARD_PAD + DS + 8 + 20 + 6 + MAX_DOTS * DOT_H + CARD_PAD; // 202px
 
     // Read card data directly from live DOM — no cloning, no html2canvas
     var cards = Array.from(
@@ -278,10 +278,12 @@ function exportTilesPDF() {
         ctx.fill();
         var txt = dot.textContent.trim();
         if (txt.length > 20) txt = txt.substring(0, 19) + '\u2026';
-        ctx.font      = '9px sans-serif';
-        ctx.fillStyle = '#6B6B6B';
-        ctx.textAlign = 'left';
-        ctx.fillText(txt, cx + 18, dy2 + 9);
+        ctx.font         = '9px sans-serif';
+        ctx.fillStyle    = '#6B6B6B';
+        ctx.textAlign    = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(txt, cx + 18, dy2 + 4);
+        ctx.textBaseline = 'top';
       });
 
       ctx.textAlign = 'left';
