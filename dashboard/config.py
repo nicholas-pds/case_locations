@@ -74,13 +74,13 @@ LOCATION_DISPLAY_ORDER = [
 
 # Category colors for CSS classes
 CATEGORY_COLORS = {
-    'Metal': '#607D8B',
-    'Clear': '#2196F3',
-    'Wire Bending': '#FF9800',
-    'MARPE': '#9C27B0',
-    'Hybrid': '#009688',
-    'E2 Expanders': '#F44336',
-    'Airway': '#E91E63',
+    'Metal': '#2a9fc9',
+    'Clear': '#fca832',
+    'Wire Bending': '#F44336',
+    'MARPE': '#e82778',
+    'Hybrid': '#1bd15b',
+    'E2 Expanders': '#fcf232',
+    'Airway': '#e82778',
     'Lab to Lab': '#7B1FA2',
     'Other': '#B0BEC5',
 }
