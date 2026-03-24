@@ -95,7 +95,7 @@ async def export_csv(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Case #', 'Pan #', 'Ship Date', 'Category', 'Last Task', 'Last Location', 'Last Scan Time'])
+    writer.writerow(['Case #', 'Pan #', 'Ship Date', 'Category', 'Last Task', 'Last Location', 'Last Scan Time', 'Local Delivery'])
 
     if df is not None and not df.empty:
         for _, row in df.iterrows():
@@ -130,6 +130,7 @@ async def export_csv(
                 row.get('Last Task Completed', ''),
                 row.get('Last Location', ''),
                 st,
+                'Yes' if row.get('LocalDelivery') else 'No',
             ])
 
     output.seek(0)
