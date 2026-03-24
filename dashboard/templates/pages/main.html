@@ -153,6 +153,10 @@ function exportTilesPDF() {
   var dateStr = now.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   var timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
 
+  // Total cases count from DOM badge
+  var totalCasesEl = document.querySelector('.total-badge-count');
+  var totalCases = totalCasesEl ? totalCasesEl.textContent.trim() : '';
+
   // Preload logo
   var logoImg = new Image();
   logoImg.onload = logoImg.onerror = doExport;
@@ -200,6 +204,18 @@ function exportTilesPDF() {
       var logoW = logoImg.naturalWidth * logoH / logoImg.naturalHeight;
       ctx.drawImage(logoImg, PAD, y, logoW, logoH);
       y += logoH + 8;
+    }
+
+    // Total cases — top right (mirrors on-screen badge)
+    if (totalCases) {
+      ctx.textAlign    = 'right';
+      ctx.textBaseline = 'top';
+      ctx.font         = 'bold 32px sans-serif';
+      ctx.fillStyle    = '#C62828';
+      ctx.fillText(totalCases, PAGE_W - PAD, PAD);
+      ctx.font         = 'bold 13px sans-serif';
+      ctx.fillText('TOTAL CASES', PAGE_W - PAD, PAD + 36);
+      ctx.textAlign    = 'left';
     }
 
     // Date/time
