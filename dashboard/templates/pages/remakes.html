@@ -1084,20 +1084,20 @@
                 </td>
                 <!-- Call Notes -->
                 <td class="col-notes">
-                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
-                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).length > 0">
                     <div>
-                      <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="n.Note + n.UserID">
+                      <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).slice(0,10)" :key="n.Note + n.UserID">
                         <div class="call-note-item">
-                          <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
+                          <span style="color:#c41227;font-weight:600;margin-right:4px" x-text="'[' + (n._caseNum || '') + ']'"></span><span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
                           <span x-text="fmtNoteShort(n.Note)"></span>
                         </div>
                       </template>
-                      <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                      <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).length > 0">
                         <button class="overflow-btn"
-                          @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID))">
+                          @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber))">
                           + Read All
                         </button>
                       </template>
@@ -1438,20 +1438,20 @@
                 </td>
                 <!-- Call Notes -->
                 <td class="col-notes">
-                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).length === 0">
                     <span style="color:var(--gray)">—</span>
                   </template>
-                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                  <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).length > 0">
                     <div>
-                      <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="n.Note + n.UserID">
+                      <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).slice(0,10)" :key="n.Note + n.UserID">
                         <div class="call-note-item">
-                          <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
+                          <span style="color:#c41227;font-weight:600;margin-right:4px" x-text="'[' + (n._caseNum || '') + ']'"></span><span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
                           <span x-text="fmtNoteShort(n.Note)"></span>
                         </div>
                       </template>
-                      <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                      <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).length > 0">
                         <button class="overflow-btn"
-                          @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID))">
+                          @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber))">
                           + Read All
                         </button>
                       </template>
@@ -1961,19 +1961,19 @@
                   <td x-text="row.PracticeName || '—'"></td>
                   <td x-text="row.RemakeDiscount ? fmtCurrency(parseFloat(row.RemakeDiscount)) : '—'"></td>
                   <td class="col-notes">
-                    <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length === 0">
+                    <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).length === 0">
                       <span style="color:var(--gray)">—</span>
                     </template>
-                    <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).length > 0">
+                    <template x-if="getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).length > 0">
                       <div>
-                        <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID).slice(0,3)" :key="n.Note + n.UserID">
+                        <template x-for="n in getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber).slice(0,3)" :key="n.Note + n.UserID">
                           <div class="call-note-item">
-                            <span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
+                            <span style="color:#c41227;font-weight:600;margin-right:4px" x-text="'[' + (n._caseNum || '') + ']'"></span><span class="call-note-user" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + String(n.CallDate).slice(0,10) : '') + ': '"></span>
                             <span x-text="fmtNoteShort(n.Note)"></span>
                           </div>
                         </template>
                         <button class="overflow-btn"
-                          @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID))">
+                          @click.stop="showTip('notes', getSortedNotesForCase(row.MainCaseID, row.OG_CaseID, row.MainCaseNumber, row.OG_CaseNumber))">
                           + Read All
                         </button>
                       </div>
@@ -2036,7 +2036,7 @@
           <div>
             <template x-for="n in _tip.items" :key="n.Note + n.UserID">
               <div class="tip-note-item">
-                <div class="tip-note-meta" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + fmtNoteDate(n.CallDate) : '')"></div>
+                <div class="tip-note-meta"><span style="color:#c41227;font-weight:600;margin-right:4px" x-text="'[' + (n._caseNum || '') + ']'"></span><span x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + fmtNoteDate(n.CallDate) : '')"></span></div>
                 <div class="tip-note-text" x-html="fmtNote(n.Note)"></div>
               </div>
             </template>
@@ -2271,17 +2271,17 @@
           <div class="pres-panel-hdr">
             Call Notes
             <span style="font-weight:400;color:var(--red);text-transform:none;letter-spacing:0;"
-                  x-text="presCase ? '(' + getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID).length + ')' : ''"></span>
+                  x-text="presCase ? '(' + getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID, presCase.MainCaseNumber, presCase.OG_CaseNumber).length + ')' : ''"></span>
           </div>
           <div class="pres-panel-body">
-            <template x-if="presCase && getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID).length === 0">
+            <template x-if="presCase && getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID, presCase.MainCaseNumber, presCase.OG_CaseNumber).length === 0">
               <div class="pres-empty">No call notes</div>
             </template>
-            <template x-if="presCase && getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 0">
+            <template x-if="presCase && getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID, presCase.MainCaseNumber, presCase.OG_CaseNumber).length > 0">
               <div>
-                <template x-for="n in getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID)" :key="n.Note + n.UserID">
+                <template x-for="n in getSortedNotesForCase(presCase.MainCaseID, presCase.OG_CaseID, presCase.MainCaseNumber, presCase.OG_CaseNumber)" :key="n.Note + n.UserID">
                   <div class="pres-call-note">
-                    <div class="pres-call-note-meta" x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + fmtNoteDate(n.CallDate) : '')"></div>
+                    <div class="pres-call-note-meta"><span style="color:#c41227;font-weight:600;margin-right:4px" x-text="'[' + (n._caseNum || '') + ']'"></span><span x-text="(n.UserName || n.UserID) + (n.CallDate ? ' · ' + fmtNoteDate(n.CallDate) : '')"></span></div>
                     <div class="pres-call-note-text" x-html="fmtNote(n.Note)"></div>
                   </div>
                 </template>
@@ -2922,14 +2922,7 @@ function remakesPage() {
 
     // ── Per-case detail helpers ──────────────────────────────────
     getTasksForCase(mainId, ogId) {
-      const seen = new Set();
-      return [
-        ...(this._taskMapData[String(mainId)] || []),
-        ...(this._taskMapData[String(ogId)]   || []),
-      ].filter(t => {
-        const k = t.Task + t.CompleteDate;
-        return seen.has(k) ? false : seen.add(k);
-      });
+      return [...(this._taskMapData[String(ogId)] || [])];
     },
 
     getNotesForCase(mainId, ogId) {
@@ -2943,10 +2936,22 @@ function remakesPage() {
       });
     },
 
-    getSortedNotesForCase(mainId, ogId) {
-      return this.getNotesForCase(mainId, ogId)
-        .slice()
-        .sort((a, b) => ((b.CallDate || '') > (a.CallDate || '') ? 1 : -1));
+    getSortedNotesForCase(mainId, ogId, mainCaseNum, ogCaseNum) {
+      const mainNotes = (this._noteMapData[String(mainId)] || []).map(n => ({
+        ...n, _caseNum: mainCaseNum, _isNew: true
+      }));
+      const ogNotes = (this._noteMapData[String(ogId)] || []).map(n => ({
+        ...n, _caseNum: ogCaseNum, _isNew: false
+      }));
+      const seen = new Set();
+      const all = [...mainNotes, ...ogNotes].filter(n => {
+        const k = n.Note + n.UserID;
+        return seen.has(k) ? false : seen.add(k);
+      });
+      return all.sort((a, b) => {
+        if (a._isNew !== b._isNew) return a._isNew ? -1 : 1;
+        return ((b.CallDate || '') > (a.CallDate || '')) ? 1 : -1;
+      });
     },
 
     showTip(type, items) {
