@@ -2937,17 +2937,20 @@ function remakesPage() {
     },
 
     getSortedNotesForCase(mainId, ogId, mainCaseNum, ogCaseNum) {
-      const mainNotes = (this._noteMapData[String(mainId)] || []).map(n => ({
-        ...n, _caseNum: mainCaseNum, _isNew: true
-      }));
-      const ogNotes = (this._noteMapData[String(ogId)] || []).map(n => ({
-        ...n, _caseNum: ogCaseNum, _isNew: false
-      }));
+      const mainIdStr = String(mainId);
+      const ogIdStr   = String(ogId);
       const seen = new Set();
-      const all = [...mainNotes, ...ogNotes].filter(n => {
+      const all  = [];
+      for (const n of [
+        ...(this._noteMapData[mainIdStr] || []),
+        ...(this._noteMapData[ogIdStr]   || []),
+      ]) {
         const k = n.Note + n.UserID;
-        return seen.has(k) ? false : seen.add(k);
-      });
+        if (seen.has(k)) continue;
+        seen.add(k);
+        const isNew = String(n.AnchorCaseID) === mainIdStr;
+        all.push({ ...n, _isNew: isNew, _caseNum: isNew ? mainCaseNum : ogCaseNum });
+      }
       return all.sort((a, b) => {
         if (a._isNew !== b._isNew) return a._isNew ? -1 : 1;
         return ((b.CallDate || '') > (a.CallDate || '')) ? 1 : -1;
