@@ -1066,7 +1066,7 @@
                   <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <div>
                       <ul class="task-list">
-                        <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="t.Task + t.CompleteDate">
+                        <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="(t.CaseID || '') + '_' + (t.Task || '') + '_' + (t.CompleteDate || '') + '_' + (t.CompletedBy || '')">
                           <li>
                             <span class="task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
                             <span x-text="' – ' + (t.Task || '')"></span>
@@ -1420,7 +1420,7 @@
                   <template x-if="getTasksForCase(row.MainCaseID, row.OG_CaseID).length > 0">
                     <div>
                       <ul class="task-list">
-                        <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="t.Task + t.CompleteDate">
+                        <template x-for="t in getTasksForCase(row.MainCaseID, row.OG_CaseID).slice(0,10)" :key="(t.CaseID || '') + '_' + (t.Task || '') + '_' + (t.CompleteDate || '') + '_' + (t.CompletedBy || '')">
                           <li>
                             <span class="task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
                             <span x-text="' – ' + (t.Task || '')"></span>
@@ -2023,7 +2023,7 @@
         <!-- Tasks content -->
         <template x-if="_tip.type === 'tasks'">
           <ul style="list-style:none;margin:0;padding:0;">
-            <template x-for="t in _tip.items" :key="t.Task + t.CompleteDate">
+            <template x-for="t in _tip.items" :key="(t.CaseID || '') + '_' + (t.Task || '') + '_' + (t.CompleteDate || '') + '_' + (t.CompletedBy || '')">
               <li class="tip-task-item">
                 <span style="font-weight:600;color:var(--gray);" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
                 <span x-text="' – ' + (t.Task || '')"></span>
@@ -2303,7 +2303,7 @@
             </template>
             <template x-if="presCase && getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length > 0">
               <div>
-                <template x-for="t in getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID)" :key="t.Task + t.CompleteDate">
+                <template x-for="t in getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID)" :key="(t.CaseID || '') + '_' + (t.Task || '') + '_' + (t.CompleteDate || '') + '_' + (t.CompletedBy || '')">
                   <div class="pres-task-item">
                     <span class="pres-task-name" x-text="fmtShortName(t.CompletedByName || t.CompletedBy)"></span>
                     <span x-text="' – ' + (t.Task || '')"></span>
@@ -2922,7 +2922,14 @@ function remakesPage() {
 
     // ── Per-case detail helpers ──────────────────────────────────
     getTasksForCase(mainId, ogId) {
-      return [...(this._taskMapData[String(ogId)] || [])];
+      const seen = new Set();
+      return [
+        ...(this._taskMapData[String(ogId)]   || []),
+        ...(this._taskMapData[String(mainId)] || []),
+      ].filter(t => {
+        const k = (t.Task || '') + (t.CompleteDate || '') + (t.CompletedBy || '');
+        return seen.has(k) ? false : seen.add(k);
+      });
     },
 
     getNotesForCase(mainId, ogId) {

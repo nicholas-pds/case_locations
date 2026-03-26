@@ -120,7 +120,9 @@ WITH RemakeCases AS (
 SELECT th.CaseID, th.Task, th.CompletedBy, CAST(th.CompleteDate AS DATE) AS CompleteDate
 FROM dbo.CaseTasksHistory AS th
 WHERE th.CaseID IN (
-    SELECT OG_CaseID FROM RemakeCases
+    SELECT MainCaseID FROM RemakeCases
+    UNION
+    SELECT OG_CaseID  FROM RemakeCases
 )
 ORDER BY th.CaseID, th.CompleteDate ASC
 """
