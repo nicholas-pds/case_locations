@@ -1845,6 +1845,7 @@ function efficiencyPage() {
       const ordered = [...data].reverse(); // chronological: oldest → today
       new Chart(ctx, {
         type: 'bar',
+        plugins: [ChartDataLabels],
         data: {
           labels: ordered.map(d => d.label),
           datasets: [
@@ -1866,10 +1867,18 @@ function efficiencyPage() {
           responsive: true,
           plugins: {
             legend: { display: false },
+            datalabels: {
+              anchor: 'end',
+              align: 'end',
+              offset: 2,
+              font: { size: 11, weight: '600' },
+              color: '#1A1A1A',
+              display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+            },
           },
           scales: {
             x: { grid: { display: false } },
-            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
+            y: { beginAtZero: true, grace: '10%', ticks: { stepSize: 3, precision: 0 } },
           },
         },
       });
@@ -1881,4 +1890,5 @@ function efficiencyPage() {
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 {% endblock %}
