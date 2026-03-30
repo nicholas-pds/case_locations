@@ -2,7 +2,7 @@
 {% block title %}Efficiency{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/efficiency.css?v=7">
+<link rel="stylesheet" href="/static/css/efficiency.css?v=8">
 {% endblock %}
 
 {% block content %}
@@ -44,6 +44,7 @@
     <button class="eff-tab" :class="{ active: activeTab === 'mm' }" @click="activeTab = 'mm'">MM EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === 'noon' }" @click="activeTab = 'noon'">Noon EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === '3pm' }" @click="activeTab = '3pm'">3PM EFF</button>
+    <button class="eff-tab" :class="{ active: activeTab === 'airway' }" @click="activeTab = 'airway'; $nextTick(() => _initAirwayChart())">Airway</button>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
@@ -661,6 +662,92 @@
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
+  <!-- AIRWAY TAB                                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="activeTab === 'airway'">
+    <template x-if="airwayData.length === 0">
+      <div class="eff-empty" style="padding:60px 0; text-align:center; color:var(--eff-muted);">
+        No airway task data available.
+      </div>
+    </template>
+    <template x-if="airwayData.length > 0">
+      <div>
+        <!-- Bar Chart -->
+        <div class="eff-section">
+          <div class="eff-section-title">Task Count — Last 6 Business Days</div>
+          <div class="airway-chart-wrap">
+            <canvas id="airwayChart" height="110"></canvas>
+          </div>
+          <div class="airway-legend">
+            <span class="airway-legend-swatch" style="background:#4a4a4a;"></span>3dplan
+            <span class="airway-legend-swatch" style="background:#c41227; margin-left:18px;"></span>3dfin-exp
+          </div>
+        </div>
+
+        <!-- Per-day employee breakdowns -->
+        <div class="eff-section">
+          <div class="eff-section-title">Employee Breakdown by Day</div>
+          <template x-for="(day, idx) in airwayData" :key="day.date">
+            <div class="airway-day-block">
+              <div class="airway-day-label"
+                   x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day Ago — ' : '-' + idx + ' Days Ago — ') + day.label">
+              </div>
+              <div class="airway-tables-row">
+                <!-- 3dplan -->
+                <div class="eff-team-card">
+                  <div class="eff-card-header">
+                    <div class="eff-card-name">3dplan</div>
+                    <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.plan_total + ' total'"></div>
+                  </div>
+                  <table class="eff-person-table">
+                    <thead>
+                      <tr><th>Name</th><th>Count</th></tr>
+                    </thead>
+                    <tbody>
+                      <template x-for="(emp, ei) in day.plan_by_emp" :key="day.date + '-p-' + ei">
+                        <tr>
+                          <td x-text="emp.name"></td>
+                          <td x-text="emp.count"></td>
+                        </tr>
+                      </template>
+                      <template x-if="day.plan_by_emp.length === 0">
+                        <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- 3dfin-exp -->
+                <div class="eff-team-card">
+                  <div class="eff-card-header">
+                    <div class="eff-card-name">3dfin-exp</div>
+                    <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.fin_total + ' total'"></div>
+                  </div>
+                  <table class="eff-person-table">
+                    <thead>
+                      <tr><th>Name</th><th>Count</th></tr>
+                    </thead>
+                    <tbody>
+                      <template x-for="(emp, ei) in day.fin_by_emp" :key="day.date + '-f-' + ei">
+                        <tr>
+                          <td x-text="emp.name"></td>
+                          <td x-text="emp.count"></td>
+                        </tr>
+                      </template>
+                      <template x-if="day.fin_by_emp.length === 0">
+                        <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
   <!-- EDIT CONSTANTS MODAL                       -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="showConstantsModal" x-cloak class="eff-modal-overlay" @click.self="showConstantsModal = false">
@@ -822,6 +909,9 @@ function efficiencyPage() {
     // Midday state
     noonRows: {{ noon_records | tojson }},
     pm3Rows: {{ pm3_records | tojson }},
+
+    // Airway state
+    airwayData: {{ airway_records | tojson }},
 
     // Constants state
     constantsRecords: {{ constants_records | tojson }},
@@ -1744,7 +1834,51 @@ function efficiencyPage() {
         document.body.removeChild(el);
       });
     },
+
+    // ─── Airway Chart ────────────────────────────
+    _initAirwayChart() {
+      const existing = Chart.getChart('airwayChart');
+      if (existing) existing.destroy();
+      const data = this.airwayData;
+      const ctx = document.getElementById('airwayChart');
+      if (!ctx || !data.length) return;
+      const ordered = [...data].reverse(); // chronological: oldest → today
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ordered.map(d => d.label),
+          datasets: [
+            {
+              label: '3dplan',
+              data: ordered.map(d => d.plan_total),
+              backgroundColor: '#4a4a4a',
+              borderRadius: 3,
+            },
+            {
+              label: '3dfin-exp',
+              data: ordered.map(d => d.fin_total),
+              backgroundColor: '#c41227',
+              borderRadius: 3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
+          },
+        },
+      });
+    },
   };
 }
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 {% endblock %}

@@ -12,6 +12,7 @@ from dashboard.data.efficiency_store import (
     load_employee_lkups, save_employee_lkups,
 )
 from dashboard.data.efficiency_processing import run_full_upload, process_midday_snapshot
+from dashboard.data.airway_queries import fetch_airway_tasks
 from dashboard.data.cache import cache
 
 router = APIRouter()
@@ -110,6 +111,13 @@ async def efficiency_page(request: Request):
         if not pm3_df.empty:
             pm3_df = pm3_df.merge(morning_constants, on="Name", how="left")
 
+    # Airway task data — fail gracefully so a DB issue won't break the page
+    try:
+        airway_records = fetch_airway_tasks()
+    except Exception:
+        logger.warning("Airway tasks fetch failed", exc_info=True)
+        airway_records = []
+
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/efficiency.html", {
         "request": request,
@@ -126,6 +134,7 @@ async def efficiency_page(request: Request):
         "week_eff_labels": week_eff_labels,
         "available_dates": available_dates,
         "latest_date": latest_date,
+        "airway_records": airway_records,
     })
 
 
