@@ -11,7 +11,7 @@ WITH CasesWithRankedCategories AS
             ORDER BY
                 CASE pr.Category
                     WHEN 'Hybrid'        THEN 1
-                    WHEN 'E2 Expanders'  THEN 2
+                    WHEN 'E² Expanders'  THEN 2
                     WHEN 'Lab to Lab'    THEN 3
                     WHEN 'Marpe'         THEN 4
                     WHEN 'Metal'         THEN 5
@@ -74,7 +74,7 @@ FROM FinalAssignment
 ORDER BY ShipDate DESC,
          CASE Category
              WHEN 'Hybrid'        THEN 1
-             WHEN 'E2 Expanders'  THEN 2
+             WHEN 'E² Expanders'  THEN 2
              WHEN 'Lab to Lab'    THEN 3
              WHEN 'Marpe'         THEN 4
              WHEN 'Metal'         THEN 5

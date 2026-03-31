@@ -12,7 +12,7 @@ WITH ProductCategories AS
         ON cp.ProductID = pr.ProductID
     WHERE
         ca.Status = 'In Production'
-        AND pr.Category IN ('Metal', 'Clear', 'Wire Bending', 'Marpe', 'Hybrid', 'E2 Expanders', 'Lab to Lab', 'Airway')
+        AND pr.Category IN ('Metal', 'Clear', 'Wire Bending', 'Marpe', 'Hybrid', 'E² Expanders', 'Lab to Lab', 'Airway')
 ),
 
 /* Assign priority and pick only the highest-priority category per case */
@@ -27,7 +27,7 @@ PrioritizedCategories AS
             ORDER BY 
                 CASE Category
                     WHEN 'Hybrid'         THEN 1
-                    WHEN 'E2 Expanders'   THEN 2
+                    WHEN 'E² Expanders'   THEN 2
                     WHEN 'Lab to Lab'     THEN 3
                     WHEN 'Marpe'          THEN 4
                     WHEN 'Metal'          THEN 5
