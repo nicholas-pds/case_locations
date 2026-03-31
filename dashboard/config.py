@@ -77,7 +77,7 @@ CATEGORY_COLORS = {
     'Metal': '#2a9fc9',
     'Clear': '#fca832',
     'Wire Bending': '#F44336',
-    'MARPE': '#e82778',
+    'MARPE': '#F8C8DC',
     'Hybrid': '#1bd15b',
     'E² Expanders': '#fcf232',
     'Airway': '#e82778',
