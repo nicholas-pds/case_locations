@@ -79,7 +79,7 @@ CATEGORY_COLORS = {
     'Wire Bending': '#F44336',
     'MARPE': '#e82778',
     'Hybrid': '#1bd15b',
-    'E2 Expanders': '#fcf232',
+    'E² Expanders': '#fcf232',
     'Airway': '#e82778',
     'Lab to Lab': '#7B1FA2',
     'Other': '#B0BEC5',

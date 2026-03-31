@@ -34,12 +34,15 @@ def fetch_case_locations() -> pd.DataFrame:
 
     # Normalize categories
     if 'Category' in df.columns:
-        # Normalize E*Expander* variants to clean ASCII name
+        # Blank / empty → Other
+        df['Category'] = df['Category'].fillna('').str.strip()
+        df.loc[df['Category'] == '', 'Category'] = 'Other'
+
+        # Normalize E*Expander* variants to display name with superscript
         expander_mask = df['Category'].str.contains('Expander', case=False, na=False)
-        df.loc[expander_mask, 'Category'] = 'E2 Expanders'
+        df.loc[expander_mask, 'Category'] = 'E² Expanders'
 
         df['Category'] = df['Category'].replace({'Airway': 'MARPE', 'Lab to lab': 'Lab to Lab'})
-        df['Category'] = df['Category'].fillna('Other')
 
         # Filter out MARPE rows in planning stages
         mask = ~(
@@ -97,10 +100,13 @@ def fetch_workload_pivot() -> pd.DataFrame:
     end_date = prev_biz_day + timedelta(days=WORKLOAD_DAYS_RANGE)
     df = df[(df['ShipDate'] >= start_date) & (df['ShipDate'] <= end_date)]
 
-    # Normalize E*Expander* variants to clean ASCII name
+    # Normalize categories
     if 'Category' in df.columns:
+        df['Category'] = df['Category'].fillna('').str.strip()
+        df.loc[df['Category'] == '', 'Category'] = 'Other'
+
         expander_mask = df['Category'].str.contains('Expander', case=False, na=False)
-        df.loc[expander_mask, 'Category'] = 'E2 Expanders'
+        df.loc[expander_mask, 'Category'] = 'E² Expanders'
 
     # Aggregate: group by Category + Status + ShipDate, count cases
     df = df.groupby(['Category', 'Status', 'ShipDate']).size().reset_index(name='CaseCount')
