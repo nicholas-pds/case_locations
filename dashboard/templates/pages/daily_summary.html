@@ -22,6 +22,10 @@
     if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
     return '$' + Math.round(v).toLocaleString();
   }
+  function fmtCurrency(v) {
+    if (v == null) return '';
+    return '$' + v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
 
   document.addEventListener('DOMContentLoaded', function() {
     const salesData = {{ sales_history_json | safe }};
@@ -206,10 +210,10 @@
             tooltip: {
               callbacks: {
                 label: function(ctx) {
-                  if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtMillions(ctx.raw);
+                  if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtCurrency(ctx.raw);
                   if (ctx.raw == null) return null;
-                  if (monthlyData.is_current[ctx.dataIndex]) return 'Projected: ' + fmtMillions(ctx.raw);
-                  return '3-Mo Avg: ' + fmtMillions(ctx.raw);
+                  if (monthlyData.is_current[ctx.dataIndex]) return 'Projected: ' + fmtCurrency(ctx.raw);
+                  return '3-Mo Avg: ' + fmtCurrency(ctx.raw);
                 }
               }
             }
@@ -272,10 +276,10 @@
             tooltip: {
               callbacks: {
                 label: function(ctx) {
-                  if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtMillions(ctx.raw);
+                  if (ctx.datasetIndex === 0) return 'Revenue: ' + fmtCurrency(ctx.raw);
                   if (ctx.raw == null) return null;
-                  if (dailyData.is_today[ctx.dataIndex]) return 'Projected: ' + fmtMillions(ctx.raw);
-                  return '5-Day Avg: ' + fmtMillions(ctx.raw);
+                  if (dailyData.is_today[ctx.dataIndex]) return 'Projected: ' + fmtCurrency(ctx.raw);
+                  return '5-Day Avg: ' + fmtCurrency(ctx.raw);
                 }
               }
             }
