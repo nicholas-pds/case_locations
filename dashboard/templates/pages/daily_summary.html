@@ -24,7 +24,7 @@
   }
   function fmtCurrency(v) {
     if (v == null) return '';
-    return '$' + v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return '$' + Math.round(v).toLocaleString();
   }
 
   document.addEventListener('DOMContentLoaded', function() {
