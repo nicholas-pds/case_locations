@@ -30,4 +30,4 @@ Always ask the user if they want to commit and push before ending your response.
 `dashboard/data/cache.py` — async `DataCache` singleton (`cache`); use `await cache.set(key, val)`, `await cache.get(key)`, `cache.get_sync(key)`.
 
 ### CSS Palette
-`--red: #C0182B; --gray: #6B6B6B; --dark: #1A1A1A; --light: #F8F8F8; --border: #E5E5E5;`
+`--red: #c41227; --gray: #6B6B6B; --dark: #1A1A1A; --light: #F8F8F8; --border: #E5E5E5;`
