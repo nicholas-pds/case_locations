@@ -9,14 +9,14 @@ WITH CasesWithRankedCategories AS
         ROW_NUMBER() OVER (
             PARTITION BY ca.CaseNumber, CAST(ca.ShipDate AS DATE)
             ORDER BY
-                CASE pr.Category
-                    WHEN 'Hybrid'        THEN 1
-                    WHEN 'E² Expanders'  THEN 2
-                    WHEN 'Lab to Lab'    THEN 3
-                    WHEN 'Marpe'         THEN 4
-                    WHEN 'Metal'         THEN 5
-                    WHEN 'Clear'         THEN 6
-                    WHEN 'Wire Bending'  THEN 7
+                CASE
+                    WHEN pr.Category = 'Hybrid'              THEN 1
+                    WHEN pr.Category LIKE 'E%Expander%'      THEN 2
+                    WHEN pr.Category = 'Lab to Lab'          THEN 3
+                    WHEN pr.Category = 'Marpe'               THEN 4
+                    WHEN pr.Category = 'Metal'               THEN 5
+                    WHEN pr.Category = 'Clear'               THEN 6
+                    WHEN pr.Category = 'Wire Bending'        THEN 7
                     ELSE 99
                 END,
                 pr.Category DESC
@@ -72,14 +72,14 @@ SELECT
     CaseNumber
 FROM FinalAssignment
 ORDER BY ShipDate DESC,
-         CASE Category
-             WHEN 'Hybrid'        THEN 1
-             WHEN 'E² Expanders'  THEN 2
-             WHEN 'Lab to Lab'    THEN 3
-             WHEN 'Marpe'         THEN 4
-             WHEN 'Metal'         THEN 5
-             WHEN 'Clear'         THEN 6
-             WHEN 'Wire Bending'  THEN 7
-             WHEN 'Other'         THEN 99
+         CASE
+             WHEN Category = 'Hybrid'              THEN 1
+             WHEN Category LIKE 'E%Expander%'      THEN 2
+             WHEN Category = 'Lab to Lab'          THEN 3
+             WHEN Category = 'Marpe'               THEN 4
+             WHEN Category = 'Metal'               THEN 5
+             WHEN Category = 'Clear'               THEN 6
+             WHEN Category = 'Wire Bending'        THEN 7
+             ELSE 99
          END,
          Category;

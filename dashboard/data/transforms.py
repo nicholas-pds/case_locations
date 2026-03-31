@@ -390,7 +390,7 @@ def build_workload_pivot_table(df: pd.DataFrame) -> dict:
 
     dates = sorted(df['ShipDate'].unique())
     categories_order = [
-        'Hybrid', 'E² Expanders', 'Lab to Lab', 'MARPE',
+        'Hybrid', 'E2 Expanders', 'Lab to Lab', 'MARPE',
         'Metal', 'Clear', 'Wire Bending', 'Other',
     ]
 
@@ -439,7 +439,7 @@ def build_category_pace_data(df: pd.DataFrame) -> list[dict]:
         return []
 
     categories_order = [
-        'Hybrid', 'E² Expanders', 'Lab to Lab', 'MARPE',
+        'Hybrid', 'E2 Expanders', 'Lab to Lab', 'MARPE',
         'Metal', 'Clear', 'Wire Bending', 'Other',
     ]
 

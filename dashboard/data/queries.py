@@ -32,8 +32,12 @@ def fetch_case_locations() -> pd.DataFrame:
     df = df[df['Ship Date'] > cutoff_date]
     df['Ship Date'] = df['Ship Date'].dt.date
 
-    # Replace Airway -> MARPE in Category
+    # Normalize categories
     if 'Category' in df.columns:
+        # Normalize E*Expander* variants to clean ASCII name
+        expander_mask = df['Category'].str.contains('Expander', case=False, na=False)
+        df.loc[expander_mask, 'Category'] = 'E2 Expanders'
+
         df['Category'] = df['Category'].replace({'Airway': 'MARPE', 'Lab to lab': 'Lab to Lab'})
         df['Category'] = df['Category'].fillna('Other')
 
@@ -92,6 +96,11 @@ def fetch_workload_pivot() -> pd.DataFrame:
     start_date = prev_biz_day
     end_date = prev_biz_day + timedelta(days=WORKLOAD_DAYS_RANGE)
     df = df[(df['ShipDate'] >= start_date) & (df['ShipDate'] <= end_date)]
+
+    # Normalize E*Expander* variants to clean ASCII name
+    if 'Category' in df.columns:
+        expander_mask = df['Category'].str.contains('Expander', case=False, na=False)
+        df.loc[expander_mask, 'Category'] = 'E2 Expanders'
 
     # Aggregate: group by Category + Status + ShipDate, count cases
     df = df.groupby(['Category', 'Status', 'ShipDate']).size().reset_index(name='CaseCount')

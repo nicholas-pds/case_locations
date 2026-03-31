@@ -9,8 +9,6 @@ WITH ProductCategories AS
     LEFT JOIN dbo.Products AS pr       ON cp.ProductID = pr.ProductID
     WHERE ca.Status = 'In Production'
       AND pr.Category IS NOT NULL
-      AND pr.Category IN ('Metal', 'Clear', 'Wire Bending', 'Marpe', 
-                          'Hybrid', 'E² Expanders', 'Lab to Lab', 'Airway')
 )
 
 SELECT 

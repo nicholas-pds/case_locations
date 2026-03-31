@@ -12,7 +12,7 @@ WITH ProductCategories AS
         ON cp.ProductID = pr.ProductID
     WHERE
         ca.Status = 'In Production'
-        AND pr.Category IN ('Metal', 'Clear', 'Wire Bending', 'Marpe', 'Hybrid', 'E² Expanders', 'Lab to Lab', 'Airway')
+        AND pr.Category IS NOT NULL
 ),
 
 /* Assign priority and pick only the highest-priority category per case */
@@ -25,16 +25,16 @@ PrioritizedCategories AS
         ROW_NUMBER() OVER (
             PARTITION BY CaseNumber 
             ORDER BY 
-                CASE Category
-                    WHEN 'Hybrid'         THEN 1
-                    WHEN 'E² Expanders'   THEN 2
-                    WHEN 'Lab to Lab'     THEN 3
-                    WHEN 'Marpe'          THEN 4
-                    WHEN 'Metal'          THEN 5
-                    WHEN 'Clear'          THEN 6
-                    WHEN 'Wire Bending'   THEN 7
-                    WHEN 'Airway'         THEN 8
-                    ELSE 99  
+                CASE
+                    WHEN Category = 'Hybrid'              THEN 1
+                    WHEN Category LIKE 'E%Expander%'      THEN 2
+                    WHEN Category = 'Lab to Lab'          THEN 3
+                    WHEN Category = 'Marpe'               THEN 4
+                    WHEN Category = 'Metal'               THEN 5
+                    WHEN Category = 'Clear'               THEN 6
+                    WHEN Category = 'Wire Bending'        THEN 7
+                    WHEN Category = 'Airway'              THEN 8
+                    ELSE 99
                 END
         ) AS PriorityRank
     FROM ProductCategories
