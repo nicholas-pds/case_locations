@@ -109,7 +109,7 @@ function workloadPage() {
       }
       const data = this._gembaCache;
       const locationMap = {
-        manufacturing: { cases: data.manufacturing_cases, label: '3D Manufacturing' },
+        manufacturing: { cases: data.manufacturing_cases, label: '3D Printers' },
         oven:          { cases: data.oven_cases,          label: 'Oven' },
         tumbler:       { cases: data.tumbler_cases,       label: 'Tumbler' },
       };
@@ -148,8 +148,12 @@ function _buildGembaPDF(cases, dates, locationLabel) {
   titleWrap.style.cssText = 'text-align:center;flex:1;';
   const titleEl = document.createElement('div');
   titleEl.style.cssText = 'font-size:14pt;font-weight:700;line-height:1.2;';
-  titleEl.textContent = locationLabel + ' Gemba Walk';
+  titleEl.textContent = locationLabel.toUpperCase();
+  const subEl = document.createElement('div');
+  subEl.style.cssText = 'font-size:10pt;font-weight:600;opacity:0.9;';
+  subEl.textContent = '3D Manufacturing Gemba Walk';
   titleWrap.appendChild(titleEl);
+  titleWrap.appendChild(subEl);
 
   const dtWrap = document.createElement('div');
   dtWrap.style.cssText = 'text-align:right;font-size:9pt;line-height:1.5;min-width:110px;';
@@ -233,45 +237,66 @@ function _buildGembaPDF(cases, dates, locationLabel) {
       return a.category < b.category ? -1 : a.category > b.category ? 1 : 0;
     });
 
-  const t2 = document.createElement('table');
-  t2.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed;';
+  // html2pdf uses html2canvas (bitmap slicing) — CSS thead repeat doesn't work.
+  // Instead, pre-split detail cases into page-sized chunks, each with its own thead.
+  const DETAIL_COLS = ['Ship Date', 'Case #', 'Pan #', 'Type', 'ETA', 'Notes'];
+  const COL_PCTS   = [11, 9, 14, 15, 11, 40];
+  const ROWS_PAGE1 = 24;  // rows fitting on first page after header + summary table
+  const ROWS_NEXT  = 35;  // rows fitting on subsequent pages
 
-  // Fixed col widths: Ship Date 11%, Case# 9%, Pan# 14%, Type 15%, ETA 11%, Notes 40%
-  const cg2 = document.createElement('colgroup');
-  [11, 9, 14, 15, 11, 40].forEach(pct => {
-    const col = document.createElement('col');
-    col.style.width = pct + '%';
-    cg2.appendChild(col);
-  });
-  t2.appendChild(cg2);
-
-  const detailCols = ['Ship Date', 'Case #', 'Pan #', 'Type', 'ETA', 'Notes'];
-  const thead2 = document.createElement('thead');
-  thead2.style.cssText = 'display:table-header-group;';
-  const hrow2 = document.createElement('tr');
-  detailCols.forEach(col => {
-    const th = document.createElement('th');
-    th.style.cssText = 'background:#c41227;color:#fff;padding:4pt 5pt;border:1px solid #000;font-weight:600;text-align:left;';
-    th.textContent = col;
-    hrow2.appendChild(th);
-  });
-  thead2.appendChild(hrow2);
-  t2.appendChild(thead2);
-
-  const tbody2 = document.createElement('tbody');
-  detailCases.forEach((c, i) => {
-    const tr = document.createElement('tr');
-    tr.style.cssText = 'page-break-inside:avoid;background:' + (i % 2 === 0 ? '#fff' : '#f5f5f5') + ';';
-    const vals = [_fmtDate(c.ship_date), c.case_number, c.pan_number, c.category, '', ''];
-    vals.forEach((v) => {
-      const td = document.createElement('td');
-      td.style.cssText = 'padding:4pt 5pt;border:1px solid #000;word-wrap:break-word;';
-      td.textContent = v;
-      tr.appendChild(td);
+  function _makeDetailTable(chunk, rowOffset) {
+    const tbl = document.createElement('table');
+    tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed;';
+    const cg = document.createElement('colgroup');
+    COL_PCTS.forEach(pct => {
+      const col = document.createElement('col');
+      col.style.width = pct + '%';
+      cg.appendChild(col);
     });
-    tbody2.appendChild(tr);
-  });
-  t2.appendChild(tbody2);
+    tbl.appendChild(cg);
+    const thead = document.createElement('thead');
+    const hrow = document.createElement('tr');
+    DETAIL_COLS.forEach(c => {
+      const th = document.createElement('th');
+      th.style.cssText = 'background:#c41227;color:#fff;padding:4pt 5pt;border:1px solid #000;font-weight:600;text-align:left;';
+      th.textContent = c;
+      hrow.appendChild(th);
+    });
+    thead.appendChild(hrow);
+    tbl.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    chunk.forEach((c, i) => {
+      const tr = document.createElement('tr');
+      tr.style.cssText = 'page-break-inside:avoid;background:' + ((rowOffset + i) % 2 === 0 ? '#fff' : '#f5f5f5') + ';';
+      [_fmtDate(c.ship_date), c.case_number, c.pan_number, c.category, '', ''].forEach(v => {
+        const td = document.createElement('td');
+        td.style.cssText = 'padding:4pt 5pt;border:1px solid #000;word-wrap:break-word;';
+        td.textContent = v;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    return tbl;
+  }
+
+  const detailSection = document.createElement('div');
+  detailSection.appendChild(detailLabel);
+  let remaining = [...detailCases];
+  let isFirst = true;
+  let rowOffset = 0;
+  while (remaining.length > 0) {
+    const limit = isFirst ? ROWS_PAGE1 : ROWS_NEXT;
+    const chunk = remaining.splice(0, limit);
+    if (!isFirst) {
+      const pb = document.createElement('div');
+      pb.style.cssText = 'page-break-before:always;padding-top:4pt;';
+      detailSection.appendChild(pb);
+    }
+    detailSection.appendChild(_makeDetailTable(chunk, rowOffset));
+    rowOffset += chunk.length;
+    isFirst = false;
+  }
 
   // ── Assemble wrapper ──
   const wrapper = document.createElement('div');
@@ -279,8 +304,7 @@ function _buildGembaPDF(cases, dates, locationLabel) {
   wrapper.appendChild(header);
   wrapper.appendChild(summaryLabel);
   wrapper.appendChild(t1);
-  wrapper.appendChild(detailLabel);
-  wrapper.appendChild(t2);
+  wrapper.appendChild(detailSection);
 
   html2pdf().set({
     margin:      [18, 18, 18, 18],
