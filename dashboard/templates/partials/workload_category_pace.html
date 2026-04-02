@@ -6,7 +6,7 @@
     {% for day in row.days %}
     <div class="pace-card pace-card-half pace-card-{{ day.status }}"
          style="cursor:pointer"
-         @click="$dispatch('open-pace-modal', {date: '{{ day.date_iso }}', category: '{{ row.category }}', title: '{{ row.category }} | {{ day.label }}'})">
+         @click="$dispatch('open-pace-modal', {date: '{{ day.date_iso }}', category: '{{ row.category }}', title: '{{ row.category }} - {{ day.label }}'})">
       <div class="pace-day">{{ day.label }}</div>
       <div class="pace-fraction">{{ day.invoiced }}<span class="pace-separator"> / </span>{{ day.total }}</div>
       <div class="pace-bar-container">
