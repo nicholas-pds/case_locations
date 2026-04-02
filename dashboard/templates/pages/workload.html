@@ -242,8 +242,8 @@ function _buildGembaPDF(cases, dates, locationLabel) {
   // Instead, pre-split detail cases into page-sized chunks, each with its own thead.
   const DETAIL_COLS = ['Ship Date', 'Case #', 'Pan #', 'Type', 'ETA', 'Notes'];
   const COL_PCTS   = [11, 9, 14, 15, 11, 40];
-  const ROWS_PAGE1 = 24;  // rows fitting on first page after header + summary table
-  const ROWS_NEXT  = 35;  // rows fitting on subsequent pages
+  const ROWS_PAGE1 = 18;  // rows fitting on first page after header + summary table
+  const ROWS_NEXT  = 28;  // rows fitting on subsequent pages
 
   function _makeDetailTable(chunk, rowOffset) {
     const tbl = document.createElement('table');
@@ -289,12 +289,12 @@ function _buildGembaPDF(cases, dates, locationLabel) {
   while (remaining.length > 0) {
     const limit = isFirst ? ROWS_PAGE1 : ROWS_NEXT;
     const chunk = remaining.splice(0, limit);
+    const tableWrap = document.createElement('div');
     if (!isFirst) {
-      const pb = document.createElement('div');
-      pb.style.cssText = 'page-break-before:always;padding-top:4pt;';
-      detailSection.appendChild(pb);
+      tableWrap.style.cssText = 'page-break-before:always;';
     }
-    detailSection.appendChild(_makeDetailTable(chunk, rowOffset));
+    tableWrap.appendChild(_makeDetailTable(chunk, rowOffset));
+    detailSection.appendChild(tableWrap);
     rowOffset += chunk.length;
     isFirst = false;
   }
