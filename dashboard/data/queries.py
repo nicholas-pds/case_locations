@@ -94,6 +94,9 @@ def fetch_workload_pivot() -> tuple[pd.DataFrame, pd.DataFrame]:
     if 'DueDate' in df.columns:
         df['DueDate'] = pd.to_datetime(df['DueDate'], errors='coerce').dt.date
 
+    # Save original ShipDate before rush adjustment (for display in pace modal)
+    df['OrigShipDate'] = df['ShipDate']
+
     # Adjust rush pan ShipDates to previous business day (holiday-aware)
     df = adjust_rush_ship_dates(df, 'ShipDate')
 

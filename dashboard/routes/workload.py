@@ -150,7 +150,7 @@ async def pace_cases(date_str: str = None, category: str = None):
 
     cases = []
     for _, row in filtered.iterrows():
-        ship = row.get('ShipDate')
+        ship = row.get('OrigShipDate', row.get('ShipDate'))
         due = row.get('DueDate')
         cases.append({
             'ship_date': ship.strftime('%m/%d') if hasattr(ship, 'strftime') else str(ship),
