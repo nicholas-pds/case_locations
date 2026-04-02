@@ -90,7 +90,8 @@
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-const GEMBA_CATEGORIES = ['Rush "R"', 'Clear', 'Hybrid', 'Metal', 'Lab to Lab', 'Wire Bending', 'MARPE'];
+const GEMBA_CATEGORIES = ['Rush "R"', 'Clear', 'Hybrid', 'Metal', 'Lab to Lab', 'Wire Bending', 'MARPE', 'E\u00B2 Expanders'];
+const GEMBA_CAT_DISPLAY = { 'E\u00B2 Expanders': 'E\u00B2' };
 
 function workloadPage() {
   return {
@@ -173,7 +174,7 @@ function _buildGembaPDF(cases, dates, locationLabel) {
 
   // Column widths for 9-col summary table (must sum to 100%)
   const cg1 = document.createElement('colgroup');
-  [14, 8, 11, 10, 10, 10, 11, 14, 12].forEach(pct => {
+  [13, 7, 10, 9, 9, 9, 10, 12, 11, 10].forEach(pct => {
     const col = document.createElement('col');
     col.style.width = pct + '%';
     cg1.appendChild(col);
@@ -186,7 +187,7 @@ function _buildGembaPDF(cases, dates, locationLabel) {
   allCols.forEach(col => {
     const th = document.createElement('th');
     th.style.cssText = 'background:#c41227;color:#fff;padding:4pt 5pt;border:1px solid #000;font-weight:600;text-align:center;word-break:break-word;';
-    th.textContent = col;
+    th.textContent = GEMBA_CAT_DISPLAY[col] || col;
     hrow1.appendChild(th);
   });
   thead1.appendChild(hrow1);
