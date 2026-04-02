@@ -239,16 +239,16 @@ function _buildGembaPDF(cases, dates, locationLabel) {
   const t2 = document.createElement('table');
   t2.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed;';
 
-  // Fixed col widths: Ship Date 7%, Case# 9%, Pan# 13%, Type 15%, ETA 11%, Notes 45%
+  // Fixed col widths: Ship Date 11%, Case# 9%, Pan# 12%, Type 15%, ETA 11%, Notes 42%
   const cg2 = document.createElement('colgroup');
-  [7, 9, 13, 15, 11, 45].forEach(pct => {
+  [11, 9, 12, 15, 11, 42].forEach(pct => {
     const col = document.createElement('col');
     col.style.width = pct + '%';
     cg2.appendChild(col);
   });
   t2.appendChild(cg2);
 
-  const detailCols = ['Ship Date', 'Case Number', 'Pan Number', 'Type', 'ETA', 'Notes'];
+  const detailCols = ['Ship Date', 'Case #', 'Pan #', 'Type', 'ETA', 'Notes'];
   const thead2 = document.createElement('thead');
   thead2.style.cssText = 'display:table-header-group;';
   const hrow2 = document.createElement('tr');
@@ -268,7 +268,7 @@ function _buildGembaPDF(cases, dates, locationLabel) {
     const vals = [_fmtDate(c.ship_date), c.case_number, c.pan_number, c.category, '', ''];
     vals.forEach((v) => {
       const td = document.createElement('td');
-      td.style.cssText = 'padding:4pt 5pt;border:1px solid #000;overflow:hidden;';
+      td.style.cssText = 'padding:4pt 5pt;border:1px solid #000;word-wrap:break-word;';
       td.textContent = v;
       tr.appendChild(td);
     });
@@ -278,7 +278,7 @@ function _buildGembaPDF(cases, dates, locationLabel) {
 
   // ── Assemble wrapper ──
   const wrapper = document.createElement('div');
-  wrapper.style.cssText = 'font-family:Poppins,Arial,sans-serif;padding:0;width:576pt;';
+  wrapper.style.cssText = 'font-family:Poppins,Arial,sans-serif;padding:0;width:490pt;';
   wrapper.appendChild(header);
   wrapper.appendChild(summaryLabel);
   wrapper.appendChild(t1);
