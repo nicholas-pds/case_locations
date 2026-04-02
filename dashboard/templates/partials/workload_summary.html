@@ -17,11 +17,17 @@
     <div class="summary-label">Design</div>
     <div class="summary-value">{{ design_count }}</div>
   </div>
-  <div class="summary-card" style="border-left-color: #9C27B0; cursor:pointer;"
+  <div class="summary-card" style="border-left-color: #9C27B0; cursor:pointer; display:flex; align-items:center; gap:12px;"
        @click="$dispatch('open-gemba-modal')"
        title="Click to download 3D Room Gemba Walk">
-    <div class="summary-label">3D Manufacturing</div>
-    <div class="summary-value">{{ manufacturing_count }}</div>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#9CA3AF" viewBox="0 0 16 16" style="flex-shrink:0;">
+      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+      <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+    </svg>
+    <div>
+      <div class="summary-label">3D Manufacturing</div>
+      <div class="summary-value">{{ manufacturing_count }}</div>
+    </div>
   </div>
   <div class="summary-card" style="border-left-color: #607D8B;">
     <div class="summary-label">Production Floor</div>

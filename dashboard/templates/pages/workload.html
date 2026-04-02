@@ -49,16 +49,8 @@
      @keydown.escape.window="gembaOpen = false">
   <div style="background:#fff;border-radius:8px;padding:28px 32px;min-width:320px;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,0.18);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
 
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#9CA3AF" viewBox="0 0 16 16" style="flex-shrink:0;">
-        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-      </svg>
-      <div>
-        <h2 style="margin:0 0 4px 0;font-size:17px;font-weight:700;color:#1A1A1A;">3D Gemba Walk</h2>
-        <p style="margin:0;font-size:13px;color:#6B6B6B;">Download the daily Gemba Walk sheet for each location.</p>
-      </div>
-    </div>
+    <h2 style="margin:0 0 4px 0;font-size:17px;font-weight:700;color:#1A1A1A;">3D Gemba Walk</h2>
+    <p style="margin:0 0 20px 0;font-size:13px;color:#6B6B6B;">Download the daily Gemba Walk sheet for each location.</p>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button @click="downloadGembaPDF('manufacturing')"
               style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#c41227;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
