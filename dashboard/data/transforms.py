@@ -367,6 +367,7 @@ def build_workload_pace_data(df: pd.DataFrame) -> list[dict]:
 
         pace.append({
             'label': label,
+            'date_iso': d.strftime('%Y-%m-%d') if hasattr(d, 'strftime') else str(d),
             'invoiced': inv,
             'in_production': prod,
             'total': total,
@@ -468,6 +469,7 @@ def build_category_pace_data(df: pd.DataFrame) -> list[dict]:
 
             days.append({
                 'label': label,
+                'date_iso': d.strftime('%Y-%m-%d') if hasattr(d, 'strftime') else str(d),
                 'invoiced': inv,
                 'in_production': prod,
                 'total': total,

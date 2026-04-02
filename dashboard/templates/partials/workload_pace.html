@@ -1,6 +1,8 @@
 <div class="pace-grid">
   {% for day in pace_data %}
-  <div class="pace-card pace-card-{{ day.status }}">
+  <div class="pace-card pace-card-{{ day.status }}"
+       style="cursor:pointer"
+       @click="$dispatch('open-pace-modal', {date: '{{ day.date_iso }}', category: null, title: 'ALL | {{ day.label }}'})">
     <div class="pace-day">{{ day.label }}</div>
     <div class="pace-fraction">{{ day.invoiced }}<span class="pace-separator"> / </span>{{ day.total }}</div>
     <div class="pace-bar-container">

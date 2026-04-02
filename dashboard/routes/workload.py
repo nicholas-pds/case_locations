@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from dashboard.data.cache import cache
-from dashboard.data.transforms import build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data, build_category_pace_data
+from dashboard.data.transforms import build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data, build_category_pace_data, adjust_rush_ship_dates
 from src.holidays import previous_business_day, next_x_business_days, get_all_company_holidays
-from datetime import date
+from datetime import date, datetime
 import json
+import pandas as pd
 
 router = APIRouter()
 
@@ -121,3 +122,43 @@ async def gemba_data():
         'oven_cases': _df_to_gemba_records(filter_loc('Oven')),
         'tumbler_cases': _df_to_gemba_records(filter_loc('Tumbler')),
     })
+
+
+@router.get("/workload/pace-cases")
+async def pace_cases(date_str: str = None, category: str = None):
+    """Return individual In Production cases for a given (rush-adjusted) date and optional category."""
+    if not date_str:
+        return JSONResponse({'cases': [], 'count': 0})
+
+    case_df = await cache.get("case_locations")
+    if case_df is None or case_df.empty:
+        return JSONResponse({'cases': [], 'count': 0})
+
+    # Apply rush date adjustment to a copy (for filtering only)
+    adjusted = adjust_rush_ship_dates(case_df.copy(), 'Ship Date')
+    target = datetime.strptime(date_str, '%Y-%m-%d').date()
+    mask = adjusted['Ship Date'] == target
+    if category:
+        mask = mask & (adjusted['Category'] == category)
+
+    # Select matching rows from the ORIGINAL df (unadjusted Ship Date for display)
+    filtered = case_df.loc[mask].copy()
+
+    # Sort by Ship Date ASC, then Category ASC
+    filtered = filtered.sort_values(['Ship Date', 'Category'])
+
+    cases = []
+    for _, row in filtered.iterrows():
+        ship = row.get('Ship Date')
+        due = row.get('Due Date')
+        cases.append({
+            'ship_date': ship.strftime('%m/%d') if hasattr(ship, 'strftime') else str(ship),
+            'due_date': due.strftime('%m/%d') if hasattr(due, 'strftime') and pd.notna(due) else '',
+            'case_number': str(row.get('Case Number', '') or ''),
+            'pan_number': str(row.get('Pan Number', '') or ''),
+            'category': str(row.get('Category', '') or ''),
+            'last_location': str(row.get('Last Location', '') or ''),
+            'local_delivery': bool(row.get('LocalDelivery', False)),
+        })
+
+    return JSONResponse({'cases': cases, 'count': len(cases)})
