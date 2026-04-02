@@ -442,7 +442,7 @@ function _buildPacePDF(cases, title, isoDate, category) {
   titleEl.textContent = title;
   const subEl = document.createElement('div');
   subEl.style.cssText = 'font-size:10pt;font-weight:600;opacity:0.9;';
-  subEl.textContent = 'Cases In Production';
+  subEl.textContent = 'Cases In Production - ' + cases.length + ' Cases';
   titleWrap.appendChild(titleEl);
   titleWrap.appendChild(subEl);
 
