@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from dashboard.data.cache import cache
-from dashboard.data.transforms import build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data, build_category_pace_data, adjust_rush_ship_dates
+from dashboard.data.transforms import build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data, build_category_pace_data
 from src.holidays import previous_business_day, next_x_business_days, get_all_company_holidays
 from datetime import date, datetime
 import json
@@ -126,38 +126,39 @@ async def gemba_data():
 
 @router.get("/workload/pace-cases")
 async def pace_cases(date_str: str = None, category: str = None):
-    """Return individual In Production cases for a given (rush-adjusted) date and optional category."""
+    """Return individual In Production cases for a given (rush-adjusted) date and optional category.
+    Uses workload_pivot_detail cache (same source as pace tiles) for consistent counts."""
     if not date_str:
         return JSONResponse({'cases': [], 'count': 0})
 
-    case_df = await cache.get("case_locations")
-    if case_df is None or case_df.empty:
+    detail_df = await cache.get("workload_pivot_detail")
+    if detail_df is None or detail_df.empty:
         return JSONResponse({'cases': [], 'count': 0})
 
-    # Apply rush date adjustment to a copy (for filtering only)
-    adjusted = adjust_rush_ship_dates(case_df.copy(), 'Ship Date')
+    # Filter to In Production only (pivot detail includes Invoiced too)
+    filtered = detail_df[detail_df['Status'] == 'In Production'].copy()
+
+    # Filter by rush-adjusted ShipDate (already adjusted in the cache)
     target = datetime.strptime(date_str, '%Y-%m-%d').date()
-    mask = adjusted['Ship Date'] == target
+    mask = filtered['ShipDate'] == target
     if category:
-        mask = mask & (adjusted['Category'] == category)
+        mask = mask & (filtered['Category'] == category)
+    filtered = filtered[mask]
 
-    # Select matching rows from the ORIGINAL df (unadjusted Ship Date for display)
-    filtered = case_df.loc[mask].copy()
-
-    # Sort by Ship Date ASC, then Category ASC
-    filtered = filtered.sort_values(['Ship Date', 'Category'])
+    # Sort by ShipDate ASC, then Category ASC
+    filtered = filtered.sort_values(['ShipDate', 'Category'])
 
     cases = []
     for _, row in filtered.iterrows():
-        ship = row.get('Ship Date')
-        due = row.get('Due Date')
+        ship = row.get('ShipDate')
+        due = row.get('DueDate')
         cases.append({
             'ship_date': ship.strftime('%m/%d') if hasattr(ship, 'strftime') else str(ship),
             'due_date': due.strftime('%m/%d') if hasattr(due, 'strftime') and pd.notna(due) else '',
-            'case_number': str(row.get('Case Number', '') or ''),
-            'pan_number': str(row.get('Pan Number', '') or ''),
+            'case_number': str(row.get('CaseNumber', '') or ''),
+            'pan_number': str(row.get('PanNumber', '') or ''),
             'category': str(row.get('Category', '') or ''),
-            'last_location': str(row.get('Last Location', '') or ''),
+            'last_location': str(row.get('LastLocation', '') or ''),
             'local_delivery': bool(row.get('LocalDelivery', False)),
         })
 

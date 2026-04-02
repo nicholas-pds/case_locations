@@ -82,14 +82,17 @@ def fetch_workload_status() -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
-def fetch_workload_pivot() -> pd.DataFrame:
+def fetch_workload_pivot() -> tuple[pd.DataFrame, pd.DataFrame]:
     """Execute workload_pivot.sql for category breakdown.
-    Returns per-row data, adjusts rush ShipDates, then aggregates."""
+    Returns (aggregated_df, detail_df) — per-row data with rush adjustment,
+    then aggregated counts for tiles."""
     df = execute_sql_to_dataframe(str(SQL_DIR / "workload_pivot.sql"))
     if df.empty:
-        return df
+        return df, df
 
     df['ShipDate'] = pd.to_datetime(df['ShipDate']).dt.date
+    if 'DueDate' in df.columns:
+        df['DueDate'] = pd.to_datetime(df['DueDate'], errors='coerce').dt.date
 
     # Adjust rush pan ShipDates to previous business day (holiday-aware)
     df = adjust_rush_ship_dates(df, 'ShipDate')
@@ -108,10 +111,13 @@ def fetch_workload_pivot() -> pd.DataFrame:
         expander_mask = df['Category'].str.contains('Expander', case=False, na=False)
         df.loc[expander_mask, 'Category'] = 'E² Expanders'
 
-    # Aggregate: group by Category + Status + ShipDate, count cases
-    df = df.groupby(['Category', 'Status', 'ShipDate']).size().reset_index(name='CaseCount')
+    # Keep per-row detail for pace modal
+    detail_df = df.copy()
 
-    return df.reset_index(drop=True)
+    # Aggregate: group by Category + Status + ShipDate, count cases
+    agg_df = df.groupby(['Category', 'Status', 'ShipDate']).size().reset_index(name='CaseCount')
+
+    return agg_df.reset_index(drop=True), detail_df.reset_index(drop=True)
 
 
 def fetch_airway_workflow() -> pd.DataFrame:

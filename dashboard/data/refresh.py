@@ -84,6 +84,15 @@ async def refresh_all_queries():
             logger.error(f"Query '{name}' failed: {result}")
             continue
 
+        # workload_pivot returns (aggregated_df, detail_df) tuple
+        if name == "workload_pivot" and isinstance(result, tuple):
+            agg_df, detail_df = result
+            await cache.set("workload_pivot", agg_df)
+            await cache.set("workload_pivot_detail", detail_df)
+            logger.info(f"Cache updated: workload_pivot ({len(agg_df)} rows)")
+            logger.info(f"Cache updated: workload_pivot_detail ({len(detail_df)} rows)")
+            continue
+
         # Add filter columns to case_locations
         if name == "case_locations" and not result.empty:
             try:

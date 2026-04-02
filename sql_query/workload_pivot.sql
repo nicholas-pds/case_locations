@@ -4,7 +4,10 @@ WITH CasesWithRankedCategories AS
         ca.CaseNumber,
         ca.PanNumber,
         CAST(ca.ShipDate AS DATE) AS ShipDate,
+        CAST(ca.DueDate AS DATE) AS DueDate,
         ca.Status,
+        ca.LocalDelivery,
+        cll.[Description] AS LastLocation,
         pr.Category,
         ROW_NUMBER() OVER (
             PARTITION BY ca.CaseNumber, CAST(ca.ShipDate AS DATE)
@@ -24,6 +27,7 @@ WITH CasesWithRankedCategories AS
     FROM dbo.Cases AS ca
     INNER JOIN dbo.CaseProducts AS cp ON ca.CaseID = cp.CaseID
     INNER JOIN dbo.Products AS pr ON cp.ProductID = pr.ProductID
+    LEFT JOIN dbo.CaseLogLocations AS cll ON ca.LastLocationID = cll.ID
     WHERE ca.Status IN ('In Production', 'Invoiced')
       AND ca.ShipDate IS NOT NULL
       AND pr.Category <> 'Airway'
@@ -34,9 +38,12 @@ WITH CasesWithRankedCategories AS
 (
     SELECT
         ShipDate,
+        DueDate,
         CaseNumber,
         PanNumber,
         Status,
+        LocalDelivery,
+        LastLocation,
         CASE WHEN Category = 'Accessories' THEN 'Other'
              ELSE ISNULL(NULLIF(Category, ''), 'Other')
         END AS Category
@@ -48,11 +55,15 @@ WITH CasesWithRankedCategories AS
     -- Add cases that have NO products at all OR no products with any category
     SELECT
         CAST(ca.ShipDate AS DATE) AS ShipDate,
+        CAST(ca.DueDate AS DATE) AS DueDate,
         ca.CaseNumber,
         ca.PanNumber,
         ca.Status,
+        ca.LocalDelivery,
+        cll.[Description] AS LastLocation,
         'Other' AS Category
     FROM dbo.Cases AS ca
+    LEFT JOIN dbo.CaseLogLocations AS cll ON ca.LastLocationID = cll.ID
     WHERE ca.Status IN ('In Production', 'Invoiced')
       AND ca.ShipDate IS NOT NULL
       AND CAST(ca.ShipDate AS DATE) >= DATEADD(day, -3, CAST(GETDATE() AS DATE))
@@ -68,8 +79,11 @@ SELECT
     Category,
     Status,
     ShipDate,
+    DueDate,
     PanNumber,
-    CaseNumber
+    CaseNumber,
+    LocalDelivery,
+    LastLocation
 FROM FinalAssignment
 ORDER BY ShipDate DESC,
          CASE
