@@ -2,6 +2,8 @@
 {% block title %}Workload Preview{% endblock %}
 
 {% block content %}
+<div x-data="workloadPage()" @open-gemba-modal.window="gembaOpen = true">
+
 <div class="page-header">
   <h1 class="page-title">Workload Preview - Cases Invoiced & In Production</h1>
 </div>
@@ -39,4 +41,243 @@
      hx-swap="innerHTML">
   {% include "partials/workload_category_pace.html" %}
 </div>
+
+<!-- 3D Room Gemba Walk Modal -->
+<div x-show="gembaOpen" x-cloak
+     style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;"
+     @click.self="gembaOpen = false">
+  <div style="background:#fff;border-radius:8px;padding:28px 32px;min-width:320px;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+    <h2 style="margin:0 0 4px 0;font-size:17px;font-weight:700;color:#1A1A1A;">3D Room Gemba Walk</h2>
+    <p style="margin:0 0 20px 0;font-size:13px;color:#6B6B6B;">Download the daily Gemba Walk sheet for each location.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button @click="downloadGembaPDF('manufacturing')"
+              style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#c41227;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+        <span>3D Printers</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0;">
+          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+        </svg>
+      </button>
+      <button @click="downloadGembaPDF('oven')"
+              style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#c41227;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+        <span>Oven</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0;">
+          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+        </svg>
+      </button>
+      <button @click="downloadGembaPDF('tumbler')"
+              style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#c41227;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+        <span>Tumbler</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0;">
+          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+        </svg>
+      </button>
+    </div>
+    <button @click="gembaOpen = false"
+            style="margin-top:16px;width:100%;padding:8px;background:#f0f0f0;color:#6B6B6B;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+      Close
+    </button>
+  </div>
+</div>
+
+</div><!-- end x-data -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+const GEMBA_CATEGORIES = ['Rush "R"', 'Clear', 'Hybrid', 'Metal', 'Lab to Lab', 'Wire Bending', 'MARPE'];
+
+function workloadPage() {
+  return {
+    gembaOpen: false,
+    _gembaCache: null,
+
+    async downloadGembaPDF(location) {
+      if (!this._gembaCache) {
+        try {
+          const res = await fetch('/workload/3d-gemba-data');
+          this._gembaCache = await res.json();
+        } catch (e) {
+          alert('Failed to load Gemba data. Please try again.');
+          return;
+        }
+      }
+      const data = this._gembaCache;
+      const locationMap = {
+        manufacturing: { cases: data.manufacturing_cases, label: '3D Manufacturing' },
+        oven:          { cases: data.oven_cases,          label: 'Oven' },
+        tumbler:       { cases: data.tumbler_cases,       label: 'Tumbler' },
+      };
+      const { cases, label } = locationMap[location];
+      const dates = data.dates; // [prev, today, next1, next2]
+
+      _buildGembaPDF(cases, dates, label);
+    }
+  };
+}
+
+function _fmtDate(isoStr) {
+  const [y, m, d] = isoStr.split('-');
+  return m + '/' + d;
+}
+
+function _buildGembaPDF(cases, dates, locationLabel) {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const dateStr = (now.getMonth()+1) + '/' + now.getDate() + '/' + now.getFullYear();
+  const fileDate = String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + now.getFullYear();
+  const fileName = 'Gemba_' + locationLabel.replace(/\s+/g,'_') + '_' + fileDate + '.pdf';
+
+  // ── Header ──
+  const header = document.createElement('div');
+  header.style.cssText = 'background:#c41227;color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14pt;';
+
+  const logoWrap = document.createElement('div');
+  logoWrap.style.cssText = 'display:flex;flex-direction:column;';
+  const logoImg = document.createElement('img');
+  logoImg.src = window.location.origin + '/static/logo.png';
+  logoImg.style.cssText = 'height:32px;width:auto;';
+  logoWrap.appendChild(logoImg);
+
+  const titleWrap = document.createElement('div');
+  titleWrap.style.cssText = 'text-align:center;flex:1;';
+  const titleEl = document.createElement('div');
+  titleEl.style.cssText = 'font-size:14pt;font-weight:700;line-height:1.2;';
+  titleEl.textContent = '3D Room Gemba Walk';
+  const subEl = document.createElement('div');
+  subEl.style.cssText = 'font-size:10pt;font-weight:600;opacity:0.9;';
+  subEl.textContent = locationLabel;
+  titleWrap.appendChild(titleEl);
+  titleWrap.appendChild(subEl);
+
+  const dtWrap = document.createElement('div');
+  dtWrap.style.cssText = 'text-align:right;font-size:9pt;line-height:1.5;min-width:110px;';
+  dtWrap.innerHTML = 'Downloaded: ' + timeStr + '<br>' + dateStr;
+
+  header.appendChild(logoWrap);
+  header.appendChild(titleWrap);
+  header.appendChild(dtWrap);
+
+  // ── Summary Table (Table 1) ──
+  const summaryLabel = document.createElement('div');
+  summaryLabel.style.cssText = 'font-size:10pt;font-weight:700;margin-bottom:4pt;color:#1A1A1A;';
+  summaryLabel.textContent = 'Summary by Ship Date';
+
+  const t1 = document.createElement('table');
+  t1.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:16pt;';
+
+  const allCols = ['Ship Date', 'Total', ...GEMBA_CATEGORIES];
+  const thead1 = document.createElement('thead');
+  const hrow1 = document.createElement('tr');
+  allCols.forEach(col => {
+    const th = document.createElement('th');
+    th.style.cssText = 'background:#c41227;color:#fff;padding:4pt 5pt;border:1px solid #000;font-weight:600;text-align:center;white-space:nowrap;';
+    th.textContent = col;
+    hrow1.appendChild(th);
+  });
+  thead1.appendChild(hrow1);
+  t1.appendChild(thead1);
+
+  const tbody1 = document.createElement('tbody');
+  dates.forEach((d, i) => {
+    const dayCases = cases.filter(c => c.ship_date === d);
+    const tr = document.createElement('tr');
+    tr.style.backgroundColor = i % 2 === 0 ? '#fff' : '#f5f5f5';
+
+    const tdDate = document.createElement('td');
+    tdDate.style.cssText = 'padding:4pt 5pt;border:1px solid #000;text-align:center;font-weight:600;';
+    tdDate.textContent = _fmtDate(d);
+    tr.appendChild(tdDate);
+
+    const tdTotal = document.createElement('td');
+    tdTotal.style.cssText = 'padding:4pt 5pt;border:1px solid #000;text-align:center;font-weight:700;';
+    tdTotal.textContent = dayCases.length;
+    tr.appendChild(tdTotal);
+
+    GEMBA_CATEGORIES.forEach(cat => {
+      const td = document.createElement('td');
+      td.style.cssText = 'padding:4pt 5pt;border:1px solid #000;text-align:center;';
+      let count;
+      if (cat === 'Rush "R"') {
+        count = dayCases.filter(c => c.is_rush).length;
+      } else {
+        count = dayCases.filter(c => c.category === cat).length;
+      }
+      td.textContent = count > 0 ? count : '';
+      tr.appendChild(td);
+    });
+
+    tbody1.appendChild(tr);
+  });
+  t1.appendChild(tbody1);
+
+  // ── Detail Table (Table 2) — prev biz day + today only ──
+  const detailLabel = document.createElement('div');
+  detailLabel.style.cssText = 'font-size:10pt;font-weight:700;margin-bottom:4pt;color:#1A1A1A;';
+  detailLabel.textContent = 'Case Detail — ' + _fmtDate(dates[0]) + ' & ' + _fmtDate(dates[1]);
+
+  const detailCases = cases
+    .filter(c => c.ship_date === dates[0] || c.ship_date === dates[1])
+    .sort((a, b) => {
+      if (a.ship_date !== b.ship_date) return a.ship_date < b.ship_date ? -1 : 1;
+      return a.category < b.category ? -1 : a.category > b.category ? 1 : 0;
+    });
+
+  const t2 = document.createElement('table');
+  t2.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5pt;';
+
+  const detailCols = ['Ship Date', 'Case Number', 'Pan Number', 'Type', 'ETA', 'Notes'];
+  const thead2 = document.createElement('thead');
+  thead2.style.cssText = 'display:table-header-group;';
+  const hrow2 = document.createElement('tr');
+  detailCols.forEach(col => {
+    const th = document.createElement('th');
+    let extra = '';
+    if (col === 'ETA' || col === 'Notes') extra = 'min-width:60pt;';
+    th.style.cssText = 'background:#c41227;color:#fff;padding:4pt 5pt;border:1px solid #000;font-weight:600;text-align:left;' + extra;
+    th.textContent = col;
+    hrow2.appendChild(th);
+  });
+  thead2.appendChild(hrow2);
+  t2.appendChild(thead2);
+
+  const tbody2 = document.createElement('tbody');
+  detailCases.forEach((c, i) => {
+    const tr = document.createElement('tr');
+    tr.style.cssText = 'page-break-inside:avoid;background:' + (i % 2 === 0 ? '#fff' : '#f5f5f5') + ';';
+    const vals = [_fmtDate(c.ship_date), c.case_number, c.pan_number, c.category, '', ''];
+    vals.forEach((v, vi) => {
+      const td = document.createElement('td');
+      let extra = '';
+      if (vi === 4 || vi === 5) extra = 'min-width:60pt;';
+      td.style.cssText = 'padding:4pt 5pt;border:1px solid #000;' + extra;
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+    tbody2.appendChild(tr);
+  });
+  t2.appendChild(tbody2);
+
+  // ── Assemble wrapper ──
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'font-family:Poppins,Arial,sans-serif;padding:0;';
+  wrapper.appendChild(header);
+  wrapper.appendChild(summaryLabel);
+  wrapper.appendChild(t1);
+  wrapper.appendChild(detailLabel);
+  wrapper.appendChild(t2);
+
+  html2pdf().set({
+    margin:      [14, 14, 14, 14],
+    filename:    fileName,
+    image:       { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF:       { orientation: 'portrait', unit: 'pt', format: 'letter' },
+    pagebreak:   { mode: ['css', 'legacy'] }
+  }).from(wrapper).save();
+}
+</script>
 {% endblock %}

@@ -17,7 +17,9 @@
     <div class="summary-label">Design</div>
     <div class="summary-value">{{ design_count }}</div>
   </div>
-  <div class="summary-card" style="border-left-color: #9C27B0;">
+  <div class="summary-card" style="border-left-color: #9C27B0; cursor:pointer;"
+       @click="$dispatch('open-gemba-modal')"
+       title="Click to download 3D Room Gemba Walk">
     <div class="summary-label">3D Manufacturing</div>
     <div class="summary-value">{{ manufacturing_count }}</div>
   </div>

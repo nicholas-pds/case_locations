@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from dashboard.data.cache import cache
 from dashboard.data.transforms import build_workload_chart_data, build_workload_pivot_table, build_workload_pace_data, build_category_pace_data
+from src.holidays import previous_business_day, next_x_business_days, get_all_company_holidays
+from datetime import date
 import json
 
 router = APIRouter()
@@ -69,4 +71,53 @@ async def workload_page(request: Request):
         "manufacturing_count": manufacturing_count,
         "production_floor_count": production_floor_count,
         "category_pace_data": category_pace_data,
+    })
+
+
+def _df_to_gemba_records(df):
+    """Convert a filtered case_locations DataFrame to JSON-safe gemba records."""
+    records = []
+    if df is None or df.empty:
+        return records
+    for _, row in df.iterrows():
+        pan = str(row.get('Pan Number', '') or '')
+        is_rush = pan.startswith('R') and len(pan) < 4
+        ship = row.get('Ship Date')
+        ship_str = ship.strftime('%Y-%m-%d') if hasattr(ship, 'strftime') else str(ship)
+        records.append({
+            'case_number': str(row.get('Case Number', '') or ''),
+            'pan_number': pan,
+            'ship_date': ship_str,
+            'category': str(row.get('Category', '') or ''),
+            'is_rush': is_rush,
+        })
+    return records
+
+
+@router.get("/workload/3d-gemba-data")
+async def gemba_data():
+    case_df = await cache.get("case_locations")
+
+    holidays = get_all_company_holidays()
+    today = date.today()
+    prev_biz = previous_business_day(holidays=holidays)
+    next1 = next_x_business_days(today, 1, holidays=holidays)
+    next2 = next_x_business_days(today, 2, holidays=holidays)
+    dates = [
+        prev_biz.strftime('%Y-%m-%d'),
+        today.strftime('%Y-%m-%d'),
+        next1.strftime('%Y-%m-%d'),
+        next2.strftime('%Y-%m-%d'),
+    ]
+
+    def filter_loc(loc):
+        if case_df is None or case_df.empty or 'Last Location' not in case_df.columns:
+            return None
+        return case_df[case_df['Last Location'] == loc]
+
+    return JSONResponse({
+        'dates': dates,
+        'manufacturing_cases': _df_to_gemba_records(filter_loc('3D Manufacturing')),
+        'oven_cases': _df_to_gemba_records(filter_loc('Oven')),
+        'tumbler_cases': _df_to_gemba_records(filter_loc('Tumbler')),
     })
