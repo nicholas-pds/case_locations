@@ -2,7 +2,7 @@
 {% block title %}Efficiency{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/efficiency.css?v=10">
+<link rel="stylesheet" href="/static/css/efficiency.css?v=11">
 {% endblock %}
 
 {% block content %}
@@ -795,24 +795,48 @@
     </template>
     <template x-if="designData.length > 0">
       <div>
-        <div style="font-size:12px; color:var(--eff-muted); margin-bottom:16px;" x-text="'Data as of ' + designFetchedAt"></div>
+
+        <!-- ── STICKY HEADER ──────────────────────────── -->
+        <div class="design-sticky-hdr">
+          <div class="design-fetch-time" x-text="'Data as of ' + designFetchedAt"></div>
+          <div class="design-windows">
+            <div class="design-window">
+              <div class="design-window-label">
+                Noon (3am – 12pm)
+                <span class="design-status-badge"
+                      :class="new Date().getHours() >= 12 ? 'design-status-complete' : 'design-status-progress'"
+                      x-text="new Date().getHours() >= 12 ? 'Complete' : 'In Progress'"></span>
+              </div>
+              <div class="design-2col">
+                <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#1A1A1A;"></span>Design</div>
+                <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#c41227;"></span>Clean File</div>
+              </div>
+            </div>
+            <div class="design-window-sep"></div>
+            <div class="design-window">
+              <div class="design-window-label">
+                3PM (3am – 3pm)
+                <span class="design-status-badge"
+                      :class="new Date().getHours() >= 15 ? 'design-status-complete' : 'design-status-progress'"
+                      x-text="new Date().getHours() >= 15 ? 'Complete' : 'In Progress'"></span>
+              </div>
+              <div class="design-2col">
+                <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#1A1A1A;"></span>Design</div>
+                <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#c41227;"></span>Clean File</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCROLL CONTENT (charts + cards) ───────── -->
         <div class="design-windows">
 
-          <!-- ── Noon window (3am – 12pm) ── -->
+          <!-- Noon window -->
           <div class="design-window">
-            <div class="design-window-label">
-              Noon (3am – 12pm)
-              <span class="design-status-badge"
-                    :class="new Date().getHours() >= 12 ? 'design-status-complete' : 'design-status-progress'"
-                    x-text="new Date().getHours() >= 12 ? 'Complete' : 'In Progress'"></span>
-            </div>
             <div class="design-2col">
 
               <!-- Noon: Design (3dd) -->
               <div class="airway-col">
-                <div class="airway-col-title">
-                  <span class="airway-legend-swatch" style="background:#1A1A1A;"></span>Design
-                </div>
                 <div class="airway-chart-col">
                   <canvas id="designChartNoonDD" height="130"></canvas>
                 </div>
@@ -839,9 +863,6 @@
 
               <!-- Noon: Clean File (3dcf) -->
               <div class="airway-col">
-                <div class="airway-col-title">
-                  <span class="airway-legend-swatch" style="background:#c41227;"></span>Clean File
-                </div>
                 <div class="airway-chart-col">
                   <canvas id="designChartNoonCF" height="130"></canvas>
                 </div>
@@ -869,24 +890,15 @@
             </div>
           </div>
 
-          <!-- ── Vertical divider ── -->
+          <!-- Vertical divider -->
           <div class="design-window-sep"></div>
 
-          <!-- ── 3PM window (3am – 3pm) ── -->
+          <!-- 3PM window -->
           <div class="design-window">
-            <div class="design-window-label">
-              3PM (3am – 3pm)
-              <span class="design-status-badge"
-                    :class="new Date().getHours() >= 15 ? 'design-status-complete' : 'design-status-progress'"
-                    x-text="new Date().getHours() >= 15 ? 'Complete' : 'In Progress'"></span>
-            </div>
             <div class="design-2col">
 
               <!-- 3PM: Design (3dd) -->
               <div class="airway-col">
-                <div class="airway-col-title">
-                  <span class="airway-legend-swatch" style="background:#1A1A1A;"></span>Design
-                </div>
                 <div class="airway-chart-col">
                   <canvas id="designChartPM3DD" height="130"></canvas>
                 </div>
@@ -913,9 +925,6 @@
 
               <!-- 3PM: Clean File (3dcf) -->
               <div class="airway-col">
-                <div class="airway-col-title">
-                  <span class="airway-legend-swatch" style="background:#c41227;"></span>Clean File
-                </div>
                 <div class="airway-chart-col">
                   <canvas id="designChartPM3CF" height="130"></canvas>
                 </div>
