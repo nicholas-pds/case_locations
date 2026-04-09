@@ -85,7 +85,7 @@ def fetch_design_tasks() -> tuple:
     df["date_str"] = df["date_only"].astype(str)
 
     # Filter to last 6 business days
-    biz_days = _last_n_business_days(6)
+    biz_days = _last_n_business_days(7)
     biz_day_strs = {str(d) for d in biz_days}
     df = df[df["date_str"].isin(biz_day_strs)].copy()
 
