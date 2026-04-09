@@ -1002,26 +1002,31 @@
 
 
 /* ── Airway Tab ───────────────────────────────────────── */
-.airway-charts-row {
+.airway-3col {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 8px;
+  gap: 20px;
+  align-items: start;
 }
 
-.airway-chart-col {
+.airway-col {
   min-width: 0;
 }
 
-.airway-legend {
-  text-align: center;
-  font-size: 12px;
-  color: var(--eff-muted);
-  margin-bottom: 4px;
+.airway-col-title {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--eff-text);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.airway-chart-col {
+  margin-bottom: 16px;
 }
 
 .airway-legend-swatch {
@@ -1032,28 +1037,8 @@
   flex-shrink: 0;
 }
 
-.airway-day-block {
-  margin-bottom: 28px;
-}
-
-.airway-day-label {
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--eff-text);
-  margin-bottom: 10px;
-  padding-bottom: 5px;
-  border-bottom: 2px solid var(--eff-border);
-}
-
-.airway-tables-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 600px) {
-  .airway-charts-row,
-  .airway-tables-row {
+@media (max-width: 700px) {
+  .airway-3col {
     grid-template-columns: 1fr;
   }
 }

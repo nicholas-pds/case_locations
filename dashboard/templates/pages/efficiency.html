@@ -671,111 +671,93 @@
       </div>
     </template>
     <template x-if="airwayData.length > 0">
-      <div>
-        <!-- Bar Charts — 3-column -->
-        <div class="eff-section">
-          <div class="eff-section-title">Task Count — Last 6 Business Days</div>
-          <div class="airway-charts-row">
-            <div class="airway-chart-col">
-              <canvas id="airwayChartPlan" height="130"></canvas>
-              <div class="airway-legend">
-                <span class="airway-legend-swatch" style="background:#4a4a4a;"></span>3dplan
-              </div>
-            </div>
-            <div class="airway-chart-col">
-              <canvas id="airwayChartFin" height="130"></canvas>
-              <div class="airway-legend">
-                <span class="airway-legend-swatch" style="background:#c41227;"></span>3dfin-exp
-              </div>
-            </div>
-            <div class="airway-chart-col">
-              <canvas id="airwayChartRevise" height="130"></canvas>
-              <div class="airway-legend">
-                <span class="airway-legend-swatch" style="background:#1A1A1A;"></span>3drevise
-              </div>
-            </div>
+      <div class="airway-3col">
+        <!-- Column 1: 3dplan -->
+        <div class="airway-col">
+          <div class="airway-col-title">
+            <span class="airway-legend-swatch" style="background:#4a4a4a;"></span>3dplan
           </div>
+          <div class="airway-chart-col">
+            <canvas id="airwayChartPlan" height="130"></canvas>
+          </div>
+          <template x-for="(day, idx) in airwayData" :key="'plan-' + day.date">
+            <div class="eff-team-card" style="margin-bottom:12px;">
+              <div class="eff-card-header">
+                <div class="eff-card-name"
+                     x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
+                <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.plan_total + ' total'"></div>
+              </div>
+              <table class="eff-person-table">
+                <thead><tr><th>Name</th><th>Count</th></tr></thead>
+                <tbody>
+                  <template x-for="(emp, ei) in day.plan_by_emp" :key="day.date + '-p-' + ei">
+                    <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
+                  </template>
+                  <template x-if="day.plan_by_emp.length === 0">
+                    <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
         </div>
 
-        <!-- Per-day employee breakdowns -->
-        <div class="eff-section">
-          <div class="eff-section-title">Employee Breakdown by Day</div>
-          <template x-for="(day, idx) in airwayData" :key="day.date">
-            <div class="airway-day-block">
-              <div class="airway-day-label"
-                   x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day Ago — ' : '-' + idx + ' Days Ago — ') + day.label">
+        <!-- Column 2: 3dfin-exp -->
+        <div class="airway-col">
+          <div class="airway-col-title">
+            <span class="airway-legend-swatch" style="background:#c41227;"></span>3dfin-exp
+          </div>
+          <div class="airway-chart-col">
+            <canvas id="airwayChartFin" height="130"></canvas>
+          </div>
+          <template x-for="(day, idx) in airwayData" :key="'fin-' + day.date">
+            <div class="eff-team-card" style="margin-bottom:12px;">
+              <div class="eff-card-header">
+                <div class="eff-card-name"
+                     x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
+                <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.fin_total + ' total'"></div>
               </div>
-              <div class="airway-tables-row">
-                <!-- 3dplan -->
-                <div class="eff-team-card">
-                  <div class="eff-card-header">
-                    <div class="eff-card-name">3dplan</div>
-                    <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.plan_total + ' total'"></div>
-                  </div>
-                  <table class="eff-person-table">
-                    <thead>
-                      <tr><th>Name</th><th>Count</th></tr>
-                    </thead>
-                    <tbody>
-                      <template x-for="(emp, ei) in day.plan_by_emp" :key="day.date + '-p-' + ei">
-                        <tr>
-                          <td x-text="emp.name"></td>
-                          <td x-text="emp.count"></td>
-                        </tr>
-                      </template>
-                      <template x-if="day.plan_by_emp.length === 0">
-                        <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
-                      </template>
-                    </tbody>
-                  </table>
-                </div>
-                <!-- 3dfin-exp -->
-                <div class="eff-team-card">
-                  <div class="eff-card-header">
-                    <div class="eff-card-name">3dfin-exp</div>
-                    <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.fin_total + ' total'"></div>
-                  </div>
-                  <table class="eff-person-table">
-                    <thead>
-                      <tr><th>Name</th><th>Count</th></tr>
-                    </thead>
-                    <tbody>
-                      <template x-for="(emp, ei) in day.fin_by_emp" :key="day.date + '-f-' + ei">
-                        <tr>
-                          <td x-text="emp.name"></td>
-                          <td x-text="emp.count"></td>
-                        </tr>
-                      </template>
-                      <template x-if="day.fin_by_emp.length === 0">
-                        <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
-                      </template>
-                    </tbody>
-                  </table>
-                </div>
-                <!-- 3drevise -->
-                <div class="eff-team-card">
-                  <div class="eff-card-header">
-                    <div class="eff-card-name">3drevise</div>
-                    <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.revise_total + ' total'"></div>
-                  </div>
-                  <table class="eff-person-table">
-                    <thead>
-                      <tr><th>Name</th><th>Count</th></tr>
-                    </thead>
-                    <tbody>
-                      <template x-for="(emp, ei) in day.revise_by_emp" :key="day.date + '-r-' + ei">
-                        <tr>
-                          <td x-text="emp.name"></td>
-                          <td x-text="emp.count"></td>
-                        </tr>
-                      </template>
-                      <template x-if="day.revise_by_emp.length === 0">
-                        <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
-                      </template>
-                    </tbody>
-                  </table>
-                </div>
+              <table class="eff-person-table">
+                <thead><tr><th>Name</th><th>Count</th></tr></thead>
+                <tbody>
+                  <template x-for="(emp, ei) in day.fin_by_emp" :key="day.date + '-f-' + ei">
+                    <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
+                  </template>
+                  <template x-if="day.fin_by_emp.length === 0">
+                    <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+
+        <!-- Column 3: 3drevise -->
+        <div class="airway-col">
+          <div class="airway-col-title">
+            <span class="airway-legend-swatch" style="background:#1A1A1A;"></span>3drevise
+          </div>
+          <div class="airway-chart-col">
+            <canvas id="airwayChartRevise" height="130"></canvas>
+          </div>
+          <template x-for="(day, idx) in airwayData" :key="'rev-' + day.date">
+            <div class="eff-team-card" style="margin-bottom:12px;">
+              <div class="eff-card-header">
+                <div class="eff-card-name"
+                     x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
+                <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.revise_total + ' total'"></div>
               </div>
+              <table class="eff-person-table">
+                <thead><tr><th>Name</th><th>Count</th></tr></thead>
+                <tbody>
+                  <template x-for="(emp, ei) in day.revise_by_emp" :key="day.date + '-r-' + ei">
+                    <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
+                  </template>
+                  <template x-if="day.revise_by_emp.length === 0">
+                    <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                  </template>
+                </tbody>
+              </table>
             </div>
           </template>
         </div>
