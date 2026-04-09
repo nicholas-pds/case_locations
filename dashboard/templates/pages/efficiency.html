@@ -471,33 +471,43 @@
   <!-- NOON EFF TAB                                -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === 'noon'">
-    <div style="padding:8px 0 16px; color:var(--eff-muted); font-size:13px;">
-      Snapshot: today 3:00 AM – 12:00 PM · Updated automatically at noon on business days
+    <!-- Filter Bar -->
+    <div class="eff-filter-bar">
+      <select class="eff-filter-select" x-model="noonDate">
+        {% for d in noon_available_dates %}
+        <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+      </select>
+      <button class="eff-clear-btn" @click="noonDate = {{ noon_latest_date | tojson }}"
+              x-show="noonDate !== {{ noon_latest_date | tojson }}">Reset</button>
+    </div>
+    <div style="padding:0 0 16px; color:var(--eff-muted); font-size:13px;">
+      Snapshot: 3:00 AM – 12:00 PM · Updated automatically at noon on business days
     </div>
 
     <!-- KPI Cards -->
-    <template x-if="noonRows.length > 0">
+    <template x-if="filteredNoonRows().length > 0">
       <div class="eff-section">
         <div class="eff-section-title">Overview</div>
         <div class="eff-kpi-row eff-kpi-row-4">
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">People</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(noonRows).people"></div>
-            <div class="eff-kpi-sub" x-text="'across ' + middaySummaryTeams(noonRows).length + ' teams'"></div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredNoonRows()).people"></div>
+            <div class="eff-kpi-sub" x-text="'across ' + middaySummaryTeams(filteredNoonRows()).length + ' teams'"></div>
           </div>
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">Cases</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(noonRows).cases.toLocaleString()"></div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredNoonRows()).cases.toLocaleString()"></div>
             <div class="eff-kpi-sub">total worked on</div>
           </div>
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">Tasks</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(noonRows).tasks.toLocaleString()"></div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredNoonRows()).tasks.toLocaleString()"></div>
             <div class="eff-kpi-sub">total completed</div>
           </div>
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">Duration</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(noonRows).duration.toFixed(1)"></div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredNoonRows()).duration.toFixed(1)"></div>
             <div class="eff-kpi-sub">hours</div>
           </div>
         </div>
@@ -505,11 +515,11 @@
     </template>
 
     <!-- Team Cards -->
-    <template x-if="noonRows.length > 0">
+    <template x-if="filteredNoonRows().length > 0">
       <div class="eff-section">
         <div class="eff-section-title">Team Breakdowns</div>
         <div class="eff-teams-grid">
-          <template x-for="section in middayTeamSections(noonRows)" :key="'ncard-'+section.team">
+          <template x-for="section in middayTeamSections(filteredNoonRows())" :key="'ncard-'+section.team">
             <div class="eff-team-card">
               <div class="eff-card-header">
                 <div class="eff-card-name" x-text="section.team"></div>
@@ -540,13 +550,13 @@
     </template>
 
     <!-- Empty State -->
-    <div x-show="noonRows.length === 0" class="eff-empty">
+    <div x-show="filteredNoonRows().length === 0" class="eff-empty">
       <div class="eff-empty-icon">🕛</div>
       <div class="eff-empty-text">No noon data yet — updates automatically at 12:00 PM on business days</div>
     </div>
 
     <!-- Footer -->
-    <template x-if="noonRows.length > 0">
+    <template x-if="filteredNoonRows().length > 0">
       <div class="eff-footer">
         <div>Partners Dental Solutions — Internal Use Only</div>
         <div class="eff-legend">
@@ -568,33 +578,43 @@
   <!-- 3PM EFF TAB                                 -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === '3pm'">
-    <div style="padding:8px 0 16px; color:var(--eff-muted); font-size:13px;">
-      Snapshot: today 3:00 AM – 3:00 PM · Updated automatically at 3:00 PM on business days
+    <!-- Filter Bar -->
+    <div class="eff-filter-bar">
+      <select class="eff-filter-select" x-model="pm3Date">
+        {% for d in pm3_available_dates %}
+        <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+      </select>
+      <button class="eff-clear-btn" @click="pm3Date = {{ pm3_latest_date | tojson }}"
+              x-show="pm3Date !== {{ pm3_latest_date | tojson }}">Reset</button>
+    </div>
+    <div style="padding:0 0 16px; color:var(--eff-muted); font-size:13px;">
+      Snapshot: 3:00 AM – 3:00 PM · Updated automatically at 3:00 PM on business days
     </div>
 
     <!-- KPI Cards -->
-    <template x-if="pm3Rows.length > 0">
+    <template x-if="filteredPm3Rows().length > 0">
       <div class="eff-section">
         <div class="eff-section-title">Overview</div>
         <div class="eff-kpi-row eff-kpi-row-4">
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">People</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(pm3Rows).people"></div>
-            <div class="eff-kpi-sub" x-text="'across ' + middaySummaryTeams(pm3Rows).length + ' teams'"></div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredPm3Rows()).people"></div>
+            <div class="eff-kpi-sub" x-text="'across ' + middaySummaryTeams(filteredPm3Rows()).length + ' teams'"></div>
           </div>
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">Cases</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(pm3Rows).cases.toLocaleString()"></div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredPm3Rows()).cases.toLocaleString()"></div>
             <div class="eff-kpi-sub">total worked on</div>
           </div>
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">Tasks</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(pm3Rows).tasks.toLocaleString()"></div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredPm3Rows()).tasks.toLocaleString()"></div>
             <div class="eff-kpi-sub">total completed</div>
           </div>
           <div class="eff-kpi-card">
             <div class="eff-kpi-label">Duration</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(pm3Rows).duration.toFixed(1)"></div>
+            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredPm3Rows()).duration.toFixed(1)"></div>
             <div class="eff-kpi-sub">hours</div>
           </div>
         </div>
@@ -602,11 +622,11 @@
     </template>
 
     <!-- Team Cards -->
-    <template x-if="pm3Rows.length > 0">
+    <template x-if="filteredPm3Rows().length > 0">
       <div class="eff-section">
         <div class="eff-section-title">Team Breakdowns</div>
         <div class="eff-teams-grid">
-          <template x-for="section in middayTeamSections(pm3Rows)" :key="'pcard-'+section.team">
+          <template x-for="section in middayTeamSections(filteredPm3Rows())" :key="'pcard-'+section.team">
             <div class="eff-team-card">
               <div class="eff-card-header">
                 <div class="eff-card-name" x-text="section.team"></div>
@@ -637,13 +657,13 @@
     </template>
 
     <!-- Empty State -->
-    <div x-show="pm3Rows.length === 0" class="eff-empty">
+    <div x-show="filteredPm3Rows().length === 0" class="eff-empty">
       <div class="eff-empty-icon">🕒</div>
       <div class="eff-empty-text">No 3PM data yet — updates automatically at 3:00 PM on business days</div>
     </div>
 
     <!-- Footer -->
-    <template x-if="pm3Rows.length > 0">
+    <template x-if="filteredPm3Rows().length > 0">
       <div class="eff-footer">
         <div>Partners Dental Solutions — Internal Use Only</div>
         <div class="eff-legend">
@@ -927,6 +947,8 @@ function efficiencyPage() {
     // Midday state
     noonRows: {{ noon_records | tojson }},
     pm3Rows: {{ pm3_records | tojson }},
+    noonDate: {{ noon_latest_date | tojson }},
+    pm3Date: {{ pm3_latest_date | tojson }},
 
     // Airway state
     airwayData: {{ airway_records | tojson }},
@@ -969,11 +991,9 @@ function efficiencyPage() {
       if (this.activeTab === 'daily') {
         return this.dailyDate || 'All Dates';
       } else if (this.activeTab === 'noon') {
-        const d = this.noonRows[0]?.Data_Date || new Date().toISOString().slice(0,10);
-        return 'Snapshot: ' + d + ' (12:00 PM)';
+        return 'Snapshot: ' + (this.noonDate || new Date().toISOString().slice(0,10)) + ' (12:00 PM)';
       } else if (this.activeTab === '3pm') {
-        const d = this.pm3Rows[0]?.Data_Date || new Date().toISOString().slice(0,10);
-        return 'Snapshot: ' + d + ' (3:00 PM)';
+        return 'Snapshot: ' + (this.pm3Date || new Date().toISOString().slice(0,10)) + ' (3:00 PM)';
       } else {
         return 'Multi-Period View';
       }
@@ -1093,6 +1113,16 @@ function efficiencyPage() {
       this.dailyDate = {{ latest_date | tojson }};
       this.dailySearch = '';
       this.dailyTeam = '';
+    },
+
+    filteredNoonRows() {
+      if (!this.noonDate) return this.noonRows;
+      return this.noonRows.filter(r => String(r.Data_Date || '') === this.noonDate);
+    },
+
+    filteredPm3Rows() {
+      if (!this.pm3Date) return this.pm3Rows;
+      return this.pm3Rows.filter(r => String(r.Data_Date || '') === this.pm3Date);
     },
 
     effColor(val) {
@@ -1426,7 +1456,7 @@ function efficiencyPage() {
       if (this.activeTab === 'daily') {
         reportDate = this.dailySummaryAll().date || today;
       } else if (this.activeTab === 'noon' || this.activeTab === '3pm') {
-        const src = this.activeTab === 'noon' ? this.noonRows : this.pm3Rows;
+        const src = this.activeTab === 'noon' ? this.filteredNoonRows() : this.filteredPm3Rows();
         reportDate = this.middaySummaryAll(src).date || today;
       }
 
@@ -1532,7 +1562,7 @@ function efficiencyPage() {
 
       } else {
         const isNoon = this.activeTab === 'noon';
-        const src = isNoon ? this.noonRows : this.pm3Rows;
+        const src = isNoon ? this.filteredNoonRows() : this.filteredPm3Rows();
         const label = isNoon ? '12:00 PM' : '3:00 PM';
         const goalKey = isNoon ? 'Noon_Goal' : 'PM3_Goal';
 
@@ -1699,12 +1729,12 @@ function efficiencyPage() {
 
       // Build actual data lookup from noon/3pm rows
       const noonMap = {};
-      this.noonRows.forEach(r => { noonMap[r.Name] = r; });
+      this.filteredNoonRows().forEach(r => { noonMap[r.Name] = r; });
       const pm3Map = {};
-      this.pm3Rows.forEach(r => { pm3Map[r.Name] = r; });
+      this.filteredPm3Rows().forEach(r => { pm3Map[r.Name] = r; });
 
       // Get data date
-      const dataDate = this.middaySummaryAll(isNoon ? this.noonRows : this.pm3Rows).date;
+      const dataDate = this.middaySummaryAll(isNoon ? this.filteredNoonRows() : this.filteredPm3Rows()).date;
       const d = new Date(dataDate + 'T00:00:00');
       const dateStr = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
 

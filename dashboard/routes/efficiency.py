@@ -11,7 +11,7 @@ from dashboard.data.efficiency_store import (
     load_tech_constants, save_tech_constants,
     load_employee_lkups, save_employee_lkups,
 )
-from dashboard.data.efficiency_processing import run_full_upload, process_midday_snapshot
+from dashboard.data.efficiency_processing import run_full_upload, process_midday_snapshot, backfill_midday_history
 from dashboard.data.airway_queries import fetch_airway_tasks
 from dashboard.data.cache import cache
 
@@ -59,6 +59,15 @@ async def efficiency_page(request: Request):
                         pm3_df = refreshed
             except Exception:
                 pass  # Will use JS fallback date
+
+    # Backfill historical snapshots (no-op if all dates present)
+    for _w in ("noon", "3pm"):
+        try:
+            backfill_midday_history(_w)
+        except Exception:
+            logger.warning(f"backfill_midday_history({_w}) failed", exc_info=True)
+    noon_df = load_midday("noon")
+    pm3_df = load_midday("3pm")
 
     # Sort daily: Date desc, then MT Name asc
     if not daily_df.empty:
@@ -111,6 +120,19 @@ async def efficiency_page(request: Request):
         if not pm3_df.empty:
             pm3_df = pm3_df.merge(morning_constants, on="Name", how="left")
 
+    # Date pickers for noon/3pm
+    noon_available_dates: list = []
+    noon_latest_date = None
+    if not noon_df.empty and "Data_Date" in noon_df.columns:
+        noon_available_dates = sorted(noon_df["Data_Date"].dropna().unique().tolist(), reverse=True)
+        noon_latest_date = noon_available_dates[0] if noon_available_dates else None
+
+    pm3_available_dates: list = []
+    pm3_latest_date = None
+    if not pm3_df.empty and "Data_Date" in pm3_df.columns:
+        pm3_available_dates = sorted(pm3_df["Data_Date"].dropna().unique().tolist(), reverse=True)
+        pm3_latest_date = pm3_available_dates[0] if pm3_available_dates else None
+
     # Airway task data — fail gracefully so a DB issue won't break the page
     try:
         airway_records = fetch_airway_tasks()
@@ -134,6 +156,10 @@ async def efficiency_page(request: Request):
         "week_eff_labels": week_eff_labels,
         "available_dates": available_dates,
         "latest_date": latest_date,
+        "noon_available_dates": noon_available_dates,
+        "noon_latest_date": noon_latest_date,
+        "pm3_available_dates": pm3_available_dates,
+        "pm3_latest_date": pm3_latest_date,
         "airway_records": airway_records,
     })
 

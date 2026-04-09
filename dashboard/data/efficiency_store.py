@@ -124,10 +124,23 @@ def load_midday(window: str) -> pd.DataFrame:
 
 
 def save_midday(window: str, df: pd.DataFrame) -> None:
-    """window: 'noon' or '3pm'"""
+    """window: 'noon' or '3pm'. UPSERT by Data_Date, keep last 7 calendar days."""
+    from datetime import date, timedelta
     path = _NOON_PATH if window == "noon" else _3PM_PATH
-    df.to_parquet(path, index=False)
-    logger.info(f"Saved {window} midday data: {len(df)} rows")
+    if df.empty:
+        logger.warning(f"save_midday({window}): empty df — skipping")
+        return
+    new_date = df["Data_Date"].iloc[0]
+    existing = _safe_read(path)
+    if not existing.empty and "Data_Date" in existing.columns:
+        existing = existing[existing["Data_Date"] != new_date]
+        combined = pd.concat([existing, df], ignore_index=True)
+    else:
+        combined = df.copy()
+    cutoff = (date.today() - timedelta(days=7)).strftime("%Y-%m-%d")
+    combined = combined[combined["Data_Date"] >= cutoff]
+    combined.to_parquet(path, index=False)
+    logger.info(f"Saved {window} midday data: {len(combined)} rows across {sorted(combined['Data_Date'].unique().tolist())}")
 
 
 # ─────────────────────────────────────────────

@@ -63,7 +63,7 @@ def _fetch_tasks(start_date: str, end_date: str) -> pd.DataFrame:
 
 
 def _fetch_midday_raw() -> pd.DataFrame:
-    """Fetch midday snapshot data (5-day lookback, no date params)."""
+    """Fetch midday snapshot data (8-day lookback, no date params)."""
     sql = (_SQL_DIR / "efficiency_midday.sql").read_text()
     conn = _get_conn()
     try:
@@ -349,34 +349,23 @@ def stage4_aggregated(all_daily_df: pd.DataFrame, reference: date = None) -> pd.
 # Midday Snapshot Processing
 # ─────────────────────────────────────────────
 
-def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
+def _aggregate_midday_for_date(raw: pd.DataFrame, window: str, ref_date: date) -> pd.DataFrame:
     """
-    Fetch midday task data from SQL and filter to today's time window.
-    window='noon'  → 3:00 AM – 12:00 PM
-    window='3pm'   → 3:00 AM – 3:00 PM
-    Returns flat task records grouped by employee.
+    Filter pre-parsed raw df to the given ref_date/window and aggregate per employee.
+    raw must have CompleteDate already parsed to datetime (NaT rows dropped).
+    window='noon' → 3:00 AM – 12:00 PM
+    window='3pm'  → 3:00 AM – 3:00 PM
     """
-    today = date.today()
-    start_time = datetime.combine(today, datetime.min.time()).replace(hour=3)
+    start_time = datetime.combine(ref_date, datetime.min.time()).replace(hour=3)
     end_hour = 12 if window == "noon" else 15
-    end_time = datetime.combine(today, datetime.min.time()).replace(hour=end_hour)
+    end_time = datetime.combine(ref_date, datetime.min.time()).replace(hour=end_hour)
 
-    raw = _fetch_midday_raw()
-    if raw.empty:
-        return pd.DataFrame()
-
-    # Convert CompleteDate to datetime, drop parse failures
-    raw["CompleteDate"] = pd.to_datetime(raw["CompleteDate"], errors="coerce")
-    raw = raw.dropna(subset=["CompleteDate"])
-
-    # Filter to time window (inclusive both ends)
     mask = (raw["CompleteDate"] >= start_time) & (raw["CompleteDate"] <= end_time)
     filtered = raw[mask].copy()
 
     if filtered.empty:
         return pd.DataFrame()
 
-    # Aggregate per employee: unique cases and total duration (hours)
     filtered["Duration"] = pd.to_numeric(filtered["Duration"], errors="coerce").fillna(0)
     agg = filtered.groupby(["CompletedBy", "Name"]).agg(
         Cases=("CaseNumber", "nunique"),
@@ -384,10 +373,8 @@ def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
         Total_Duration_Hours=("Duration", lambda x: round(x.sum(), 2)),
     ).reset_index()
 
-    # Cast CompletedBy to int for merge compatibility
     agg["CompletedBy"] = pd.to_numeric(agg["CompletedBy"], errors="coerce").fillna(0).astype(int)
 
-    # Join with employee lookup to get Team
     lookup = load_employee_lookup()
     agg = agg.merge(
         lookup[["Employee ID", "Team"]],
@@ -396,15 +383,59 @@ def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
         how="left",
     )
     agg["Team"] = agg["Team"].fillna("Unknown")
-
-    # Exclude z_Not On Report
     agg = agg[agg["Team"] != "z_Not On Report"]
 
-    # Capture the actual data date from the filtered records
-    data_date = filtered["CompleteDate"].max().strftime("%Y-%m-%d")
-    agg["Data_Date"] = data_date
+    agg["Data_Date"] = ref_date.strftime("%Y-%m-%d")
 
     return agg[["Team", "Name", "Cases", "Tasks_Completed", "Total_Duration_Hours", "Data_Date"]].sort_values(["Team", "Name"]).reset_index(drop=True)
+
+
+def process_midday_snapshot(window: Literal["noon", "3pm"]) -> pd.DataFrame:
+    """
+    Fetch midday task data from SQL and filter to today's time window.
+    window='noon'  → 3:00 AM – 12:00 PM
+    window='3pm'   → 3:00 AM – 3:00 PM
+    Returns flat task records grouped by employee.
+    """
+    raw = _fetch_midday_raw()
+    if raw.empty:
+        return pd.DataFrame()
+    raw["CompleteDate"] = pd.to_datetime(raw["CompleteDate"], errors="coerce")
+    raw = raw.dropna(subset=["CompleteDate"])
+    return _aggregate_midday_for_date(raw, window, date.today())
+
+
+def backfill_midday_history(window: Literal["noon", "3pm"]) -> None:
+    """Fill any missing dates in today-1 through today-7 for the given window.
+    Makes one SQL call and is a no-op if all dates are already present.
+    """
+    from dashboard.data.efficiency_store import load_midday, save_midday
+    today = date.today()
+    candidates = [today - timedelta(days=i) for i in range(1, 8)]
+    existing_df = load_midday(window)
+    existing_dates: set = set()
+    if not existing_df.empty and "Data_Date" in existing_df.columns:
+        existing_dates = set(existing_df["Data_Date"].unique())
+    missing = [d for d in candidates if d.strftime("%Y-%m-%d") not in existing_dates]
+    if not missing:
+        return
+    try:
+        raw = _fetch_midday_raw()
+    except Exception as e:
+        logger.error(f"backfill_midday_history({window}): SQL fetch failed: {e}")
+        return
+    if raw.empty:
+        return
+    raw["CompleteDate"] = pd.to_datetime(raw["CompleteDate"], errors="coerce")
+    raw = raw.dropna(subset=["CompleteDate"])
+    for d in missing:
+        try:
+            snap = _aggregate_midday_for_date(raw, window, d)
+            if not snap.empty:
+                save_midday(window, snap)
+                logger.info(f"backfill_midday_history({window}): saved {len(snap)} rows for {d}")
+        except Exception as e:
+            logger.warning(f"backfill_midday_history({window}): failed for {d}: {e}")
 
 
 # ─────────────────────────────────────────────

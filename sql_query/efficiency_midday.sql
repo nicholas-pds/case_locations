@@ -18,7 +18,7 @@ INNER JOIN
     dbo.Cases AS ca
     ON ca.CaseID = cth.CaseID
 WHERE
-    cth.CompleteDate >= DATEADD(day, -5, GETDATE())
+    cth.CompleteDate >= DATEADD(day, -8, GETDATE())
     AND cth.Rejected = 0
 ORDER BY
     cth.Task ASC;
