@@ -1110,11 +1110,12 @@
 .design-sticky-hdr {
   position: sticky;
   top: 48px;
-  background: var(--light);
+  background: #fff;
   z-index: 20;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   margin-bottom: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
 .design-fetch-time {
