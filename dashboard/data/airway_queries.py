@@ -1,4 +1,4 @@
-"""Airway task query: 3dplan and 3dfin-exp counts over last 6 business days."""
+"""Airway task query: 3dplan, 3dfin-exp, and 3drevise counts over last 6 business days."""
 import sys
 import pandas as pd
 from datetime import date, timedelta
@@ -41,8 +41,10 @@ def fetch_airway_tasks() -> list:
       "label": "Mon 3/30",
       "plan_total": 12,
       "fin_total": 8,
-      "plan_by_emp": [{"name": "John S.", "count": 3}, ...],
-      "fin_by_emp":  [{"name": "Bill K.", "count": 7}, ...],
+      "revise_total": 5,
+      "plan_by_emp":   [{"name": "John S.", "count": 3}, ...],
+      "fin_by_emp":    [{"name": "Bill K.", "count": 7}, ...],
+      "revise_by_emp": [{"name": "Jane D.", "count": 2}, ...],
     }
     """
     df = execute_sql_to_dataframe(str(SQL_DIR / "airway_tasks_plan_export.sql"))
@@ -98,16 +100,24 @@ def fetch_airway_tasks() -> list:
             for _, r in day_df.iterrows()
             if int(r["Sum of 3dfin-exp"]) > 0
         ]
+        revise_by = [
+            {"name": r["emp_name"], "count": int(r["Sum of 3drevise"])}
+            for _, r in day_df.iterrows()
+            if int(r["Sum of 3drevise"]) > 0
+        ]
         plan_by.sort(key=lambda x: x["count"], reverse=True)
         fin_by.sort(key=lambda x: x["count"], reverse=True)
+        revise_by.sort(key=lambda x: x["count"], reverse=True)
 
         result.append({
             "date": date_str,
             "label": label,
             "plan_total": int(day_df["Sum of 3dplan tasks"].sum()),
             "fin_total": int(day_df["Sum of 3dfin-exp"].sum()),
+            "revise_total": int(day_df["Sum of 3drevise"].sum()),
             "plan_by_emp": plan_by,
             "fin_by_emp": fin_by,
+            "revise_by_emp": revise_by,
         })
 
     return result

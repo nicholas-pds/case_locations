@@ -7,17 +7,22 @@ SELECT
                    END) AS [Sum of 3dplan tasks],
                    
     -- Count of unique Case + Task combinations for '3dfin-exp'
-    COUNT(DISTINCT CASE WHEN cth.Task = '3dfin-exp' 
-                        THEN CONCAT(ca.CaseNumber, '_', cth.Task) 
+    COUNT(DISTINCT CASE WHEN cth.Task = '3dfin-exp'
+                        THEN CONCAT(ca.CaseNumber, '_', cth.Task)
                    END) AS [Sum of 3dfin-exp],
-                   
+
+    -- Count of unique Case + Task combinations for '3drevise'
+    COUNT(DISTINCT CASE WHEN cth.Task = '3drevise'
+                        THEN CONCAT(ca.CaseNumber, '_', cth.Task)
+                   END) AS [Sum of 3drevise],
+
     CAST(cth.completeDate AS DATE) AS [completedate]
 FROM dbo.CaseTasksHistory AS cth
 INNER JOIN dbo.cases AS ca
     ON ca.CaseID = cth.CaseID
 WHERE cth.completeDate >= CAST(DATEADD(day, -7, GETDATE()) AS DATE)
   AND cth.completeDate < CAST(DATEADD(day, 1, GETDATE()) AS DATE)
-  AND cth.Task IN ('3dplan', '3dfin-exp')
+  AND cth.Task IN ('3dplan', '3dfin-exp', '3drevise')
 GROUP BY 
     cth.CompletedBY,
     CAST(cth.completeDate AS DATE)

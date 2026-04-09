@@ -1002,9 +1002,15 @@
 
 
 /* ── Airway Tab ───────────────────────────────────────── */
-.airway-chart-wrap {
-  max-width: 680px;
-  margin: 0 auto 8px;
+.airway-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.airway-chart-col {
+  min-width: 0;
 }
 
 .airway-legend {
@@ -1041,11 +1047,12 @@
 
 .airway-tables-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
 }
 
 @media (max-width: 600px) {
+  .airway-charts-row,
   .airway-tables-row {
     grid-template-columns: 1fr;
   }

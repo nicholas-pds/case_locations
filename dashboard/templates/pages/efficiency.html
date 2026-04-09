@@ -672,15 +672,28 @@
     </template>
     <template x-if="airwayData.length > 0">
       <div>
-        <!-- Bar Chart -->
+        <!-- Bar Charts — 3-column -->
         <div class="eff-section">
           <div class="eff-section-title">Task Count — Last 6 Business Days</div>
-          <div class="airway-chart-wrap">
-            <canvas id="airwayChart" height="110"></canvas>
-          </div>
-          <div class="airway-legend">
-            <span class="airway-legend-swatch" style="background:#4a4a4a;"></span>3dplan
-            <span class="airway-legend-swatch" style="background:#c41227; margin-left:18px;"></span>3dfin-exp
+          <div class="airway-charts-row">
+            <div class="airway-chart-col">
+              <canvas id="airwayChartPlan" height="130"></canvas>
+              <div class="airway-legend">
+                <span class="airway-legend-swatch" style="background:#4a4a4a;"></span>3dplan
+              </div>
+            </div>
+            <div class="airway-chart-col">
+              <canvas id="airwayChartFin" height="130"></canvas>
+              <div class="airway-legend">
+                <span class="airway-legend-swatch" style="background:#c41227;"></span>3dfin-exp
+              </div>
+            </div>
+            <div class="airway-chart-col">
+              <canvas id="airwayChartRevise" height="130"></canvas>
+              <div class="airway-legend">
+                <span class="airway-legend-swatch" style="background:#1A1A1A;"></span>3drevise
+              </div>
+            </div>
           </div>
         </div>
 
@@ -734,6 +747,29 @@
                         </tr>
                       </template>
                       <template x-if="day.fin_by_emp.length === 0">
+                        <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- 3drevise -->
+                <div class="eff-team-card">
+                  <div class="eff-card-header">
+                    <div class="eff-card-name">3drevise</div>
+                    <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.revise_total + ' total'"></div>
+                  </div>
+                  <table class="eff-person-table">
+                    <thead>
+                      <tr><th>Name</th><th>Count</th></tr>
+                    </thead>
+                    <tbody>
+                      <template x-for="(emp, ei) in day.revise_by_emp" :key="day.date + '-r-' + ei">
+                        <tr>
+                          <td x-text="emp.name"></td>
+                          <td x-text="emp.count"></td>
+                        </tr>
+                      </template>
+                      <template x-if="day.revise_by_emp.length === 0">
                         <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
                       </template>
                     </tbody>
@@ -1835,52 +1871,54 @@ function efficiencyPage() {
       });
     },
 
-    // ─── Airway Chart ────────────────────────────
+    // ─── Airway Charts (3 separate) ─────────────────
     _initAirwayChart() {
-      const existing = Chart.getChart('airwayChart');
-      if (existing) existing.destroy();
       const data = this.airwayData;
-      const ctx = document.getElementById('airwayChart');
-      if (!ctx || !data.length) return;
+      if (!data.length) return;
       const ordered = [...data].reverse(); // chronological: oldest → today
-      new Chart(ctx, {
-        type: 'bar',
-        plugins: [ChartDataLabels],
-        data: {
-          labels: ordered.map(d => d.label),
-          datasets: [
-            {
-              label: '3dplan',
-              data: ordered.map(d => d.plan_total),
-              backgroundColor: '#4a4a4a',
+      const labels = ordered.map(d => d.label);
+
+      const chartDefs = [
+        { id: 'airwayChartPlan',   key: 'plan_total',   color: '#4a4a4a' },
+        { id: 'airwayChartFin',    key: 'fin_total',    color: '#c41227' },
+        { id: 'airwayChartRevise', key: 'revise_total', color: '#1A1A1A' },
+      ];
+
+      chartDefs.forEach(({ id, key, color }) => {
+        const existing = Chart.getChart(id);
+        if (existing) existing.destroy();
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        new Chart(ctx, {
+          type: 'bar',
+          plugins: [ChartDataLabels],
+          data: {
+            labels,
+            datasets: [{
+              data: ordered.map(d => d[key]),
+              backgroundColor: color,
               borderRadius: 3,
+            }],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              datalabels: {
+                anchor: 'end',
+                align: 'end',
+                offset: 2,
+                font: { size: 11, weight: '600' },
+                color: '#1A1A1A',
+                display: (c) => c.dataset.data[c.dataIndex] > 0,
+              },
             },
-            {
-              label: '3dfin-exp',
-              data: ordered.map(d => d.fin_total),
-              backgroundColor: '#c41227',
-              borderRadius: 3,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            datalabels: {
-              anchor: 'end',
-              align: 'end',
-              offset: 2,
-              font: { size: 11, weight: '600' },
-              color: '#1A1A1A',
-              display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, grace: '10%', ticks: { stepSize: 3, precision: 0 } },
             },
           },
-          scales: {
-            x: { grid: { display: false } },
-            y: { beginAtZero: true, grace: '10%', ticks: { stepSize: 3, precision: 0 } },
-          },
-        },
+        });
       });
     },
   };
