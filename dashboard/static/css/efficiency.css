@@ -1026,6 +1026,8 @@
 }
 
 .airway-chart-col {
+  position: relative;
+  height: 130px;
   margin-bottom: 16px;
 }
 

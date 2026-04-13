@@ -2,7 +2,7 @@
 {% block title %}Efficiency{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/efficiency.css?v=12">
+<link rel="stylesheet" href="/static/css/efficiency.css?v=13">
 {% endblock %}
 
 {% block content %}
@@ -2090,6 +2090,7 @@ function efficiencyPage() {
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: { display: false },
               datalabels: {
@@ -2138,6 +2139,7 @@ function efficiencyPage() {
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: { display: false },
               datalabels: {
