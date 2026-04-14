@@ -140,8 +140,8 @@ def fetch_checkin_tasks() -> tuple:
     all_cats = trend_df["Category"].unique().tolist()
 
     # Order categories to match workload page canonical order
-    CATEGORIES_ORDER = ["Hybrid", "E\u00b2 Expanders", "Lab to Lab", "MARPE",
-                        "Metal", "Clear", "Wire Bending", "Other"]
+    CATEGORIES_ORDER = ["Metal", "MARPE", "Clear", "E\u00b2 Expanders",
+                        "Hybrid", "Wire Bending", "Lab to Lab", "Other"]
     known = [c for c in CATEGORIES_ORDER if c in all_cats]
     extra = [c for c in all_cats if c not in CATEGORIES_ORDER]
     sorted_cats = known + sorted(extra)
