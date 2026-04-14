@@ -498,6 +498,7 @@
   /* ── Note save feedback ── */
   .note-save-badge   { font-size: 0.72rem; color: #2E7D32; font-weight: 700; margin-top: 3px; }
   .note-saving-badge { font-size: 0.72rem; color: var(--gray); font-style: italic; margin-top: 3px; }
+  .note-save-error   { font-size: 0.72rem; color: #C62828; font-weight: 700; margin-top: 3px; cursor: pointer; }
 
   /* ── L&D Column ── */
   .col-ld { width:80px; min-width:80px; max-width:80px; vertical-align:top; padding:6px 4px !important; }
@@ -917,6 +918,7 @@
   .pres-note-textarea:focus { border-color: var(--red); outline: none; }
   .pres-note-save-badge   { font-size: 0.72rem; color: #1A7A35; font-weight: 700; margin-top: 4px; }
   .pres-note-saving-badge { font-size: 0.72rem; color: #999; font-style: italic; margin-top: 4px; }
+  .pres-note-save-error   { font-size: 0.72rem; color: #C62828; font-weight: 700; margin-top: 4px; cursor: pointer; }
 
   .pres-call-note { padding: 8px 0; border-bottom: 1px solid #E8E4E0; font-size: 0.82rem; }
   .pres-call-note:last-child { border-bottom: none; }
@@ -1137,8 +1139,9 @@
                 <td class="col-note-final">
                   <div style="position:relative;">
                     <textarea class="note-textarea"
-                              :value="savedNotes[row.MainCaseNumber] || ''"
-                              @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                              x-model="savedNotes[row.MainCaseNumber]"
+                              @blur="saveNote(row.MainCaseNumber, savedNotes[row.MainCaseNumber])"
+                              @input="debouncedSaveNote(row.MainCaseNumber)"
                               placeholder="Add investigation notes…"></textarea>
                     <div class="note-save-badge"
                          x-show="_noteSaveState[row.MainCaseNumber] === 'saved'"
@@ -1146,6 +1149,10 @@
                     <div class="note-saving-badge"
                          x-show="_noteSaveState[row.MainCaseNumber] === 'saving'"
                          x-cloak>Saving…</div>
+                    <div class="note-save-error"
+                         x-show="_noteSaveState[row.MainCaseNumber] === 'error'"
+                         @click="saveNote(row.MainCaseNumber, savedNotes[row.MainCaseNumber])"
+                         x-cloak>Save failed — retry</div>
                   </div>
                 </td>
                 <!-- L&D -->
@@ -1491,8 +1498,9 @@
                 <td class="col-note-final">
                   <div style="position:relative;">
                     <textarea class="note-textarea"
-                              :value="savedNotes[row.MainCaseNumber] || ''"
-                              @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                              x-model="savedNotes[row.MainCaseNumber]"
+                              @blur="saveNote(row.MainCaseNumber, savedNotes[row.MainCaseNumber])"
+                              @input="debouncedSaveNote(row.MainCaseNumber)"
                               placeholder="Add investigation notes…"></textarea>
                     <div class="note-save-badge"
                          x-show="_noteSaveState[row.MainCaseNumber] === 'saved'"
@@ -1500,6 +1508,10 @@
                     <div class="note-saving-badge"
                          x-show="_noteSaveState[row.MainCaseNumber] === 'saving'"
                          x-cloak>Saving…</div>
+                    <div class="note-save-error"
+                         x-show="_noteSaveState[row.MainCaseNumber] === 'error'"
+                         @click="saveNote(row.MainCaseNumber, savedNotes[row.MainCaseNumber])"
+                         x-cloak>Save failed — retry</div>
                   </div>
                 </td>
                 <!-- L&D -->
@@ -1606,20 +1618,24 @@
                 <td class="col-note-final">
                   <div style="position:relative;">
                     <textarea class="note-textarea"
-                              :value="savedNotes[row.MainCaseNumber] || ''"
-                              @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                              x-model="savedNotes[row.MainCaseNumber]"
+                              @blur="saveNote(row.MainCaseNumber, savedNotes[row.MainCaseNumber])"
+                              @input="debouncedSaveNote(row.MainCaseNumber)"
                               placeholder="Add investigation notes…"></textarea>
                     <div class="note-save-badge" x-show="_noteSaveState[row.MainCaseNumber]==='saved'" x-cloak>Saved ✓</div>
+                    <div class="note-save-error" x-show="_noteSaveState[row.MainCaseNumber]==='error'" @click="saveNote(row.MainCaseNumber, savedNotes[row.MainCaseNumber])" x-cloak>Save failed — retry</div>
                   </div>
                 </td>
                 <!-- Follow-Up Notes (AM only) -->
                 <td class="col-note-final">
                   <div style="position:relative;">
                     <textarea class="note-textarea"
-                              :value="savedFollowUpNotes[row.MainCaseNumber] || ''"
-                              @blur="saveFollowUpNote(row.MainCaseNumber, $event.target.value)"
+                              x-model="savedFollowUpNotes[row.MainCaseNumber]"
+                              @blur="saveFollowUpNote(row.MainCaseNumber, savedFollowUpNotes[row.MainCaseNumber])"
+                              @input="debouncedSaveFollowUpNote(row.MainCaseNumber)"
                               placeholder="Add follow-up notes…"></textarea>
                     <div class="note-save-badge" x-show="_followUpSaveState[row.MainCaseNumber]==='saved'" x-cloak>Saved ✓</div>
+                    <div class="note-save-error" x-show="_followUpSaveState[row.MainCaseNumber]==='error'" @click="saveFollowUpNote(row.MainCaseNumber, savedFollowUpNotes[row.MainCaseNumber])" x-cloak>Save failed — retry</div>
                   </div>
                 </td>
                 <!-- Done checkbox -->
@@ -1982,8 +1998,9 @@
                   <td class="col-note-final">
                     <div style="position:relative;">
                       <textarea class="note-textarea"
-                                :value="savedNotes[row.MainCaseNumber] || ''"
-                                @blur="saveNote(row.MainCaseNumber, $event.target.value)"
+                                x-model="savedNotes[row.MainCaseNumber]"
+                                @blur="saveNote(row.MainCaseNumber, savedNotes[row.MainCaseNumber])"
+                                @input="debouncedSaveNote(row.MainCaseNumber)"
                                 placeholder="Add investigation notes…"></textarea>
                       <div class="note-save-badge"
                            x-show="_noteSaveState[row.MainCaseNumber] === 'saved'"
@@ -1991,6 +2008,10 @@
                       <div class="note-saving-badge"
                            x-show="_noteSaveState[row.MainCaseNumber] === 'saving'"
                            x-cloak>Saving…</div>
+                      <div class="note-save-error"
+                           x-show="_noteSaveState[row.MainCaseNumber] === 'error'"
+                           @click="saveNote(row.MainCaseNumber, savedNotes[row.MainCaseNumber])"
+                           x-cloak>Save failed — retry</div>
                     </div>
                   </td>
                 </tr>
@@ -2254,8 +2275,9 @@
           <div class="pres-panel-hdr">Investigation Notes</div>
           <div class="pres-panel-body">
             <textarea class="pres-note-textarea"
-                      :value="presCase ? (savedNotes[presCase.MainCaseNumber] || '') : ''"
-                      @blur="presCase && saveNote(presCase.MainCaseNumber, $event.target.value)"
+                      x-model="savedNotes[presCase?.MainCaseNumber || '']"
+                      @blur="presCase && saveNote(presCase.MainCaseNumber, savedNotes[presCase.MainCaseNumber])"
+                      @input="presCase && debouncedSaveNote(presCase.MainCaseNumber)"
                       placeholder="Add investigation notes…"></textarea>
             <div class="pres-note-save-badge"
                  x-show="presCase && _noteSaveState[presCase.MainCaseNumber] === 'saved'"
@@ -2263,6 +2285,10 @@
             <div class="pres-note-saving-badge"
                  x-show="presCase && _noteSaveState[presCase.MainCaseNumber] === 'saving'"
                  x-cloak>Saving&#x2026;</div>
+            <div class="pres-note-save-error"
+                 x-show="presCase && _noteSaveState[presCase.MainCaseNumber] === 'error'"
+                 @click="presCase && saveNote(presCase.MainCaseNumber, savedNotes[presCase.MainCaseNumber])"
+                 x-cloak>Save failed — retry</div>
           </div>
         </div>
 
@@ -2461,6 +2487,8 @@ function remakesPage() {
     _ddChartRaf: null,
     _noteSaveState: {},
     _followUpSaveState: {},
+    _noteDebounceTimers: {},
+    _followUpDebounceTimers: {},
     _tip: { show: false, type: '', items: [] },
 
     // ── Week anchor helpers ──────────────────────────────────────
@@ -2554,6 +2582,12 @@ function remakesPage() {
       // Set drill down to last 3 months
       const dd = this._presetRange('last3mo');
       this.ddStart = dd.start; this.ddEnd = dd.end;
+
+      // Seed keys so x-model never binds to undefined
+      for (const r of this.allRecords) {
+        if (!(r.MainCaseNumber in this.savedNotes)) this.savedNotes[r.MainCaseNumber] = '';
+        if (!(r.MainCaseNumber in this.savedFollowUpNotes)) this.savedFollowUpNotes[r.MainCaseNumber] = '';
+      }
 
       this.$watch('allStart',  () => { if (this.activeTab === 'all') this._scheduleCharts(); });
       this.$watch('allEnd',    () => { if (this.activeTab === 'all') this._scheduleCharts(); });
@@ -3271,9 +3305,31 @@ function remakesPage() {
         v => v > 0 ? v.toFixed(1) + '%' : '');
     },
 
+    // ── Debounced auto-save helpers ─────────────────────────────
+    debouncedSaveNote(caseNumber) {
+      clearTimeout(this._noteDebounceTimers[caseNumber]);
+      this._noteDebounceTimers[caseNumber] = setTimeout(() => {
+        this.saveNote(caseNumber, this.savedNotes[caseNumber]);
+        delete this._noteDebounceTimers[caseNumber];
+      }, 1500);
+    },
+
+    debouncedSaveFollowUpNote(caseNumber) {
+      clearTimeout(this._followUpDebounceTimers[caseNumber]);
+      this._followUpDebounceTimers[caseNumber] = setTimeout(() => {
+        this.saveFollowUpNote(caseNumber, this.savedFollowUpNotes[caseNumber]);
+        delete this._followUpDebounceTimers[caseNumber];
+      }, 1500);
+    },
+
     // ── Note persistence ─────────────────────────────────────────
     async saveNote(caseNumber, noteText) {
       if (!caseNumber) return;
+      // Cancel any pending debounce
+      if (this._noteDebounceTimers[caseNumber]) {
+        clearTimeout(this._noteDebounceTimers[caseNumber]);
+        delete this._noteDebounceTimers[caseNumber];
+      }
       this._noteSaveState[caseNumber] = 'saving';
       try {
         const res  = await fetch('/remakes/notes', {
@@ -3281,16 +3337,16 @@ function remakesPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ case_number: caseNumber, note: noteText }),
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.status === 'ok') {
-          this.savedNotes[caseNumber] = noteText;
           this._noteSaveState[caseNumber] = 'saved';
           setTimeout(() => { this._noteSaveState[caseNumber] = ''; }, 2000);
         } else {
-          this._noteSaveState[caseNumber] = '';
+          this._noteSaveState[caseNumber] = 'error';
         }
       } catch (e) {
-        this._noteSaveState[caseNumber] = '';
+        this._noteSaveState[caseNumber] = 'error';
         console.warn('Note save failed:', e);
       }
     },
@@ -3298,6 +3354,11 @@ function remakesPage() {
     // ── Follow-up note persistence ───────────────────────────────
     async saveFollowUpNote(caseNumber, noteText) {
       if (!caseNumber) return;
+      // Cancel any pending debounce
+      if (this._followUpDebounceTimers[caseNumber]) {
+        clearTimeout(this._followUpDebounceTimers[caseNumber]);
+        delete this._followUpDebounceTimers[caseNumber];
+      }
       this._followUpSaveState[caseNumber] = 'saving';
       try {
         const res  = await fetch('/remakes/follow-up-notes', {
@@ -3305,16 +3366,16 @@ function remakesPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ case_number: caseNumber, note: noteText }),
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.status === 'ok') {
-          this.savedFollowUpNotes[caseNumber] = noteText;
           this._followUpSaveState[caseNumber] = 'saved';
           setTimeout(() => { this._followUpSaveState[caseNumber] = ''; }, 2000);
         } else {
-          this._followUpSaveState[caseNumber] = '';
+          this._followUpSaveState[caseNumber] = 'error';
         }
       } catch (e) {
-        this._followUpSaveState[caseNumber] = '';
+        this._followUpSaveState[caseNumber] = 'error';
         console.warn('Follow-up note save failed:', e);
       }
     },
@@ -3409,6 +3470,18 @@ function remakesPage() {
 
     // ── Refresh ──────────────────────────────────────────────────
     async refresh() {
+      // Flush any pending debounced saves before reload
+      for (const [cn, t] of Object.entries(this._noteDebounceTimers)) {
+        clearTimeout(t);
+        await this.saveNote(cn, this.savedNotes[cn]);
+      }
+      for (const [cn, t] of Object.entries(this._followUpDebounceTimers)) {
+        clearTimeout(t);
+        await this.saveFollowUpNote(cn, this.savedFollowUpNotes[cn]);
+      }
+      this._noteDebounceTimers = {};
+      this._followUpDebounceTimers = {};
+
       this.loading = true;
       this.message = '';
       try {

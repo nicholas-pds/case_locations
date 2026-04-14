@@ -28,6 +28,9 @@ _LD_EMAILS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "ld_emai
 _EMPLOYEE_LKUPS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "employee_lkups.csv"
 
 _LD_DEPTS = ["CS", "ThreeD", "Lab", "Shipping"]
+
+_notes_lock = asyncio.Lock()
+_ld_lock = asyncio.Lock()
 _LD_EMAILS_DEFAULT = {
     "CS":       ["nick@partnersdentalstudio.com"],
     "ThreeD":   ["nick@partnersdentalstudio.com"],

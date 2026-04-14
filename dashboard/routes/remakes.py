@@ -25,6 +25,8 @@ from dashboard.data.remakes_queries import (
     get_tasks_for_case,
     get_notes_for_case,
     _apply_employee_names,
+    _notes_lock,
+    _ld_lock,
 )
 from dashboard.data.cache import cache
 from dashboard.config import DOCS_SERVER_USER, DOCS_SERVER_PASS
@@ -267,7 +269,8 @@ async def save_note(request: Request):
                 {"status": "error", "message": "case_number required"},
                 status_code=400,
             )
-        save_remake_note(case_number, note_text)
+        async with _notes_lock:
+            save_remake_note(case_number, note_text)
         return JSONResponse({"status": "ok"})
     except Exception as e:
         logger.error(f"Save note failed: {e}")
@@ -283,7 +286,8 @@ async def save_ld(request: Request):
     if not case_number or not dept:
         return JSONResponse({"status": "error", "message": "case_number and dept required"}, status_code=400)
     try:
-        save_remake_ld(case_number, dept, checked)
+        async with _ld_lock:
+            save_remake_ld(case_number, dept, checked)
         return JSONResponse({"status": "ok"})
     except ValueError as e:
         return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
@@ -300,7 +304,8 @@ async def save_follow_up_note_route(request: Request):
         note_text = body.get("note", "")
         if not case_number:
             return JSONResponse({"status": "error", "message": "case_number required"}, status_code=400)
-        save_follow_up_note(case_number, note_text)
+        async with _notes_lock:
+            save_follow_up_note(case_number, note_text)
         return JSONResponse({"status": "ok"})
     except Exception as e:
         logger.error(f"Save follow-up note failed: {e}")
@@ -315,7 +320,8 @@ async def save_completed_route(request: Request):
         completed = bool(body.get("completed", False))
         if not case_number:
             return JSONResponse({"status": "error", "message": "case_number required"}, status_code=400)
-        save_case_completed(case_number, completed)
+        async with _notes_lock:
+            save_case_completed(case_number, completed)
         return JSONResponse({"status": "ok"})
     except Exception as e:
         logger.error(f"Save completed failed: {e}")
