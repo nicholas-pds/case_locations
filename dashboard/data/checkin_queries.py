@@ -124,8 +124,16 @@ def fetch_checkin_tasks() -> tuple:
         })
 
     # ── 30-business-day category trends ──────────────────────────────────
-    # Use business days only (no weekends) — oldest → newest for chart axis
-    last_30 = list(reversed(_last_n_business_days(30)))
+    # Exclude today — partial day data skews the trendline. End at yesterday.
+    # Business days only (no weekends), oldest → newest for chart axis.
+    _trend_end = date.today() - timedelta(days=1)
+    _trend_days: list = []
+    _d = _trend_end
+    while len(_trend_days) < 30:
+        if _d.weekday() < 5:
+            _trend_days.append(_d)
+        _d -= timedelta(days=1)
+    last_30 = list(reversed(_trend_days))
     last_30_strs = {str(d) for d in last_30}
     trend_df = df[df["date_str"].isin(last_30_strs)].copy()
 
