@@ -33,5 +33,5 @@ FROM dbo.CaseAuditTrail AS cat
 INNER JOIN dbo.Cases AS ca ON ca.CaseID = cat.CaseID
 LEFT JOIN CaseCategories AS cc ON cc.CaseID = cat.CaseID AND cc.rn = 1
 WHERE cat.[Type] = 'Accept Remote Case'
-  AND cat.CreateDate >= DATEADD(day, -32, CAST(GETDATE() AS DATE))
+  AND cat.CreateDate >= DATEADD(day, -45, CAST(GETDATE() AS DATE))
 ORDER BY cat.CreateDate DESC;

@@ -1,5 +1,5 @@
 """Check-In query: Accept Remote Case counts over last 6 business days
-(Noon midnight–12pm and All midnight–6pm windows) plus last 30 calendar
+(Noon midnight–12pm and All midnight–6pm windows) plus last 30 business
 days grouped by product category for trend charts."""
 import sys
 import pandas as pd
@@ -48,11 +48,11 @@ def fetch_checkin_tasks() -> tuple:
       "all_by_emp": [{"name": "John S.", "count": 5}, ...],
     }
 
-    category_trends — list of dicts sorted by 30-day total desc:
+    category_trends — list of dicts in canonical workload order:
     [
       {
         "category": "Metal",
-        "days": [{"date": "2026-03-15", "count": 8}, ...]  # 30 entries oldest→newest
+        "days": [{"date": "2026-03-15", "count": 8}, ...]  # 30 business days oldest→newest
       },
       ...
     ]
@@ -78,7 +78,15 @@ def fetch_checkin_tasks() -> tuple:
         lambda n: _short(str(n)) if pd.notna(n) and str(n).strip() else "Unknown"
     )
 
-    df["Category"] = df["Category"].fillna("Other")
+    # Normalize categories to match workload page conventions
+    df["Category"] = df["Category"].fillna("").str.strip()
+    df.loc[df["Category"] == "", "Category"] = "Other"
+    df["Category"] = df["Category"].replace({
+        "Airway": "MARPE",
+        "Lab to lab": "Lab to Lab",
+        "Accessories": "Other",
+    })
+    df.loc[df["Category"].str.contains("Expander", case=False, na=False), "Category"] = "E\u00b2 Expanders"
 
     # ── 6-day Noon / All records ──────────────────────────────────────────
     biz_days = _last_n_business_days(6)
@@ -115,17 +123,20 @@ def fetch_checkin_tasks() -> tuple:
             "all_by_emp": _by_emp(all_df),
         })
 
-    # ── 30-day category trends ────────────────────────────────────────────
-    today = date.today()
-    last_30 = [today - timedelta(days=i) for i in range(29, -1, -1)]  # oldest → newest
+    # ── 30-business-day category trends ──────────────────────────────────
+    # Use business days only (no weekends) — oldest → newest for chart axis
+    last_30 = list(reversed(_last_n_business_days(30)))
     last_30_strs = {str(d) for d in last_30}
     trend_df = df[df["date_str"].isin(last_30_strs)].copy()
 
     all_cats = trend_df["Category"].unique().tolist()
 
-    # Sort categories by 30-day total desc (most active first)
-    cat_totals = {cat: int((trend_df["Category"] == cat).sum()) for cat in all_cats}
-    sorted_cats = sorted(all_cats, key=lambda c: cat_totals[c], reverse=True)
+    # Order categories to match workload page canonical order
+    CATEGORIES_ORDER = ["Hybrid", "E\u00b2 Expanders", "Lab to Lab", "MARPE",
+                        "Metal", "Clear", "Wire Bending", "Other"]
+    known = [c for c in CATEGORIES_ORDER if c in all_cats]
+    extra = [c for c in all_cats if c not in CATEGORIES_ORDER]
+    sorted_cats = known + sorted(extra)
 
     category_trends = []
     for cat_name in sorted_cats:
