@@ -1066,7 +1066,7 @@
             </template>
             <template x-for="(cat, catIdx) in checkinCategoryTrends" :key="'cat-' + catIdx">
               <div style="margin-bottom:20px;">
-                <div class="airway-col-title" x-text="cat.category"></div>
+                <div class="airway-col-title" x-text="cat.category + ' — ' + cat.avg + ' avg'"></div>
                 <div style="position:relative; height:120px;">
                   <canvas :id="'checkinCatChart_' + catIdx" height="120"></canvas>
                 </div>

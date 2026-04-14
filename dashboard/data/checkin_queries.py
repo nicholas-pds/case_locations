@@ -153,6 +153,7 @@ def fetch_checkin_tasks() -> tuple:
             day_df = trend_df[trend_df["date_str"] == str(d)]
             count = int((day_df["Category"] == cat_name).sum())
             days.append({"date": str(d), "count": count})
-        category_trends.append({"category": cat_name, "days": days})
+        avg = round(sum(d["count"] for d in days) / len(days)) if days else 0
+        category_trends.append({"category": cat_name, "days": days, "avg": avg})
 
     return records, fetched_at, category_trends
