@@ -20,18 +20,32 @@ WITH CaseCategories AS (
     FROM dbo.CaseProducts AS cp
     INNER JOIN dbo.Products AS pr ON cp.ProductID = pr.ProductID
     WHERE pr.Category IS NOT NULL
+),
+RankedAudit AS (
+    SELECT
+        cat.CaseID,
+        cat.CreatedBy,
+        cat.CreateDate,
+        ROW_NUMBER() OVER (
+            PARTITION BY cat.CaseID
+            ORDER BY cat.CreateDate DESC
+        ) AS RowNum
+    FROM dbo.CaseAuditTrail AS cat
+    WHERE cat.CreateDate >= DATEADD(day, -45, CAST(GETDATE() AS DATE))
+      AND cat.[Type] IN ('New Case', 'Accept Remote Case')
+      AND cat.CreatedBy NOT IN ('Web', 'NULL')
+      AND cat.CreatedBy IS NOT NULL
 )
 SELECT
-    cat.CreatedBy  AS UserName,
-    cat.CreateDate,
+    ra.CreatedBy AS UserName,
+    ra.CreateDate,
     ca.CaseNumber,
     CASE
         WHEN cc.Category = 'Accessories' THEN 'Other'
         ELSE ISNULL(NULLIF(cc.Category, ''), 'Other')
     END AS Category
-FROM dbo.CaseAuditTrail AS cat
-INNER JOIN dbo.Cases AS ca ON ca.CaseID = cat.CaseID
-LEFT JOIN CaseCategories AS cc ON cc.CaseID = cat.CaseID AND cc.rn = 1
-WHERE cat.[Type] = 'Accept Remote Case'
-  AND cat.CreateDate >= DATEADD(day, -45, CAST(GETDATE() AS DATE))
-ORDER BY cat.CreateDate DESC;
+FROM RankedAudit AS ra
+INNER JOIN dbo.Cases AS ca ON ca.CaseID = ra.CaseID
+LEFT JOIN CaseCategories AS cc ON cc.CaseID = ra.CaseID AND cc.rn = 1
+WHERE ra.RowNum = 1
+ORDER BY ra.CreateDate DESC;
