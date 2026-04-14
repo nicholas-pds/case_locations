@@ -14,6 +14,7 @@ from dashboard.data.efficiency_store import (
 from dashboard.data.efficiency_processing import run_full_upload, process_midday_snapshot, backfill_midday_history
 from dashboard.data.airway_queries import fetch_airway_tasks
 from dashboard.data.design_queries import fetch_design_tasks
+from dashboard.data.checkin_queries import fetch_checkin_tasks
 from dashboard.data.cache import cache
 
 router = APIRouter()
@@ -148,6 +149,13 @@ async def efficiency_page(request: Request):
         logger.warning("Design tasks fetch failed", exc_info=True)
         design_records, design_fetched_at = [], ""
 
+    # Check-In task data — fail gracefully
+    try:
+        checkin_records, checkin_fetched_at, checkin_category_trends = fetch_checkin_tasks()
+    except Exception:
+        logger.warning("Check-In tasks fetch failed", exc_info=True)
+        checkin_records, checkin_fetched_at, checkin_category_trends = [], "", []
+
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/efficiency.html", {
         "request": request,
@@ -171,6 +179,9 @@ async def efficiency_page(request: Request):
         "airway_records": airway_records,
         "design_records": design_records,
         "design_fetched_at": design_fetched_at,
+        "checkin_records": checkin_records,
+        "checkin_fetched_at": checkin_fetched_at,
+        "checkin_category_trends": checkin_category_trends,
     })
 
 

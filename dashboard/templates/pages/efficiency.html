@@ -46,6 +46,7 @@
     <button class="eff-tab" :class="{ active: activeTab === '3pm' }" @click="activeTab = '3pm'">3PM EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === 'airway' }" @click="activeTab = 'airway'; $nextTick(() => _initAirwayChart())">Airway</button>
     <button class="eff-tab" :class="{ active: activeTab === 'design' }" @click="activeTab = 'design'; $nextTick(() => _initDesignChart())">Design</button>
+    <button class="eff-tab" :class="{ active: activeTab === 'checkin' }" @click="activeTab = 'checkin'; $nextTick(() => _initCheckinChart())">Check-In</button>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
@@ -958,6 +959,127 @@
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
+  <!-- CHECK-IN TAB                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div x-show="activeTab === 'checkin'">
+    <template x-if="checkinData.length === 0">
+      <div style="text-align:center; padding:60px 0; color:var(--eff-muted);">No check-in data available.</div>
+    </template>
+    <template x-if="checkinData.length > 0">
+      <div>
+
+        <!-- ── STICKY HEADER ──────────────────────────── -->
+        <div class="design-sticky-hdr">
+          <div class="design-fetch-time" x-text="'Data as of ' + checkinFetchedAt"></div>
+          <div class="design-windows">
+            <div class="design-window">
+              <div class="design-window-label">
+                Noon (midnight – 12pm)
+                <span class="design-status-badge"
+                      :class="new Date().getHours() >= 12 ? 'design-status-complete' : 'design-status-progress'"
+                      x-text="new Date().getHours() >= 12 ? 'Complete' : 'In Progress'"></span>
+              </div>
+            </div>
+            <div class="design-window-sep"></div>
+            <div class="design-window">
+              <div class="design-window-label">
+                All Day (midnight – 6pm)
+                <span class="design-status-badge"
+                      :class="new Date().getHours() >= 18 ? 'design-status-complete' : 'design-status-progress'"
+                      x-text="new Date().getHours() >= 18 ? 'Complete' : 'In Progress'"></span>
+              </div>
+            </div>
+            <div class="design-window-sep"></div>
+            <div class="design-window">
+              <div class="design-window-label">Category Trends (30 days)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCROLL CONTENT ────────────────────────── -->
+        <div class="design-windows">
+
+          <!-- Noon window -->
+          <div class="design-window">
+            <div class="airway-col">
+              <div class="airway-chart-col">
+                <canvas id="checkinChartNoon" height="130"></canvas>
+              </div>
+              <template x-for="(day, idx) in checkinData" :key="'ci-noon-' + day.date">
+                <div class="eff-team-card" style="margin-bottom:12px;">
+                  <div class="eff-card-header">
+                    <div class="eff-card-name" x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
+                    <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.noon_total + ' total'"></div>
+                  </div>
+                  <table class="eff-person-table">
+                    <thead><tr><th>Name</th><th>Count</th></tr></thead>
+                    <tbody>
+                      <template x-for="(emp, ei) in day.noon_by_emp" :key="day.date + '-cn-' + ei">
+                        <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
+                      </template>
+                      <template x-if="day.noon_by_emp.length === 0">
+                        <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="design-window-sep"></div>
+
+          <!-- All Day window -->
+          <div class="design-window">
+            <div class="airway-col">
+              <div class="airway-chart-col">
+                <canvas id="checkinChartAll" height="130"></canvas>
+              </div>
+              <template x-for="(day, idx) in checkinData" :key="'ci-all-' + day.date">
+                <div class="eff-team-card" style="margin-bottom:12px;">
+                  <div class="eff-card-header">
+                    <div class="eff-card-name" x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
+                    <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.all_total + ' total'"></div>
+                  </div>
+                  <table class="eff-person-table">
+                    <thead><tr><th>Name</th><th>Count</th></tr></thead>
+                    <tbody>
+                      <template x-for="(emp, ei) in day.all_by_emp" :key="day.date + '-ca-' + ei">
+                        <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
+                      </template>
+                      <template x-if="day.all_by_emp.length === 0">
+                        <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="design-window-sep"></div>
+
+          <!-- Category Trends window -->
+          <div class="design-window">
+            <template x-if="checkinCategoryTrends.length === 0">
+              <div style="text-align:center; padding:40px 0; color:var(--eff-muted);">No category data.</div>
+            </template>
+            <template x-for="(cat, catIdx) in checkinCategoryTrends" :key="'cat-' + catIdx">
+              <div style="margin-bottom:20px;">
+                <div class="airway-col-title" x-text="cat.category"></div>
+                <div style="position:relative; height:120px;">
+                  <canvas :id="'checkinCatChart_' + catIdx" height="120"></canvas>
+                </div>
+              </div>
+            </template>
+          </div>
+
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
   <!-- EDIT CONSTANTS MODAL                       -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="showConstantsModal" x-cloak class="eff-modal-overlay" @click.self="showConstantsModal = false">
@@ -1128,6 +1250,10 @@ function efficiencyPage() {
     // Design state
     designData: {{ design_records | tojson }},
     designFetchedAt: "{{ design_fetched_at }}",
+    // Check-In state
+    checkinData: {{ checkin_records | tojson }},
+    checkinFetchedAt: "{{ checkin_fetched_at }}",
+    checkinCategoryTrends: {{ checkin_category_trends | tojson }},
 
     // Constants state
     constantsRecords: {{ constants_records | tojson }},
@@ -2152,6 +2278,121 @@ function efficiencyPage() {
             scales: {
               x: { grid: { display: false } },
               y: { beginAtZero: true, grace: '10%', ticks: { stepSize: 3, precision: 0 } },
+            },
+          },
+        });
+      });
+    },
+
+    // ─── Check-In Charts (Noon + All bar charts; per-category line + trendline) ───
+    _initCheckinChart() {
+      // ── Bar charts: Noon + All ──────────────────────────────────────────
+      const data = this.checkinData;
+      if (data.length) {
+        const ordered = [...data].reverse();
+        const barLabels = ordered.map(d => d.label);
+        [
+          { id: 'checkinChartNoon', key: 'noon_total', color: '#1A1A1A' },
+          { id: 'checkinChartAll',  key: 'all_total',  color: '#c41227' },
+        ].forEach(({ id, key, color }) => {
+          const ex = Chart.getChart(id);
+          if (ex) ex.destroy();
+          const ctx = document.getElementById(id);
+          if (!ctx) return;
+          new Chart(ctx, {
+            type: 'bar',
+            plugins: [ChartDataLabels],
+            data: {
+              labels: barLabels,
+              datasets: [{ data: ordered.map(d => d[key]), backgroundColor: color, borderRadius: 3 }],
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                datalabels: {
+                  anchor: 'end', align: 'end', offset: 2,
+                  font: { size: 11, weight: '600' }, color: '#1A1A1A',
+                  display: (c) => c.dataset.data[c.dataIndex] > 0,
+                },
+              },
+              scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, grace: '10%', ticks: { stepSize: 3, precision: 0 } },
+              },
+            },
+          });
+        });
+      }
+
+      // ── Line/area charts: one per category with trendline ──────────────
+      const trends = this.checkinCategoryTrends;
+      if (!trends.length) return;
+
+      function linReg(ys) {
+        const n = ys.length;
+        if (n < 2) return ys.slice();
+        const sumX  = n * (n - 1) / 2;
+        const sumX2 = (n - 1) * n * (2 * n - 1) / 6;
+        const sumY  = ys.reduce((a, b) => a + b, 0);
+        const sumXY = ys.reduce((acc, y, i) => acc + i * y, 0);
+        const slope     = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        const intercept = (sumY - slope * sumX) / n;
+        return ys.map((_, i) => +(slope * i + intercept).toFixed(2));
+      }
+
+      trends.forEach((cat, i) => {
+        const id = 'checkinCatChart_' + i;
+        const ex = Chart.getChart(id);
+        if (ex) ex.destroy();
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+
+        const counts = cat.days.map(d => d.count);
+        const labels = cat.days.map(d => {
+          const p = d.date.split('-');
+          return p[1].replace(/^0/, '') + '/' + p[2].replace(/^0/, '');
+        });
+
+        new Chart(ctx, {
+          type: 'line',
+          plugins: [ChartDataLabels],
+          data: {
+            labels,
+            datasets: [
+              {
+                data: counts,
+                borderColor: '#1A1A1A',
+                backgroundColor: 'rgba(26,26,26,0.08)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                borderWidth: 2,
+              },
+              {
+                data: linReg(counts),
+                borderColor: '#c41227',
+                borderDash: [5, 5],
+                borderWidth: 1.5,
+                pointRadius: 0,
+                fill: false,
+                tension: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              datalabels: { display: false },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 6, font: { size: 10 } },
+              },
+              y: { beginAtZero: true, grace: '10%', ticks: { precision: 0 } },
             },
           },
         });
