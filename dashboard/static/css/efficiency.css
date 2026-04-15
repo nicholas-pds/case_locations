@@ -1125,3 +1125,36 @@
   color: var(--eff-muted);
   margin-bottom: 8px;
 }
+
+/* ── Design Sub-Nav (Noon / 3PM / All Day toggle) ── */
+.design-sub-nav {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.design-sub-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--eff-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+  top: 1px;
+}
+
+.design-sub-nav-btn:hover {
+  color: var(--eff-accent);
+  background: var(--eff-surface2);
+}
+
+.design-sub-nav-btn.active {
+  color: var(--eff-red-brand);
+  border-bottom-color: var(--eff-red-brand);
+}

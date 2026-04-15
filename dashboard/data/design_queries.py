@@ -1,5 +1,5 @@
 """Design task query: 3dd (Design) and 3dcf (Clean File) counts over last 6 business days,
-split into Noon (3am–12pm) and 3PM (3am–3pm) time windows."""
+split into Noon (3am–12pm), 3PM (3am–3pm), and All Day (3am–midnight) time windows."""
 import sys
 import pandas as pd
 from datetime import date, datetime, timedelta
@@ -45,18 +45,21 @@ def _build_by_emp(window_df: pd.DataFrame, task: str) -> list:
 def fetch_design_tasks() -> tuple:
     """
     Execute design_tasks_export.sql, filter to last 6 business days,
-    split each day into Noon (3am–12pm) and 3PM (3am–3pm) windows,
-    resolve employee names, and return structured data for template.
+    split each day into Noon (3am–12pm), 3PM (3am–3pm), and All Day
+    (3am–midnight) windows, resolve employee names, and return
+    structured data for template.
 
     Returns (records, fetched_at) where:
       records = list of dicts, one per business day (desc: today first):
       {
         "date": "2026-04-09",
         "label": "Thu 4/9",
-        "noon_dd_total": 12,  "noon_cf_total": 8,
+        "noon_dd_total": 12,    "noon_cf_total": 8,
         "noon_dd_by_emp": [...], "noon_cf_by_emp": [...],
-        "pm3_dd_total": 15,   "pm3_cf_total": 10,
-        "pm3_dd_by_emp": [...], "pm3_cf_by_emp": [...],
+        "pm3_dd_total": 15,     "pm3_cf_total": 10,
+        "pm3_dd_by_emp": [...],  "pm3_cf_by_emp": [...],
+        "allday_dd_total": 20,   "allday_cf_total": 14,
+        "allday_dd_by_emp": [...], "allday_cf_by_emp": [...],
       }
       fetched_at = "2:34 PM" string
     """
@@ -110,9 +113,11 @@ def fetch_design_tasks() -> tuple:
         noon_start = datetime.combine(d, datetime.min.time()).replace(hour=3)
         noon_end   = datetime.combine(d, datetime.min.time()).replace(hour=12)
         pm3_end    = datetime.combine(d, datetime.min.time()).replace(hour=15)
+        allday_end = datetime.combine(d + timedelta(days=1), datetime.min.time())
 
-        noon_df = day_df[(day_df["completeDate"] >= noon_start) & (day_df["completeDate"] < noon_end)]
-        pm3_df  = day_df[(day_df["completeDate"] >= noon_start) & (day_df["completeDate"] < pm3_end)]
+        noon_df   = day_df[(day_df["completeDate"] >= noon_start) & (day_df["completeDate"] < noon_end)]
+        pm3_df    = day_df[(day_df["completeDate"] >= noon_start) & (day_df["completeDate"] < pm3_end)]
+        allday_df = day_df[(day_df["completeDate"] >= noon_start) & (day_df["completeDate"] < allday_end)]
 
         result.append({
             "date": date_str,
@@ -125,6 +130,10 @@ def fetch_design_tasks() -> tuple:
             "pm3_cf_total":  int((pm3_df["Task"] == "3dcf").sum()),
             "pm3_dd_by_emp": _build_by_emp(pm3_df, "3dd"),
             "pm3_cf_by_emp": _build_by_emp(pm3_df, "3dcf"),
+            "allday_dd_total": int((allday_df["Task"] == "3dd").sum()),
+            "allday_cf_total": int((allday_df["Task"] == "3dcf").sum()),
+            "allday_dd_by_emp": _build_by_emp(allday_df, "3dd"),
+            "allday_cf_by_emp": _build_by_emp(allday_df, "3dcf"),
         })
 
     return result, fetched_at

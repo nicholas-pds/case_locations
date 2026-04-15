@@ -797,160 +797,85 @@
     <template x-if="designData.length > 0">
       <div>
 
-        <!-- ── STICKY HEADER ──────────────────────────── -->
+        <!-- ── STICKY HEADER (includes sub-nav) ──────── -->
         <div class="design-sticky-hdr">
+          <div class="design-sub-nav">
+            <button class="design-sub-nav-btn"
+                    :class="{ active: designTimeWindow === 'noon' }"
+                    @click="designTimeWindow = 'noon'; $nextTick(() => _initDesignChart())">Noon</button>
+            <button class="design-sub-nav-btn"
+                    :class="{ active: designTimeWindow === '3pm' }"
+                    @click="designTimeWindow = '3pm'; $nextTick(() => _initDesignChart())">3PM</button>
+            <button class="design-sub-nav-btn"
+                    :class="{ active: designTimeWindow === 'allday' }"
+                    @click="designTimeWindow = 'allday'; $nextTick(() => _initDesignChart())">All Day</button>
+          </div>
           <div class="design-fetch-time" x-text="'Data as of ' + designFetchedAt"></div>
-          <div class="design-windows">
-            <div class="design-window">
-              <div class="design-window-label">
-                Noon (3am – 12pm)
-                <span class="design-status-badge"
-                      :class="new Date().getHours() >= 12 ? 'design-status-complete' : 'design-status-progress'"
-                      x-text="new Date().getHours() >= 12 ? 'Complete' : 'In Progress'"></span>
-              </div>
-              <div class="design-2col">
-                <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#1A1A1A;"></span>Design</div>
-                <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#c41227;"></span>Clean File</div>
-              </div>
-            </div>
-            <div class="design-window-sep"></div>
-            <div class="design-window">
-              <div class="design-window-label">
-                3PM (3am – 3pm)
-                <span class="design-status-badge"
-                      :class="new Date().getHours() >= 15 ? 'design-status-complete' : 'design-status-progress'"
-                      x-text="new Date().getHours() >= 15 ? 'Complete' : 'In Progress'"></span>
-              </div>
-              <div class="design-2col">
-                <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#1A1A1A;"></span>Design</div>
-                <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#c41227;"></span>Clean File</div>
-              </div>
-            </div>
+          <div class="design-window-label">
+            <span x-text="designWindowLabel()"></span>
+            <span class="design-status-badge"
+                  :class="new Date().getHours() >= designCompleteHour() ? 'design-status-complete' : 'design-status-progress'"
+                  x-text="new Date().getHours() >= designCompleteHour() ? 'Complete' : 'In Progress'"></span>
+          </div>
+          <div class="design-2col">
+            <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#1A1A1A;"></span>Design</div>
+            <div class="airway-col-title"><span class="airway-legend-swatch" style="background:#c41227;"></span>Clean File</div>
           </div>
         </div>
 
         <!-- ── SCROLL CONTENT (charts + cards) ───────── -->
-        <div class="design-windows">
+        <div class="design-2col">
 
-          <!-- Noon window -->
-          <div class="design-window">
-            <div class="design-2col">
-
-              <!-- Noon: Design (3dd) -->
-              <div class="airway-col">
-                <div class="airway-chart-col">
-                  <canvas id="designChartNoonDD" height="130"></canvas>
-                </div>
-                <template x-for="(day, idx) in designData" :key="'noon-dd-' + day.date">
-                  <div class="eff-team-card" style="margin-bottom:12px;">
-                    <div class="eff-card-header">
-                      <div class="eff-card-name" x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
-                      <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.noon_dd_total + ' total'"></div>
-                    </div>
-                    <table class="eff-person-table">
-                      <thead><tr><th>Name</th><th>Count</th></tr></thead>
-                      <tbody>
-                        <template x-for="(emp, ei) in day.noon_dd_by_emp" :key="day.date + '-ndd-' + ei">
-                          <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
-                        </template>
-                        <template x-if="day.noon_dd_by_emp.length === 0">
-                          <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
-                        </template>
-                      </tbody>
-                    </table>
-                  </div>
-                </template>
-              </div>
-
-              <!-- Noon: Clean File (3dcf) -->
-              <div class="airway-col">
-                <div class="airway-chart-col">
-                  <canvas id="designChartNoonCF" height="130"></canvas>
-                </div>
-                <template x-for="(day, idx) in designData" :key="'noon-cf-' + day.date">
-                  <div class="eff-team-card" style="margin-bottom:12px;">
-                    <div class="eff-card-header">
-                      <div class="eff-card-name" x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
-                      <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.noon_cf_total + ' total'"></div>
-                    </div>
-                    <table class="eff-person-table">
-                      <thead><tr><th>Name</th><th>Count</th></tr></thead>
-                      <tbody>
-                        <template x-for="(emp, ei) in day.noon_cf_by_emp" :key="day.date + '-ncf-' + ei">
-                          <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
-                        </template>
-                        <template x-if="day.noon_cf_by_emp.length === 0">
-                          <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
-                        </template>
-                      </tbody>
-                    </table>
-                  </div>
-                </template>
-              </div>
-
+          <!-- Design (3dd) column -->
+          <div class="airway-col">
+            <div class="airway-chart-col">
+              <canvas id="designChartDD" height="130"></canvas>
             </div>
+            <template x-for="(day, idx) in designData" :key="designTimeWindow + '-dd-' + day.date">
+              <div class="eff-team-card" style="margin-bottom:12px;">
+                <div class="eff-card-header">
+                  <div class="eff-card-name" x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
+                  <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day[designPrefix() + '_dd_total'] + ' total'"></div>
+                </div>
+                <table class="eff-person-table">
+                  <thead><tr><th>Name</th><th>Count</th></tr></thead>
+                  <tbody>
+                    <template x-for="(emp, ei) in day[designPrefix() + '_dd_by_emp']" :key="day.date + '-dd-' + ei">
+                      <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
+                    </template>
+                    <template x-if="day[designPrefix() + '_dd_by_emp'].length === 0">
+                      <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </template>
           </div>
 
-          <!-- Vertical divider -->
-          <div class="design-window-sep"></div>
-
-          <!-- 3PM window -->
-          <div class="design-window">
-            <div class="design-2col">
-
-              <!-- 3PM: Design (3dd) -->
-              <div class="airway-col">
-                <div class="airway-chart-col">
-                  <canvas id="designChartPM3DD" height="130"></canvas>
-                </div>
-                <template x-for="(day, idx) in designData" :key="'pm3-dd-' + day.date">
-                  <div class="eff-team-card" style="margin-bottom:12px;">
-                    <div class="eff-card-header">
-                      <div class="eff-card-name" x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
-                      <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.pm3_dd_total + ' total'"></div>
-                    </div>
-                    <table class="eff-person-table">
-                      <thead><tr><th>Name</th><th>Count</th></tr></thead>
-                      <tbody>
-                        <template x-for="(emp, ei) in day.pm3_dd_by_emp" :key="day.date + '-p3dd-' + ei">
-                          <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
-                        </template>
-                        <template x-if="day.pm3_dd_by_emp.length === 0">
-                          <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
-                        </template>
-                      </tbody>
-                    </table>
-                  </div>
-                </template>
-              </div>
-
-              <!-- 3PM: Clean File (3dcf) -->
-              <div class="airway-col">
-                <div class="airway-chart-col">
-                  <canvas id="designChartPM3CF" height="130"></canvas>
-                </div>
-                <template x-for="(day, idx) in designData" :key="'pm3-cf-' + day.date">
-                  <div class="eff-team-card" style="margin-bottom:12px;">
-                    <div class="eff-card-header">
-                      <div class="eff-card-name" x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
-                      <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day.pm3_cf_total + ' total'"></div>
-                    </div>
-                    <table class="eff-person-table">
-                      <thead><tr><th>Name</th><th>Count</th></tr></thead>
-                      <tbody>
-                        <template x-for="(emp, ei) in day.pm3_cf_by_emp" :key="day.date + '-p3cf-' + ei">
-                          <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
-                        </template>
-                        <template x-if="day.pm3_cf_by_emp.length === 0">
-                          <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
-                        </template>
-                      </tbody>
-                    </table>
-                  </div>
-                </template>
-              </div>
-
+          <!-- Clean File (3dcf) column -->
+          <div class="airway-col">
+            <div class="airway-chart-col">
+              <canvas id="designChartCF" height="130"></canvas>
             </div>
+            <template x-for="(day, idx) in designData" :key="designTimeWindow + '-cf-' + day.date">
+              <div class="eff-team-card" style="margin-bottom:12px;">
+                <div class="eff-card-header">
+                  <div class="eff-card-name" x-text="idx === 0 ? 'Today — ' + day.label : (idx === 1 ? '-1 Day — ' : '-' + idx + ' Days — ') + day.label"></div>
+                  <div class="eff-card-eff" style="color:var(--eff-muted);" x-text="day[designPrefix() + '_cf_total'] + ' total'"></div>
+                </div>
+                <table class="eff-person-table">
+                  <thead><tr><th>Name</th><th>Count</th></tr></thead>
+                  <tbody>
+                    <template x-for="(emp, ei) in day[designPrefix() + '_cf_by_emp']" :key="day.date + '-cf-' + ei">
+                      <tr><td x-text="emp.name"></td><td x-text="emp.count"></td></tr>
+                    </template>
+                    <template x-if="day[designPrefix() + '_cf_by_emp'].length === 0">
+                      <tr><td colspan="2" style="text-align:center; color:var(--eff-muted); padding:10px 0;">—</td></tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </template>
           </div>
 
         </div>
@@ -1250,6 +1175,7 @@ function efficiencyPage() {
     // Design state
     designData: {{ design_records | tojson }},
     designFetchedAt: "{{ design_fetched_at }}",
+    designTimeWindow: 'noon',
     // Check-In state
     checkinData: {{ checkin_records | tojson }},
     checkinFetchedAt: "{{ checkin_fetched_at }}",
@@ -2238,18 +2164,32 @@ function efficiencyPage() {
       });
     },
 
-    // ─── Design Charts (4 separate: Noon + 3PM × Design + Clean File) ───
+    // ─── Design helpers ───
+    designPrefix() {
+      return { noon: 'noon', '3pm': 'pm3', allday: 'allday' }[this.designTimeWindow] || 'noon';
+    },
+    designWindowLabel() {
+      return {
+        noon: 'Noon (3am – 12pm)',
+        '3pm': '3PM (3am – 3pm)',
+        allday: 'All Day (3am – Midnight)',
+      }[this.designTimeWindow] || 'Noon (3am – 12pm)';
+    },
+    designCompleteHour() {
+      return { noon: 12, '3pm': 15, allday: 24 }[this.designTimeWindow] || 12;
+    },
+
+    // ─── Design Charts (2 charts: Design + Clean File for active time window) ───
     _initDesignChart() {
       const data = this.designData;
       if (!data.length) return;
-      const ordered = [...data].reverse(); // chronological: oldest → today
+      const ordered = [...data].reverse();
       const labels = ordered.map(d => d.label);
 
+      const prefix = this.designPrefix();
       const chartDefs = [
-        { id: 'designChartNoonDD', key: 'noon_dd_total', color: '#1A1A1A' },
-        { id: 'designChartNoonCF', key: 'noon_cf_total', color: '#c41227' },
-        { id: 'designChartPM3DD',  key: 'pm3_dd_total',  color: '#1A1A1A' },
-        { id: 'designChartPM3CF',  key: 'pm3_cf_total',  color: '#c41227' },
+        { id: 'designChartDD', key: prefix + '_dd_total', color: '#1A1A1A' },
+        { id: 'designChartCF', key: prefix + '_cf_total', color: '#c41227' },
       ];
 
       chartDefs.forEach(({ id, key, color }) => {
