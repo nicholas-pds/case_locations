@@ -1,5 +1,5 @@
 """Design task query: 3dd (Design) and 3dcf (Clean File) counts over last 6 business days,
-split into Noon (3am–12pm), 3PM (3am–3pm), and All Day (3am–midnight) time windows."""
+split into Noon (3am–12pm), 3PM (3am–3pm), 11PM (3pm–midnight), and All Day (3am–midnight) time windows."""
 import sys
 import pandas as pd
 from datetime import date, datetime, timedelta
@@ -117,6 +117,7 @@ def fetch_design_tasks() -> tuple:
 
         noon_df   = day_df[(day_df["completeDate"] >= noon_start) & (day_df["completeDate"] < noon_end)]
         pm3_df    = day_df[(day_df["completeDate"] >= noon_start) & (day_df["completeDate"] < pm3_end)]
+        pm11_df   = day_df[(day_df["completeDate"] >= pm3_end)    & (day_df["completeDate"] < allday_end)]
         allday_df = day_df[(day_df["completeDate"] >= noon_start) & (day_df["completeDate"] < allday_end)]
 
         result.append({
@@ -130,6 +131,10 @@ def fetch_design_tasks() -> tuple:
             "pm3_cf_total":  int((pm3_df["Task"] == "3dcf").sum()),
             "pm3_dd_by_emp": _build_by_emp(pm3_df, "3dd"),
             "pm3_cf_by_emp": _build_by_emp(pm3_df, "3dcf"),
+            "pm11_dd_total":  int((pm11_df["Task"] == "3dd").sum()),
+            "pm11_cf_total":  int((pm11_df["Task"] == "3dcf").sum()),
+            "pm11_dd_by_emp": _build_by_emp(pm11_df, "3dd"),
+            "pm11_cf_by_emp": _build_by_emp(pm11_df, "3dcf"),
             "allday_dd_total": int((allday_df["Task"] == "3dd").sum()),
             "allday_cf_total": int((allday_df["Task"] == "3dcf").sum()),
             "allday_dd_by_emp": _build_by_emp(allday_df, "3dd"),

@@ -807,6 +807,9 @@
                     :class="{ active: designTimeWindow === '3pm' }"
                     @click="designTimeWindow = '3pm'; $nextTick(() => _initDesignChart())">3PM</button>
             <button class="design-sub-nav-btn"
+                    :class="{ active: designTimeWindow === '11pm' }"
+                    @click="designTimeWindow = '11pm'; $nextTick(() => _initDesignChart())">11PM</button>
+            <button class="design-sub-nav-btn"
                     :class="{ active: designTimeWindow === 'allday' }"
                     @click="designTimeWindow = 'allday'; $nextTick(() => _initDesignChart())">All Day</button>
           </div>
@@ -2166,17 +2169,18 @@ function efficiencyPage() {
 
     // ─── Design helpers ───
     designPrefix() {
-      return { noon: 'noon', '3pm': 'pm3', allday: 'allday' }[this.designTimeWindow] || 'noon';
+      return { noon: 'noon', '3pm': 'pm3', '11pm': 'pm11', allday: 'allday' }[this.designTimeWindow] || 'noon';
     },
     designWindowLabel() {
       return {
         noon: 'Noon (3am – 12pm)',
         '3pm': '3PM (3am – 3pm)',
+        '11pm': '11PM (3pm – Midnight)',
         allday: 'All Day (3am – Midnight)',
       }[this.designTimeWindow] || 'Noon (3am – 12pm)';
     },
     designCompleteHour() {
-      return { noon: 12, '3pm': 15, allday: 24 }[this.designTimeWindow] || 12;
+      return { noon: 12, '3pm': 15, '11pm': 24, allday: 24 }[this.designTimeWindow] || 12;
     },
 
     // ─── Design Charts (2 charts: Design + Clean File for active time window) ───
