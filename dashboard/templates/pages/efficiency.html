@@ -44,9 +44,9 @@
     <button class="eff-tab" :class="{ active: activeTab === 'mm' }" @click="activeTab = 'mm'">MM EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === 'noon' }" @click="activeTab = 'noon'">Noon EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === '3pm' }" @click="activeTab = '3pm'">3PM EFF</button>
-    <button class="eff-tab" :class="{ active: activeTab === 'airway' }" @click="activeTab = 'airway'; $nextTick(() => _initAirwayChart())">Airway</button>
-    <button class="eff-tab" :class="{ active: activeTab === 'design' }" @click="activeTab = 'design'; $nextTick(() => _initDesignChart())">Design</button>
-    <button class="eff-tab" :class="{ active: activeTab === 'checkin' }" @click="activeTab = 'checkin'; $nextTick(() => _initCheckinChart())">Check-In</button>
+    <button class="eff-tab" :class="{ active: activeTab === 'airway' }" @click="activeTab = 'airway'; loadAirwayData()">Airway</button>
+    <button class="eff-tab" :class="{ active: activeTab === 'design' }" @click="activeTab = 'design'; loadDesignData()">Design</button>
+    <button class="eff-tab" :class="{ active: activeTab === 'checkin' }" @click="activeTab = 'checkin'; loadCheckinData()">Check-In</button>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
@@ -687,7 +687,10 @@
   <!-- AIRWAY TAB                                 -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === 'airway'">
-    <template x-if="airwayData.length === 0">
+    <template x-if="airwayLoading">
+      <div style="text-align:center; padding:60px 0; color:var(--eff-muted);">Loading airway data...</div>
+    </template>
+    <template x-if="!airwayLoading && airwayData.length === 0">
       <div class="eff-empty" style="padding:60px 0; text-align:center; color:var(--eff-muted);">
         No airway task data available.
       </div>
@@ -791,7 +794,10 @@
   <!-- DESIGN TAB                                 -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === 'design'">
-    <template x-if="designData.length === 0">
+    <template x-if="designLoading">
+      <div style="text-align:center; padding:60px 0; color:var(--eff-muted);">Loading design data...</div>
+    </template>
+    <template x-if="!designLoading && designData.length === 0">
       <div style="text-align:center; padding:60px 0; color:var(--eff-muted);">No design task data available.</div>
     </template>
     <template x-if="designData.length > 0">
@@ -890,7 +896,10 @@
   <!-- CHECK-IN TAB                               -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="activeTab === 'checkin'">
-    <template x-if="checkinData.length === 0">
+    <template x-if="checkinLoading">
+      <div style="text-align:center; padding:60px 0; color:var(--eff-muted);">Loading check-in data...</div>
+    </template>
+    <template x-if="!checkinLoading && checkinData.length === 0">
       <div style="text-align:center; padding:60px 0; color:var(--eff-muted);">No check-in data available.</div>
     </template>
     <template x-if="checkinData.length > 0">
@@ -1172,17 +1181,24 @@ function efficiencyPage() {
     noonDate: {{ noon_latest_date | tojson }},
     pm3Date: {{ pm3_latest_date | tojson }},
 
-    // Airway state
-    airwayData: {{ airway_records | tojson }},
+    // Airway state — loaded lazily on first tab click
+    airwayData: [],
+    airwayLoaded: false,
+    airwayLoading: false,
 
-    // Design state
-    designData: {{ design_records | tojson }},
-    designFetchedAt: "{{ design_fetched_at }}",
+    // Design state — loaded lazily on first tab click
+    designData: [],
+    designFetchedAt: '',
     designTimeWindow: 'noon',
-    // Check-In state
-    checkinData: {{ checkin_records | tojson }},
-    checkinFetchedAt: "{{ checkin_fetched_at }}",
-    checkinCategoryTrends: {{ checkin_category_trends | tojson }},
+    designLoaded: false,
+    designLoading: false,
+
+    // Check-In state — loaded lazily on first tab click
+    checkinData: [],
+    checkinFetchedAt: '',
+    checkinCategoryTrends: [],
+    checkinLoaded: false,
+    checkinLoading: false,
 
     // Constants state
     constantsRecords: {{ constants_records | tojson }},
@@ -1207,6 +1223,72 @@ function efficiencyPage() {
     mmEffCols: {{ mm_eff_cols | tojson }},
 
     init() {},
+
+    async loadAirwayData() {
+      if (this.airwayLoaded) {
+        await this.$nextTick();
+        this._initAirwayChart();
+        return;
+      }
+      this.airwayLoading = true;
+      try {
+        const res = await fetch('/efficiency/airway-data');
+        const data = await res.json();
+        this.airwayData = data.records;
+        this.airwayLoaded = true;
+      } catch (e) {
+        console.error('Failed to load airway data', e);
+      } finally {
+        this.airwayLoading = false;
+      }
+      await this.$nextTick();
+      this._initAirwayChart();
+    },
+
+    async loadDesignData() {
+      if (this.designLoaded) {
+        await this.$nextTick();
+        this._initDesignChart();
+        return;
+      }
+      this.designLoading = true;
+      try {
+        const res = await fetch('/efficiency/design-data');
+        const data = await res.json();
+        this.designData = data.records;
+        this.designFetchedAt = data.fetched_at;
+        this.designLoaded = true;
+      } catch (e) {
+        console.error('Failed to load design data', e);
+      } finally {
+        this.designLoading = false;
+      }
+      await this.$nextTick();
+      this._initDesignChart();
+    },
+
+    async loadCheckinData() {
+      if (this.checkinLoaded) {
+        await this.$nextTick();
+        this._initCheckinChart();
+        return;
+      }
+      this.checkinLoading = true;
+      try {
+        const res = await fetch('/efficiency/checkin-data');
+        const data = await res.json();
+        this.checkinData = data.records;
+        this.checkinFetchedAt = data.fetched_at;
+        this.checkinCategoryTrends = data.category_trends;
+        this.checkinLoaded = true;
+      } catch (e) {
+        console.error('Failed to load check-in data', e);
+      } finally {
+        this.checkinLoading = false;
+      }
+      await this.$nextTick();
+      this._initCheckinChart();
+    },
 
     shortName(name) {
       if (!name) return '';

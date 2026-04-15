@@ -135,27 +135,6 @@ async def efficiency_page(request: Request):
         pm3_available_dates = sorted(pm3_df["Data_Date"].dropna().unique().tolist(), reverse=True)
         pm3_latest_date = pm3_available_dates[0] if pm3_available_dates else None
 
-    # Airway task data — fail gracefully so a DB issue won't break the page
-    try:
-        airway_records = fetch_airway_tasks()
-    except Exception:
-        logger.warning("Airway tasks fetch failed", exc_info=True)
-        airway_records = []
-
-    # Design task data — fail gracefully
-    try:
-        design_records, design_fetched_at = fetch_design_tasks()
-    except Exception:
-        logger.warning("Design tasks fetch failed", exc_info=True)
-        design_records, design_fetched_at = [], ""
-
-    # Check-In task data — fail gracefully
-    try:
-        checkin_records, checkin_fetched_at, checkin_category_trends = fetch_checkin_tasks()
-    except Exception:
-        logger.warning("Check-In tasks fetch failed", exc_info=True)
-        checkin_records, checkin_fetched_at, checkin_category_trends = [], "", []
-
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/efficiency.html", {
         "request": request,
@@ -176,12 +155,6 @@ async def efficiency_page(request: Request):
         "noon_latest_date": noon_latest_date,
         "pm3_available_dates": pm3_available_dates,
         "pm3_latest_date": pm3_latest_date,
-        "airway_records": airway_records,
-        "design_records": design_records,
-        "design_fetched_at": design_fetched_at,
-        "checkin_records": checkin_records,
-        "checkin_fetched_at": checkin_fetched_at,
-        "checkin_category_trends": checkin_category_trends,
     })
 
 
@@ -213,6 +186,39 @@ async def efficiency_refresh_midday():
     except Exception as e:
         logger.error(f"Midday refresh failed: {e}")
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
+
+
+@router.get("/efficiency/airway-data")
+async def get_airway_data():
+    """Lazy-load endpoint for Airway tab data."""
+    try:
+        records = fetch_airway_tasks()
+    except Exception:
+        logger.warning("Airway tasks fetch failed", exc_info=True)
+        records = []
+    return JSONResponse({"records": records})
+
+
+@router.get("/efficiency/design-data")
+async def get_design_data():
+    """Lazy-load endpoint for Design tab data."""
+    try:
+        records, fetched_at = fetch_design_tasks()
+    except Exception:
+        logger.warning("Design tasks fetch failed", exc_info=True)
+        records, fetched_at = [], ""
+    return JSONResponse({"records": records, "fetched_at": fetched_at})
+
+
+@router.get("/efficiency/checkin-data")
+async def get_checkin_data():
+    """Lazy-load endpoint for Check-In tab data."""
+    try:
+        records, fetched_at, category_trends = fetch_checkin_tasks()
+    except Exception:
+        logger.warning("Check-In tasks fetch failed", exc_info=True)
+        records, fetched_at, category_trends = [], "", []
+    return JSONResponse({"records": records, "fetched_at": fetched_at, "category_trends": category_trends})
 
 
 @router.get("/efficiency/constants")
