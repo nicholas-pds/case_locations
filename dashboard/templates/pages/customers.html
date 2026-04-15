@@ -6,89 +6,105 @@
   <div class="page-header" style="display: flex; align-items: center; justify-content: space-between;">
     <h1 class="page-title">Customers</h1>
     <div style="display: flex; align-items: center; gap: 12px;">
-      <span class="customer-count" x-text="filteredCount + ' of ' + customers.length + ' customers'"></span>
-      <button class="export-btn" @click="exportCsv()">Export CSV</button>
+      <span class="customer-count" x-show="!loading" x-text="filteredCount + ' of ' + customers.length + ' customers'"></span>
+      <button class="export-btn" @click="exportCsv()" x-show="!loading">Export CSV</button>
     </div>
   </div>
 
-  <!-- Metric Tiles -->
-  <div class="summary-cards">
-    <div class="summary-card summary-card-submitted">
-      <div class="summary-label">Active Customers</div>
-      <div class="summary-value" x-text="metrics.active"></div>
-    </div>
-    <div class="summary-card summary-card-production">
-      <div class="summary-label">Prospects</div>
-      <div class="summary-value" x-text="metrics.prospects"></div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-label">New This Month</div>
-      <div class="summary-value" x-text="metrics.newThisMonth"></div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-label">New YTD</div>
-      <div class="summary-value" x-text="metrics.newYTD"></div>
-    </div>
-    <div class="summary-card" style="border-left-color: #27AE60;">
-      <div class="summary-label">New Customer Sales YTD</div>
-      <div class="summary-value" x-text="metrics.newSalesYTD"></div>
-    </div>
+  <!-- Loading state -->
+  <div x-show="loading" style="text-align: center; padding: 64px; color: #888;">
+    <div style="font-size: 15px;">Loading customers...</div>
   </div>
 
-  <!-- Tabs -->
-  <div class="customer-tabs">
-    <button class="customer-tab" :class="{ active: tab === 'all' }" @click="tab = 'all'">All</button>
-    <button class="customer-tab" :class="{ active: tab === 'active' }" @click="tab = 'active'">Active</button>
-    <button class="customer-tab" :class="{ active: tab === 'prospects' }" @click="tab = 'prospects'">Prospects</button>
-  </div>
+  <div x-show="!loading" x-cloak>
 
-  <!-- Search + Filters -->
-  <div class="customer-filters">
-    <input type="text" class="search-input" placeholder="Search all columns..." x-model="search" style="flex: 1; max-width: 300px;">
-    {% for col in filter_columns %}
-    <select class="filter-select" x-model="filters.{{ col }}">
-      <option value="">{{ column_labels.get(col, col) }}</option>
-      {% for val in filter_options.get(col, []) %}
-      <option value="{{ val }}">{{ val }}</option>
+    <!-- Metric Tiles -->
+    <div class="summary-cards">
+      <div class="summary-card summary-card-submitted">
+        <div class="summary-label">Active Customers</div>
+        <div class="summary-value" x-text="metrics.active"></div>
+      </div>
+      <div class="summary-card summary-card-production">
+        <div class="summary-label">Prospects</div>
+        <div class="summary-value" x-text="metrics.prospects"></div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">New This Month</div>
+        <div class="summary-value" x-text="metrics.newThisMonth"></div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">New YTD</div>
+        <div class="summary-value" x-text="metrics.newYTD"></div>
+      </div>
+      <div class="summary-card" style="border-left-color: #27AE60;">
+        <div class="summary-label">New Customer Sales YTD</div>
+        <div class="summary-value" x-text="metrics.newSalesYTD"></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="customer-tabs">
+      <button class="customer-tab" :class="{ active: tab === 'all' }" @click="tab = 'all'">All</button>
+      <button class="customer-tab" :class="{ active: tab === 'active' }" @click="tab = 'active'">Active</button>
+      <button class="customer-tab" :class="{ active: tab === 'prospects' }" @click="tab = 'prospects'">Prospects</button>
+    </div>
+
+    <!-- Search + Filters -->
+    <div class="customer-filters">
+      <input type="text" class="search-input" placeholder="Search all columns..." x-model="search" @input.debounce.300ms="currentPage = 0" style="flex: 1; max-width: 300px;">
+      {% for col in filter_columns %}
+      <select class="filter-select" x-model="filters.{{ col }}" @change="currentPage = 0">
+        <option value="">{{ column_labels.get(col, col) }}</option>
+        {% for val in filter_options.get(col, []) %}
+        <option value="{{ val }}">{{ val }}</option>
+        {% endfor %}
+      </select>
       {% endfor %}
-    </select>
-    {% endfor %}
-    <button class="clear-filters-btn" @click="clearFilters()" x-show="hasActiveFilters()">Clear</button>
-  </div>
+      <button class="clear-filters-btn" @click="clearFilters()" x-show="hasActiveFilters()">Clear</button>
+    </div>
 
-  <!-- Table -->
-  <div class="customer-table-wrap">
-    <table>
-      <thead>
-        <tr>
-          {% for col in display_columns %}
-          <th @click="sortBy('{{ col }}')" style="cursor: pointer; user-select: none; white-space: nowrap;">
-            {{ column_labels.get(col, col) }}
-            <span x-show="sortCol === '{{ col }}'" x-text="sortDir === 'asc' ? ' ▲' : ' ▼'" style="font-size: 10px;"></span>
-          </th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        <template x-for="row in filteredRows()" :key="row.CustomerID">
+    <!-- Table -->
+    <div class="customer-table-wrap">
+      <table>
+        <thead>
           <tr>
             {% for col in display_columns %}
-            {% if col in sales_columns %}
-            <td style="text-align: right; white-space: nowrap;" x-text="formatCurrency(row.{{ col }})"></td>
-            {% elif col in ['Active', 'Prospect'] %}
-            <td style="text-align: center;" x-text="row.{{ col }} == 1 ? 'Yes' : 'No'"></td>
-            {% else %}
-            <td x-text="row.{{ col }} || ''" style="white-space: nowrap;"></td>
-            {% endif %}
+            <th @click="sortBy('{{ col }}')" style="cursor: pointer; user-select: none; white-space: nowrap;">
+              {{ column_labels.get(col, col) }}
+              <span x-show="sortCol === '{{ col }}'" x-text="sortDir === 'asc' ? ' ▲' : ' ▼'" style="font-size: 10px;"></span>
+            </th>
             {% endfor %}
           </tr>
-        </template>
-        <tr x-show="filteredRows().length === 0">
-          <td colspan="{{ display_columns|length }}" style="text-align: center; padding: 24px; color: #888;">No customers match your filters</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          <template x-for="row in pagedRows()" :key="row.CustomerID">
+            <tr>
+              {% for col in display_columns %}
+              {% if col in sales_columns %}
+              <td style="text-align: right; white-space: nowrap;" x-text="formatCurrency(row.{{ col }})"></td>
+              {% elif col in ['Active', 'Prospect'] %}
+              <td style="text-align: center;" x-text="row.{{ col }} == 1 ? 'Yes' : 'No'"></td>
+              {% else %}
+              <td x-text="row.{{ col }} || ''" style="white-space: nowrap;"></td>
+              {% endif %}
+              {% endfor %}
+            </tr>
+          </template>
+          <tr x-show="filteredCount === 0">
+            <td colspan="{{ display_columns|length }}" style="text-align: center; padding: 24px; color: #888;">No customers match your filters</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div x-show="totalPages > 1" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; font-size: 14px; color: #555;">
+      <button class="clear-filters-btn" @click="currentPage--" :disabled="currentPage === 0" style="cursor: pointer;">← Prev</button>
+      <span x-text="'Page ' + (currentPage + 1) + ' of ' + totalPages"></span>
+      <button class="clear-filters-btn" @click="currentPage++" :disabled="currentPage >= totalPages - 1" style="cursor: pointer;">Next →</button>
+    </div>
+
+  </div><!-- end x-show="!loading" -->
 
 </div>
 
@@ -96,19 +112,27 @@
 function customerTable() {
   return {
     customers: [],
+    loading: true,
     tab: 'all',
     search: '',
     filters: { {% for col in filter_columns %}'{{ col }}': ''{% if not loop.last %}, {% endif %}{% endfor %} },
     sortCol: 'CustomerID',
     sortDir: 'asc',
     filteredCount: 0,
+    pageSize: 100,
+    currentPage: 0,
 
-    init() {
-      this.customers = {{ customers | tojson }};
+    async init() {
+      const res = await fetch('/customers/json');
+      const data = await res.json();
+      this.customers = data.customers;
+      this.loading = false;
+      this.$watch('tab', () => { this.currentPage = 0; });
+      this.$watch('search', () => { this.currentPage = 0; });
+      this.$watch('filters', () => { this.currentPage = 0; }, { deep: true });
     },
 
     baseFilteredRows() {
-      // Apply column filters + search (shared by metrics and table)
       let rows = this.customers;
 
       // Column filters
@@ -156,7 +180,6 @@ function customerTable() {
     },
 
     filteredRows() {
-      // Apply tab filter on top of base filters
       let rows = this.baseFilteredRows();
 
       if (this.tab === 'active') {
@@ -183,6 +206,16 @@ function customerTable() {
       return rows;
     },
 
+    pagedRows() {
+      const rows = this.filteredRows();
+      const start = this.currentPage * this.pageSize;
+      return rows.slice(start, start + this.pageSize);
+    },
+
+    get totalPages() {
+      return Math.max(1, Math.ceil(this.filteredCount / this.pageSize));
+    },
+
     sortBy(col) {
       if (this.sortCol === col) {
         this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
@@ -190,6 +223,7 @@ function customerTable() {
         this.sortCol = col;
         this.sortDir = 'asc';
       }
+      this.currentPage = 0;
     },
 
     formatCurrency(val) {
@@ -203,6 +237,7 @@ function customerTable() {
 
     clearFilters() {
       this.search = '';
+      this.currentPage = 0;
       {% for col in filter_columns %}
       this.filters.{{ col }} = '';
       {% endfor %}

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Query
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from dashboard.data.cache import cache
 import io
 import csv
@@ -73,7 +73,6 @@ async def customers_page(request: Request):
     df = await cache.get("customers")
     metadata = await cache.get_metadata()
 
-    customers = []
     filter_options = {}
     total_count = 0
 
@@ -82,20 +81,12 @@ async def customers_page(request: Request):
         df = df[df['CustomerID'].notna() & (df['CustomerID'] != '')]
         total_count = len(df)
         filter_options = _get_filter_options(df)
-        # Convert to list of dicts for template
-        customers = df.to_dict('records')
-        # Convert date objects to strings for JSON serialization
-        for row in customers:
-            for key in ('DateOfFirstCase', 'DateOfLastCase'):
-                if key in row and row[key] is not None:
-                    row[key] = str(row[key])
 
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/customers.html", {
         "request": request,
         "metadata": metadata,
         "active_page": "customers",
-        "customers": customers,
         "total_count": total_count,
         "display_columns": DISPLAY_COLUMNS,
         "column_labels": COLUMN_LABELS,
@@ -103,6 +94,22 @@ async def customers_page(request: Request):
         "filter_options": filter_options,
         "sales_columns": SALES_COLUMNS,
     })
+
+
+@router.get("/customers/json")
+async def customers_json(request: Request):
+    """Return customer data as JSON for lazy loading on the customers page."""
+    df = await cache.get("customers")
+    if df is None or df.empty:
+        return JSONResponse({"customers": [], "total": 0})
+    df = df[df['CustomerID'].notna() & (df['CustomerID'] != '')]
+    cols_to_keep = [c for c in DISPLAY_COLUMNS if c in df.columns]
+    customers = df[cols_to_keep].to_dict('records')
+    for row in customers:
+        for key in ('DateOfFirstCase', 'DateOfLastCase'):
+            if key in row and row[key] is not None:
+                row[key] = str(row[key])
+    return JSONResponse({"customers": customers, "total": len(customers)})
 
 
 @router.get("/customers/export")
