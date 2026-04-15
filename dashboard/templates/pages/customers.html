@@ -51,7 +51,7 @@
 
     <!-- Search + Filters -->
     <div class="customer-filters">
-      <input type="text" class="search-input" placeholder="Search all columns..." x-model="search" @input.debounce.300ms="currentPage = 0" style="flex: 1; max-width: 300px;">
+      <input type="text" class="search-input" placeholder="Search all columns..." x-model.debounce.300ms="search" @input="currentPage = 0" style="flex: 1; max-width: 300px;">
       {% for col in filter_columns %}
       <select class="filter-select" x-model="filters.{{ col }}" @change="currentPage = 0">
         <option value="">{{ column_labels.get(col, col) }}</option>
