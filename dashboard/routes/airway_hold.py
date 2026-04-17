@@ -9,10 +9,10 @@ from dashboard.data.cache import cache
 router = APIRouter()
 
 HOLD_STATUS_ORDER = [
-    'Waiting on Scan(s)',
-    'How to Proceed',
-    'Email Planning Approval',
-    'Zoom Planning Approval',
+    'Airway Waiting for Scans',
+    'Airway How to Proceed',
+    'Email Plan Waiting on Approval',
+    'Zoom Plan Waiting on Approval',
 ]
 
 
