@@ -20,5 +20,5 @@ LEFT JOIN dbo.Customers AS cu ON ca.CustomerID = cu.CustomerID
 WHERE
     ca.[Status] = 'On Hold'
     AND LTRIM(RTRIM(ca.PANNumber)) LIKE '7%'
-    AND ca.HoldStatus IN ('Airway Waiting for Scans', 'Airway How to Proceed', 'Email Plan Waiting on Approval', 'Zoom Plan Waiting on Approval')
+    AND ca.HoldStatus IN ('Production, Waiting on Scan', 'Airway, How to Proceed', 'Email Plan,Waiting on Approval', 'Zoom Plan, Waiting on Approval')
 ORDER BY ca.CaseNumber;
