@@ -33,22 +33,43 @@ _collections_lock = asyncio.Lock()
 
 _ACCOUNTS_SQL = """
 SELECT
-    cu.CustomerID,
-    cu.PracticeName,
-    cu.DentalGroup,
-    CONCAT(cu.FirstName, ' ', cu.LastName) AS FullName,
-    cu.OfficePhone,
-    cu.Email,
-    cu.SalesPerson,
-    cu.PastDue30,
-    cu.PastDue60,
-    cu.PastDue90,
-    cu.PastDueOver90,
-    cu.CurrentBalance,
-    cu.TotalBalance
-FROM dbo.customers AS cu
-WHERE (cu.PastDue90 > 0 OR cu.PastDueOver90 > 0)
-ORDER BY (ISNULL(cu.PastDue90,0) + ISNULL(cu.PastDueOver90,0)) DESC;
+    lcs.LabName,
+    lcs.CustomerID,
+    c.PracticeName,
+    c.DentalGroup,
+    ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, '')  AS FullName,
+    c.OfficePhone,
+    c.BillEmail                                              AS Email,
+    c.SalesPerson,
+    c.LastPaymentDate,
+    c.LastPaymentAmount,
+    CAST(lcs.UnAppliedPC                                AS DECIMAL(12,2)) AS UnApplied,
+    CAST(ISNULL(c.ThisPeriodCharges, 0)                 AS DECIMAL(12,2)) AS ThisPeriod,
+    CAST(lcs.CurrentBalance                             AS DECIMAL(12,2)) AS CurrentBalance,
+    CAST(lcs.PastDue30                                  AS DECIMAL(12,2)) AS PastDue30,
+    CAST(lcs.PastDue60                                  AS DECIMAL(12,2)) AS PastDue60,
+    CAST(lcs.PastDue90                                  AS DECIMAL(12,2)) AS PastDue90,
+    CAST(lcs.PastDueOver90                              AS DECIMAL(12,2)) AS PastDueOver90,
+    CAST(lcs.PastDue30 + lcs.PastDue60 + lcs.PastDue90
+         + lcs.PastDueOver90                            AS DECIMAL(12,2)) AS TotalPastDue,
+    CAST(
+        ISNULL(c.ThisPeriodCharges, 0)
+        + lcs.CurrentBalance
+        + lcs.PastDue30 + lcs.PastDue60
+        + lcs.PastDue90 + lcs.PastDueOver90
+        - lcs.UnAppliedPC
+    AS DECIMAL(12,2))                                                      AS TotalBalance,
+    CASE
+        WHEN c.IsOnCOD = 1      THEN 'COD'
+        WHEN c.OnCreditHold = 1 THEN 'Credit Hold'
+        WHEN c.InCollection = 1 THEN 'In Collection'
+        ELSE ''
+    END                                                                    AS AccountFlag
+FROM dbo.LabCustomerStatements lcs
+JOIN dbo.Customers c ON lcs.CustomerID = c.CustomerID
+WHERE lcs.StatementID = (SELECT MAX(StatementID) FROM dbo.LabCustomerStatements)
+  AND (lcs.PastDue30 + lcs.PastDue60 + lcs.PastDue90 + lcs.PastDueOver90) > 0
+ORDER BY (lcs.PastDue30 + lcs.PastDue60 + lcs.PastDue90 + lcs.PastDueOver90) DESC;
 """
 
 _OPEN_CASES_SQL = """
@@ -64,7 +85,12 @@ SELECT
 FROM dbo.customers AS cu
 INNER JOIN dbo.cases AS ca
     ON cu.CustomerID = ca.CustomerID
-WHERE (cu.PastDue90 > 0 OR cu.PastDueOver90 > 0)
+WHERE ca.CustomerID IN (
+    SELECT lcs2.CustomerID
+    FROM dbo.LabCustomerStatements lcs2
+    WHERE lcs2.StatementID = (SELECT MAX(StatementID) FROM dbo.LabCustomerStatements)
+      AND (lcs2.PastDue30 + lcs2.PastDue60 + lcs2.PastDue90 + lcs2.PastDueOver90) > 0
+)
   AND ca.Status IN ('In Production')
   AND ca.Deleted = 0
 ORDER BY cu.CustomerID, ca.DateIn ASC;
@@ -73,8 +99,11 @@ ORDER BY cu.CustomerID, ca.DateIn ASC;
 
 # ─── Query functions ──────────────────────────────────────────────────────────
 
-_BALANCE_COLS = ["PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
-                 "CurrentBalance", "TotalBalance"]
+_BALANCE_COLS = [
+    "PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
+    "CurrentBalance", "TotalPastDue", "TotalBalance",
+    "UnApplied", "ThisPeriod", "LastPaymentAmount",
+]
 
 
 def get_collections_accounts(conn) -> pd.DataFrame:
@@ -289,12 +318,18 @@ def get_cached_collections() -> dict:
 
 _EXPORT_COLUMNS = [
     "PracticeName", "DentalGroup", "FullName", "OfficePhone", "Email",
-    "SalesPerson", "PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
-    "CurrentBalance", "TotalBalance", "OpenCaseCount",
+    "SalesPerson", "LastPaymentDate", "LastPaymentAmount",
+    "UnApplied", "ThisPeriod", "CurrentBalance",
+    "PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
+    "TotalPastDue", "TotalBalance",
+    "AccountFlag", "OpenCaseCount",
     "LastContacted", "Outcome", "WhoLogged", "Notes", "Completed",
 ]
-_MONEY_COLS = {"PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
-               "CurrentBalance", "TotalBalance"}
+_MONEY_COLS = {
+    "UnApplied", "ThisPeriod", "CurrentBalance",
+    "PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
+    "TotalPastDue", "TotalBalance", "LastPaymentAmount",
+}
 
 
 def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,

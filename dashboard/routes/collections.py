@@ -62,7 +62,6 @@ def _split_sections_df(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
             counts = {}
 
         df["OpenCaseCount"] = df["CustomerID"].map(counts).fillna(0).astype(int)
-        df["TotalPastDue"] = df["PastDue90"].astype(float) + df["PastDueOver90"].astype(float)
 
         is_smile = df["DentalGroup"].fillna("") == "Smile Doctors"
         is_large = (df["PastDue90"].astype(float) >= 500) | (df["PastDueOver90"].astype(float) >= 500)
@@ -81,12 +80,20 @@ def _build_sections(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
 
     def _stats(s: pd.DataFrame) -> dict:
         if s.empty:
-            return {"count": 0, "past_due_90": 0.0, "past_due_over_90": 0.0, "total_past_due": 0.0}
+            return {
+                "count": 0,
+                "past_due_30": 0.0, "past_due_60": 0.0,
+                "past_due_90": 0.0, "past_due_over_90": 0.0,
+                "total_past_due": 0.0, "total_balance": 0.0,
+            }
         return {
             "count": int(len(s)),
+            "past_due_30": float(s["PastDue30"].sum()),
+            "past_due_60": float(s["PastDue60"].sum()),
             "past_due_90": float(s["PastDue90"].sum()),
             "past_due_over_90": float(s["PastDueOver90"].sum()),
             "total_past_due": float(s["TotalPastDue"].sum()),
+            "total_balance": float(s["TotalBalance"].sum()),
         }
 
     stats = {
@@ -96,12 +103,18 @@ def _build_sections(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
     }
     overall = {
         "count": stats["section1"]["count"] + stats["section2"]["count"] + stats["section3"]["count"],
+        "past_due_30": (stats["section1"]["past_due_30"] + stats["section2"]["past_due_30"]
+                        + stats["section3"]["past_due_30"]),
+        "past_due_60": (stats["section1"]["past_due_60"] + stats["section2"]["past_due_60"]
+                        + stats["section3"]["past_due_60"]),
         "past_due_90": (stats["section1"]["past_due_90"] + stats["section2"]["past_due_90"]
                         + stats["section3"]["past_due_90"]),
         "past_due_over_90": (stats["section1"]["past_due_over_90"] + stats["section2"]["past_due_over_90"]
                              + stats["section3"]["past_due_over_90"]),
         "total_past_due": (stats["section1"]["total_past_due"] + stats["section2"]["total_past_due"]
                            + stats["section3"]["total_past_due"]),
+        "total_balance": (stats["section1"]["total_balance"] + stats["section2"]["total_balance"]
+                          + stats["section3"]["total_balance"]),
     }
 
     return (

@@ -699,6 +699,21 @@
   }
   .tree-resolved .tree-label { color: var(--muted); }
 
+  /* ── Account flag badge ── */
+  .flag-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-top: 4px;
+  }
+  .flag-cod  { background: #FEF3C7; color: #92400E; }
+  .flag-hold { background: #FEE2E2; color: #991B1B; }
+  .flag-coll { background: #FFE4E6; color: #BE123C; }
+
   /* ── Export button ── */
   .export-btn {
     display: inline-flex;
@@ -985,6 +1000,11 @@
             </template>
           </div>
           <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+          <template x-if="row.AccountFlag">
+            <span class="flag-badge"
+                  :class="{ 'flag-cod': row.AccountFlag === 'COD', 'flag-hold': row.AccountFlag === 'Credit Hold', 'flag-coll': row.AccountFlag === 'In Collection' }"
+                  x-text="row.AccountFlag"></span>
+          </template>
         </div>
 
         <!-- balance grid -->
@@ -1163,6 +1183,11 @@
             </template>
           </div>
           <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+          <template x-if="row.AccountFlag">
+            <span class="flag-badge"
+                  :class="{ 'flag-cod': row.AccountFlag === 'COD', 'flag-hold': row.AccountFlag === 'Credit Hold', 'flag-coll': row.AccountFlag === 'In Collection' }"
+                  x-text="row.AccountFlag"></span>
+          </template>
         </div>
         <div class="bal-grid">
           <div class="bal-hero">
@@ -1315,6 +1340,11 @@
             </template>
           </div>
           <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+          <template x-if="row.AccountFlag">
+            <span class="flag-badge"
+                  :class="{ 'flag-cod': row.AccountFlag === 'COD', 'flag-hold': row.AccountFlag === 'Credit Hold', 'flag-coll': row.AccountFlag === 'In Collection' }"
+                  x-text="row.AccountFlag"></span>
+          </template>
         </div>
         <div class="bal-grid">
           <div class="bal-hero">
