@@ -62,6 +62,7 @@ SELECT
 FROM dbo.Customers c
 WHERE c.Deleted = 0
   AND (c.PastDue30 + c.PastDue60 + c.PastDue90 + c.PastDueOver90) > 0
+  AND ISNULL(c.DentalGroup, '') <> 'Retain'
 ORDER BY (c.PastDue30 + c.PastDue60 + c.PastDue90 + c.PastDueOver90) DESC;
 """
 
@@ -82,6 +83,7 @@ WHERE ca.CustomerID IN (
     SELECT CustomerID FROM dbo.Customers
     WHERE Deleted = 0
       AND (PastDue30 + PastDue60 + PastDue90 + PastDueOver90) > 0
+      AND ISNULL(DentalGroup, '') <> 'Retain'
 )
   AND ca.Status IN ('In Production')
   AND ca.Deleted = 0
