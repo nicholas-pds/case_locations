@@ -69,7 +69,8 @@ def _split_sections_df(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
         df["OnHoldCount"] = df["CustomerID"].map(hold_counts).fillna(0).astype(int)
 
         is_smile = df["DentalGroup"].fillna("") == "Smile Doctors"
-        is_large = (df["PastDue90"].astype(float) >= 500) | (df["PastDueOver90"].astype(float) >= 500)
+        pd90_sum = df["PastDue90"].astype(float) + df["PastDueOver90"].astype(float)
+        is_large = pd90_sum >= 500
         s1 = df[~is_smile & is_large]
         s2 = df[~is_smile & ~is_large]
         s3 = df[is_smile]
