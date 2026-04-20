@@ -55,18 +55,18 @@ SELECT
     cu.CustomerID,
     ca.CaseID,
     ca.CaseNumber,
-    ca.PatientFirstName,
-    ca.PatientLastName,
+    ca.PatientFirst  AS PatientFirstName,
+    ca.PatientLast   AS PatientLastName,
     ca.Status,
     CAST(ca.DueDate AS DATE) AS DueDate,
-    CAST(ca.DateEntered AS DATE) AS DateEntered
+    CAST(ca.DateIn  AS DATE) AS DateEntered
 FROM dbo.customers AS cu
 INNER JOIN dbo.cases AS ca
     ON cu.CustomerID = ca.CustomerID
 WHERE cu.PastDue90 > 0
   AND ca.Status IN ('In Production')
   AND ca.Deleted = 0
-ORDER BY cu.CustomerID, ca.DateEntered ASC;
+ORDER BY cu.CustomerID, ca.DateIn ASC;
 """
 
 
