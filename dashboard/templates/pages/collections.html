@@ -702,6 +702,36 @@
     flex-shrink: 0;
     padding-left: 6px;
   }
+  /* ── Outcome status marker ── */
+  .outcome-marker {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: transparent;
+    position: relative;
+  }
+  .outcome-marker.voicemail { background: #dc2626; }
+  .outcome-marker.spoke     { background: #eab308; }
+  .outcome-marker.noanswer  { background: #7c3aed; }
+  .outcome-marker.promise   { background: #2563eb; }
+  .outcome-marker.other     { background: #f97316; }
+  .outcome-marker.resolved {
+    background: #16a34a;
+    border-radius: 2px;
+  }
+  .outcome-marker.resolved::after {
+    content: "✓";
+    position: absolute;
+    inset: 0;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 10px;
+    text-align: center;
+  }
   .tree-show-all {
     display: block;
     width: 100%;
@@ -904,6 +934,7 @@
           <div>
             <template x-for="row in treeRows(section1, 's1')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's1')">
+                <span class="outcome-marker" :class="outcomeClass(row.CustomerID)"></span>
                 <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
                 <span class="camount" x-text="fmtCompact(row.TotalPastDue)"></span>
               </div>
@@ -929,6 +960,7 @@
           <div>
             <template x-for="row in treeRows(section2, 's2')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's2')">
+                <span class="outcome-marker" :class="outcomeClass(row.CustomerID)"></span>
                 <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
                 <span class="camount" x-text="fmtCompact(row.TotalPastDue)"></span>
               </div>
@@ -954,6 +986,7 @@
           <div>
             <template x-for="row in treeRows(section3, 's3')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's3')">
+                <span class="outcome-marker" :class="outcomeClass(row.CustomerID)"></span>
                 <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
                 <span class="camount" x-text="fmtCompact(row.TotalPastDue)"></span>
               </div>
@@ -1120,11 +1153,11 @@
                     x-model="entry(row.CustomerID).Outcome"
                     @change="saveLog(row.CustomerID, { outcome: entry(row.CustomerID).Outcome })">
               <option value="">—</option>
-              <option>Left Voicemail</option>
-              <option>Spoke with Someone</option>
-              <option>No Answer</option>
-              <option>Promise to Pay</option>
-              <option>Other</option>
+              <option value="Left Voicemail">🔴 Left Voicemail</option>
+              <option value="Spoke with Someone">🟡 Spoke with Someone</option>
+              <option value="No Answer">🟣 No Answer</option>
+              <option value="Promise to Pay">🔵 Promise to Pay</option>
+              <option value="Other">🟠 Other</option>
             </select>
           </div>
           <div class="log-field">
@@ -1295,11 +1328,11 @@
                     x-model="entry(row.CustomerID).Outcome"
                     @change="saveLog(row.CustomerID, { outcome: entry(row.CustomerID).Outcome })">
               <option value="">—</option>
-              <option>Left Voicemail</option>
-              <option>Spoke with Someone</option>
-              <option>No Answer</option>
-              <option>Promise to Pay</option>
-              <option>Other</option>
+              <option value="Left Voicemail">🔴 Left Voicemail</option>
+              <option value="Spoke with Someone">🟡 Spoke with Someone</option>
+              <option value="No Answer">🟣 No Answer</option>
+              <option value="Promise to Pay">🔵 Promise to Pay</option>
+              <option value="Other">🟠 Other</option>
             </select>
           </div>
           <div class="log-field">
@@ -1460,11 +1493,11 @@
                     x-model="entry(row.CustomerID).Outcome"
                     @change="saveLog(row.CustomerID, { outcome: entry(row.CustomerID).Outcome })">
               <option value="">—</option>
-              <option>Left Voicemail</option>
-              <option>Spoke with Someone</option>
-              <option>No Answer</option>
-              <option>Promise to Pay</option>
-              <option>Other</option>
+              <option value="Left Voicemail">🔴 Left Voicemail</option>
+              <option value="Spoke with Someone">🟡 Spoke with Someone</option>
+              <option value="No Answer">🟣 No Answer</option>
+              <option value="Promise to Pay">🔵 Promise to Pay</option>
+              <option value="Other">🟠 Other</option>
             </select>
           </div>
           <div class="log-field">
@@ -1594,6 +1627,19 @@ function collectionsPage() {
                                 LastContacted: '', Completed: '0' };
       }
       return this.logEntries[id];
+    },
+
+    outcomeClass(id) {
+      const e = this.entry(id);
+      if (e.Completed === '1') return 'resolved';
+      const map = {
+        'Left Voicemail':     'voicemail',
+        'Spoke with Someone': 'spoke',
+        'No Answer':          'noanswer',
+        'Promise to Pay':     'promise',
+        'Other':              'other',
+      };
+      return map[e.Outcome] || '';
     },
 
     activeRows(section) {
