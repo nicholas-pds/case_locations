@@ -8,6 +8,10 @@
 <style>
   [x-cloak] { display: none !important; }
 
+  /* Frozen panes: only .coll-main scrolls */
+  body { overflow: hidden; height: 100vh; }
+  .page-content { height: calc(100vh - 60px); overflow: hidden; }
+
   .collections-page {
     --forest: #2F7D5B;
     --forest-tint: rgba(47,125,91,0.08);
@@ -23,9 +27,12 @@
 
     max-width: 1440px;
     margin: 0 auto;
-    padding: 20px 28px 60px;
+    padding: 20px 28px 0;
     background: var(--canvas);
-    min-height: calc(100vh - 60px);
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     font-family: "IBM Plex Sans", system-ui, sans-serif;
     color: var(--ink);
   }
@@ -42,6 +49,7 @@
     padding-bottom: 18px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 24px;
+    flex-shrink: 0;
   }
   .coll-title {
     font-family: "Fraunces", serif;
@@ -119,6 +127,7 @@
     color: var(--muted);
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    flex-shrink: 0;
   }
   .progress-track {
     flex: 1;
@@ -571,15 +580,23 @@
     display: grid;
     grid-template-columns: 260px 1fr;
     gap: 32px;
-    align-items: start;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
-  .coll-main { min-width: 0; }
+  .coll-main {
+    min-width: 0;
+    height: 100%;
+    overflow-y: auto;
+    padding-bottom: 40px;
+  }
 
   /* ── Tree nav ── */
   .tree-nav {
-    position: sticky;
-    top: 72px;
-    max-height: calc(100vh - 100px);
+    position: static;
+    height: 100%;
+    max-height: none;
     overflow-y: auto;
     background: #fff;
     border: 1px solid var(--border);
@@ -744,6 +761,11 @@
     .coll-shell { grid-template-columns: 220px 1fr; gap: 20px; }
   }
   @media (max-width: 960px) {
+    body { overflow: auto; height: auto; }
+    .page-content { height: auto; }
+    .collections-page { height: auto; overflow: visible; display: block; padding-bottom: 60px; }
+    .coll-shell { flex: none; min-height: 0; overflow: visible; align-items: start; }
+    .coll-main { height: auto; overflow: visible; padding-bottom: 0; }
     .coll-shell { grid-template-columns: 1fr; }
     .tree-nav {
       position: static;
