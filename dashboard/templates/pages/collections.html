@@ -1036,20 +1036,20 @@
         <!-- balance grid -->
         <div class="bal-grid">
           <div class="bal-hero">
-            <div class="bal-label">Past Due 90</div>
-            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
-          </div>
-          <div>
-            <div class="bal-label">Past Due 90+</div>
-            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
-          </div>
-          <div>
             <div class="bal-label">Total Past Due</div>
             <div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div>
           </div>
           <div>
+            <div class="bal-label">Past Due 90</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+          </div>
+          <div>
             <div class="bal-label">Current Balance</div>
             <div class="bal-value" x-text="fmtUSD(row.CurrentBalance)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Past Due 90+</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
           </div>
           <div>
             <div class="bal-label">Total Balance</div>
@@ -1166,8 +1166,8 @@
             </div>
             <div class="bal-grid">
               <div class="bal-hero">
-                <div class="bal-label">Past Due 90</div>
-                <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+                <div class="bal-label">Total Past Due</div>
+                <div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div>
               </div>
             </div>
             <div class="cases-tile">
@@ -1225,20 +1225,20 @@
         </div>
         <div class="bal-grid">
           <div class="bal-hero">
-            <div class="bal-label">Past Due 90</div>
-            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
-          </div>
-          <div>
-            <div class="bal-label">Past Due 90+</div>
-            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
-          </div>
-          <div>
             <div class="bal-label">Total Past Due</div>
             <div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div>
           </div>
           <div>
+            <div class="bal-label">Past Due 90</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+          </div>
+          <div>
             <div class="bal-label">Current Balance</div>
             <div class="bal-value" x-text="fmtUSD(row.CurrentBalance)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Past Due 90+</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
           </div>
           <div>
             <div class="bal-label">Total Balance</div>
@@ -1336,7 +1336,7 @@
         <template x-for="row in completedRows(section2)" :key="row.CustomerID">
           <div class="account-card completed" :style="'--rail: #D1D1D1'">
             <div class="ident"><div class="practice" x-text="row.PracticeName"></div></div>
-            <div class="bal-grid"><div class="bal-hero"><div class="bal-label">Past Due 90</div><div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div></div></div>
+            <div class="bal-grid"><div class="bal-hero"><div class="bal-label">Total Past Due</div><div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div></div></div>
             <div class="cases-tile"><button class="resolve-btn is-done" @click="markCompleted(row.CustomerID, false)">Undo</button></div>
           </div>
         </template>
@@ -1390,20 +1390,20 @@
         </div>
         <div class="bal-grid">
           <div class="bal-hero">
-            <div class="bal-label">Past Due 90</div>
-            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
-          </div>
-          <div>
-            <div class="bal-label">Past Due 90+</div>
-            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
-          </div>
-          <div>
             <div class="bal-label">Total Past Due</div>
             <div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div>
           </div>
           <div>
+            <div class="bal-label">Past Due 90</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+          </div>
+          <div>
             <div class="bal-label">Current Balance</div>
             <div class="bal-value" x-text="fmtUSD(row.CurrentBalance)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Past Due 90+</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
           </div>
           <div>
             <div class="bal-label">Total Balance</div>
@@ -1501,7 +1501,7 @@
         <template x-for="row in completedRows(section3)" :key="row.CustomerID">
           <div class="account-card completed" :style="'--rail: #D1D1D1'">
             <div class="ident"><div class="practice" x-text="row.PracticeName"></div></div>
-            <div class="bal-grid"><div class="bal-hero"><div class="bal-label">Past Due 90</div><div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div></div></div>
+            <div class="bal-grid"><div class="bal-hero"><div class="bal-label">Total Past Due</div><div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div></div></div>
             <div class="cases-tile"><button class="resolve-btn is-done" @click="markCompleted(row.CustomerID, false)">Undo</button></div>
           </div>
         </template>
