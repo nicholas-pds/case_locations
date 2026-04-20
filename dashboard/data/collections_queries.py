@@ -85,7 +85,7 @@ WHERE ca.CustomerID IN (
       AND (PastDue30 + PastDue60 + PastDue90 + PastDueOver90) > 0
       AND ISNULL(DentalGroup, '') <> 'Retain'
 )
-  AND ca.Status IN ('In Production')
+  AND ca.Status IN ('In Production', 'On Hold')
   AND ca.Deleted = 0
 ORDER BY cu.CustomerID, ca.DateIn ASC;
 """

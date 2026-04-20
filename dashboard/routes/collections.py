@@ -55,13 +55,18 @@ def _split_sections_df(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
         if not cases_df.empty:
             cases_df = cases_df.copy()
             cases_df["CustomerID"] = cases_df["CustomerID"].astype(str)
-            counts = cases_df.groupby("CustomerID").size().to_dict()
+            in_prod = cases_df[cases_df["Status"] == "In Production"]
+            counts = in_prod.groupby("CustomerID").size().to_dict()
+            on_hold = cases_df[cases_df["Status"] == "On Hold"]
+            hold_counts = on_hold.groupby("CustomerID").size().to_dict()
             for cid, grp in cases_df.groupby("CustomerID"):
                 cases_by_customer[str(cid)] = _df_to_records(grp)
         else:
             counts = {}
+            hold_counts = {}
 
         df["OpenCaseCount"] = df["CustomerID"].map(counts).fillna(0).astype(int)
+        df["OnHoldCount"] = df["CustomerID"].map(hold_counts).fillna(0).astype(int)
 
         is_smile = df["DentalGroup"].fillna("") == "Smile Doctors"
         is_large = (df["PastDue90"].astype(float) >= 500) | (df["PastDueOver90"].astype(float) >= 500)

@@ -350,6 +350,32 @@
     margin-top: 4px;
     display: block;
   }
+  .cases-split { display: flex; flex-direction: column; }
+  .cases-split-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 0;
+  }
+  .cases-split-row + .cases-split-row { border-top: 1px solid var(--border); }
+  .cases-split-num {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    min-width: 1.5ch;
+    color: var(--ink);
+  }
+  .cases-count-box.active .cases-split-num.prod { color: var(--red); }
+  .cases-split-num.hold { color: var(--muted); }
+  .cases-split-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
   .view-cases-btn {
     background: none;
     border: 1px solid var(--border);
@@ -970,8 +996,8 @@
         <span class="count" x-text="activeRows(section1).length + ' active'"></span>
       </h2>
       <div class="section-stats">
-        <span><span class="label">Past Due 90</span>${{ '%0.2f' | format(section_stats.section1.past_due_90) }}</span>
-        <span><span class="label">Past Due 90+</span>${{ '%0.2f' | format(section_stats.section1.past_due_over_90) }}</span>
+        <span><span class="label">Past Due 90</span>${{ '{:,.2f}'.format(section_stats.section1.past_due_90) }}</span>
+        <span><span class="label">Past Due 90+</span>${{ '{:,.2f}'.format(section_stats.section1.past_due_over_90) }}</span>
       </div>
     </div>
 
@@ -1033,11 +1059,19 @@
 
         <!-- cases tile -->
         <div class="cases-tile">
-          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 }">
-            <span class="cases-count" x-text="row.OpenCaseCount"></span>
-            <span class="cases-sublabel" x-text="row.OpenCaseCount === 1 ? 'case on hold' : 'cases on hold'"></span>
+          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 || row.OnHoldCount > 0 }">
+            <div class="cases-split">
+              <div class="cases-split-row">
+                <span class="cases-split-num prod" x-text="row.OpenCaseCount"></span>
+                <span class="cases-split-label">In Production</span>
+              </div>
+              <div class="cases-split-row">
+                <span class="cases-split-num hold" x-text="row.OnHoldCount"></span>
+                <span class="cases-split-label">On Hold</span>
+              </div>
+            </div>
           </div>
-          <template x-if="row.OpenCaseCount > 0">
+          <template x-if="row.OpenCaseCount > 0 || row.OnHoldCount > 0">
             <button class="view-cases-btn" @click="toggleCases(row.CustomerID)">
               <span x-text="expanded[row.CustomerID] ? 'Hide cases ▴' : 'View cases ▾'"></span>
             </button>
@@ -1154,8 +1188,8 @@
         <span class="count" x-text="activeRows(section2).length + ' active'"></span>
       </h2>
       <div class="section-stats">
-        <span><span class="label">Past Due 90</span>${{ '%0.2f' | format(section_stats.section2.past_due_90) }}</span>
-        <span><span class="label">Past Due 90+</span>${{ '%0.2f' | format(section_stats.section2.past_due_over_90) }}</span>
+        <span><span class="label">Past Due 90</span>${{ '{:,.2f}'.format(section_stats.section2.past_due_90) }}</span>
+        <span><span class="label">Past Due 90+</span>${{ '{:,.2f}'.format(section_stats.section2.past_due_over_90) }}</span>
       </div>
     </div>
 
@@ -1212,11 +1246,19 @@
           </div>
         </div>
         <div class="cases-tile">
-          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 }">
-            <span class="cases-count" x-text="row.OpenCaseCount"></span>
-            <span class="cases-sublabel" x-text="row.OpenCaseCount === 1 ? 'case on hold' : 'cases on hold'"></span>
+          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 || row.OnHoldCount > 0 }">
+            <div class="cases-split">
+              <div class="cases-split-row">
+                <span class="cases-split-num prod" x-text="row.OpenCaseCount"></span>
+                <span class="cases-split-label">In Production</span>
+              </div>
+              <div class="cases-split-row">
+                <span class="cases-split-num hold" x-text="row.OnHoldCount"></span>
+                <span class="cases-split-label">On Hold</span>
+              </div>
+            </div>
           </div>
-          <template x-if="row.OpenCaseCount > 0">
+          <template x-if="row.OpenCaseCount > 0 || row.OnHoldCount > 0">
             <button class="view-cases-btn" @click="toggleCases(row.CustomerID)">
               <span x-text="expanded[row.CustomerID] ? 'Hide cases ▴' : 'View cases ▾'"></span>
             </button>
@@ -1311,8 +1353,8 @@
         <span class="count" x-text="activeRows(section3).length + ' active'"></span>
       </h2>
       <div class="section-stats">
-        <span><span class="label">Past Due 90</span>${{ '%0.2f' | format(section_stats.section3.past_due_90) }}</span>
-        <span><span class="label">Past Due 90+</span>${{ '%0.2f' | format(section_stats.section3.past_due_over_90) }}</span>
+        <span><span class="label">Past Due 90</span>${{ '{:,.2f}'.format(section_stats.section3.past_due_90) }}</span>
+        <span><span class="label">Past Due 90+</span>${{ '{:,.2f}'.format(section_stats.section3.past_due_over_90) }}</span>
       </div>
     </div>
 
@@ -1369,11 +1411,19 @@
           </div>
         </div>
         <div class="cases-tile">
-          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 }">
-            <span class="cases-count" x-text="row.OpenCaseCount"></span>
-            <span class="cases-sublabel" x-text="row.OpenCaseCount === 1 ? 'case on hold' : 'cases on hold'"></span>
+          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 || row.OnHoldCount > 0 }">
+            <div class="cases-split">
+              <div class="cases-split-row">
+                <span class="cases-split-num prod" x-text="row.OpenCaseCount"></span>
+                <span class="cases-split-label">In Production</span>
+              </div>
+              <div class="cases-split-row">
+                <span class="cases-split-num hold" x-text="row.OnHoldCount"></span>
+                <span class="cases-split-label">On Hold</span>
+              </div>
+            </div>
           </div>
-          <template x-if="row.OpenCaseCount > 0">
+          <template x-if="row.OpenCaseCount > 0 || row.OnHoldCount > 0">
             <button class="view-cases-btn" @click="toggleCases(row.CustomerID)">
               <span x-text="expanded[row.CustomerID] ? 'Hide cases ▴' : 'View cases ▾'"></span>
             </button>
