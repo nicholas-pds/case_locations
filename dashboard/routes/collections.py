@@ -86,12 +86,7 @@ def _build_sections(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
             "count": int(len(s)),
             "past_due_90": float(s["PastDue90"].sum()),
             "past_due_over_90": float(s["PastDueOver90"].sum()),
-            "total_past_due": float(
-                s["PastDue30"].astype(float).sum()
-                + s["PastDue60"].astype(float).sum()
-                + s["PastDue90"].astype(float).sum()
-                + s["PastDueOver90"].astype(float).sum()
-            ),
+            "total_past_due": float(s["TotalPastDue"].sum()),
         }
 
     stats = {

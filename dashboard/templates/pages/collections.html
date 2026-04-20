@@ -440,9 +440,16 @@
     padding-top: 14px;
     border-top: 1px solid var(--border);
     display: grid;
-    grid-template-columns: 180px 1fr 140px auto auto;
+    grid-template-columns: 180px 1fr 140px auto;
     gap: 10px;
     align-items: flex-start;
+  }
+  .btn-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-self: flex-end;
+    min-width: 130px;
   }
   .log-field label {
     display: block;
@@ -487,24 +494,35 @@
     text-transform: uppercase;
     cursor: pointer;
     transition: background 0.15s;
-    align-self: flex-end;
+    width: 100%;
   }
   .log-btn:hover { background: #9a0e1e; }
   .log-btn:disabled { opacity: 0.5; cursor: wait; }
   .resolve-btn {
-    background: none;
+    background: var(--ink);
+    color: #fff;
     border: none;
-    color: var(--muted);
-    font-size: 11px;
-    letter-spacing: 0.04em;
+    border-radius: 2px;
+    padding: 8px 18px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     cursor: pointer;
-    padding: 8px 4px;
-    align-self: flex-end;
-    transition: color 0.15s;
+    transition: background 0.15s;
+    white-space: nowrap;
+    width: 100%;
   }
-  .resolve-btn:hover { color: var(--ink); }
-  .resolve-btn.is-done { color: var(--forest); }
+  .resolve-btn:hover { background: #333; }
+  .resolve-btn.is-done {
+    background: none;
+    color: var(--forest);
+    padding: 8px 4px;
+    width: auto;
+    font-size: 11px;
+  }
+  .resolve-btn.is-done:hover { background: none; color: var(--ink); }
 
   .save-pill {
     font-size: 10px;
@@ -768,7 +786,7 @@
       </div>
       <div class="stat">
         <div class="stat-label">Total Past Due</div>
-        <div class="stat-value big">$<span x-text="fmtShort({{ overall_stats.total_past_due }})"></span></div>
+        <div class="stat-value big">${{ "{:,.0f}".format(overall_stats.total_past_due) }}</div>
       </div>
       <div class="stat">
         <div class="stat-label">Past Due 90</div>
@@ -1048,8 +1066,10 @@
                    @blur="saveLog(row.CustomerID, { who_logged: entry(row.CustomerID).WhoLogged })"
                    placeholder="Name">
           </div>
-          <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
-          <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+          <div class="btn-stack">
+            <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
+            <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+          </div>
         </div>
       </div>
     </template>
@@ -1208,8 +1228,10 @@
                    @blur="saveLog(row.CustomerID, { who_logged: entry(row.CustomerID).WhoLogged })"
                    placeholder="Name">
           </div>
-          <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
-          <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+          <div class="btn-stack">
+            <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
+            <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+          </div>
         </div>
       </div>
     </template>
@@ -1358,8 +1380,10 @@
                    @blur="saveLog(row.CustomerID, { who_logged: entry(row.CustomerID).WhoLogged })"
                    placeholder="Name">
           </div>
-          <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
-          <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+          <div class="btn-stack">
+            <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
+            <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+          </div>
         </div>
       </div>
     </template>
