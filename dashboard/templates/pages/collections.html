@@ -1,0 +1,1253 @@
+{% extends "base.html" %}
+{% block title %}Collections{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  [x-cloak] { display: none !important; }
+
+  .collections-page {
+    --forest: #2F7D5B;
+    --forest-tint: rgba(47,125,91,0.08);
+    --amber: #C88A1E;
+    --amber-tint: rgba(200,138,30,0.06);
+    --canvas: #FAFAF8;
+    --ink: #1A1A1A;
+    --muted: #8A8A8A;
+    --tint-red: #FFF6F3;
+    --red: #C41227;
+    --gray: #6B6B6B;
+    --border: #E5E5E5;
+
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 20px 28px 60px;
+    background: var(--canvas);
+    min-height: calc(100vh - 60px);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    color: var(--ink);
+  }
+
+  .collections-page .mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .collections-page .display { font-family: "Fraunces", Georgia, serif; font-weight: 500; }
+
+  /* ── Page header ── */
+  .coll-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .coll-title {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 32px;
+    letter-spacing: -0.01em;
+    margin: 0;
+    line-height: 1;
+  }
+  .coll-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    letter-spacing: 0.02em;
+  }
+  .coll-overall {
+    display: flex;
+    gap: 28px;
+    align-items: flex-end;
+  }
+  .coll-overall .stat { text-align: right; }
+  .coll-overall .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .coll-overall .stat-value {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .coll-overall .stat-value.big {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 22px;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .refresh-btn {
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 9px 16px;
+    cursor: pointer;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: background 0.15s;
+  }
+  .refresh-btn:hover { background: #000; }
+  .refresh-btn:disabled { opacity: 0.5; cursor: wait; }
+  .last-refresh {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Progress bar ── */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .progress-track {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--forest);
+    transition: width 0.3s ease;
+  }
+
+  /* ── Section headers ── */
+  .coll-section {
+    margin-top: 40px;
+  }
+  .coll-section:first-of-type { margin-top: 24px; }
+  .section-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--canvas);
+    border-top: 1px solid var(--ink);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    padding: 14px 0 12px;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 22px;
+    margin: 0;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .section-title .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 14px;
+    letter-spacing: 0;
+  }
+  .section-stats {
+    display: flex;
+    gap: 24px;
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .section-stats .label {
+    text-transform: uppercase;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-right: 6px;
+  }
+
+  /* ── Account card ── */
+  .account-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 280px 1fr 190px;
+    gap: 28px;
+    padding: 20px 24px 20px 36px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .account-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 12px;
+    background: var(--rail, var(--border));
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+  }
+  .account-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .account-card:focus-within { outline: 2px solid var(--red); outline-offset: -2px; }
+  .account-card.completed { opacity: 0.55; }
+  .account-card.promise { background: var(--amber-tint); }
+
+  /* identity */
+  .ident .practice {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .ident .person {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .ident .contact-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .phone-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    color: var(--ink);
+    text-decoration: none;
+    background: #F3F3F0;
+    padding: 4px 10px;
+    border-radius: 3px;
+    align-self: flex-start;
+    letter-spacing: 0.02em;
+  }
+  .phone-chip:hover { background: #E8E8E3; }
+  .phone-chip svg { opacity: 0.55; }
+  .email {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+  }
+  .email:hover { color: var(--ink); }
+  .am-row {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .am-row .value {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 4px;
+  }
+
+  /* balance grid */
+  .bal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    align-content: start;
+  }
+  .bal-hero {
+    grid-column: 1 / -1;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .bal-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .bal-value {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .bal-hero .bal-value {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 24px;
+  }
+
+  /* cases on hold tile */
+  .cases-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .cases-count-box {
+    background: #F6F6F3;
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 2px;
+    text-align: center;
+  }
+  .cases-count-box.active {
+    background: var(--tint-red);
+    border-color: var(--red);
+  }
+  .cases-count {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--ink);
+    display: block;
+  }
+  .cases-count-box.active .cases-count { color: var(--red); }
+  .cases-sublabel {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-top: 4px;
+    display: block;
+  }
+  .view-cases-btn {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: "IBM Plex Sans", sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .view-cases-btn:hover { background: var(--canvas); border-color: var(--ink); }
+  .cases-hint {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.3;
+    padding: 0 4px;
+  }
+
+  /* last-contacted chip (top-right absolute) */
+  .lc-chip {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.02em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #F3F3F0;
+    color: var(--muted);
+  }
+  .lc-chip.recent { color: var(--forest); background: var(--forest-tint); }
+  .lc-chip.stale { color: var(--amber); background: var(--amber-tint); }
+
+  /* cases expansion */
+  .cases-expansion {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    transition: max-height 0.22s ease, opacity 0.22s ease;
+    max-height: 0;
+    opacity: 0;
+  }
+  .cases-expansion.open {
+    max-height: 2000px;
+    opacity: 1;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+  }
+  .cases-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .cases-table th {
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cases-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+    color: var(--ink);
+  }
+  .cases-table tr:nth-child(even) td { background: rgba(0,0,0,0.015); }
+  .cases-table .mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .cases-table .num { text-align: right; }
+
+  /* call log panel */
+  .log-panel {
+    grid-column: 1 / -1;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 180px 1fr 140px auto auto;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .log-field label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .log-select, .log-input, .log-textarea {
+    width: 100%;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 7px 9px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .log-textarea {
+    min-height: 38px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.4;
+  }
+  .log-select:focus, .log-input:focus, .log-textarea:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.03);
+  }
+  .log-btn {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 2px;
+    padding: 8px 18px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+    align-self: flex-end;
+  }
+  .log-btn:hover { background: #9a0e1e; }
+  .log-btn:disabled { opacity: 0.5; cursor: wait; }
+  .resolve-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 8px 4px;
+    align-self: flex-end;
+    transition: color 0.15s;
+  }
+  .resolve-btn:hover { color: var(--ink); }
+  .resolve-btn.is-done { color: var(--forest); }
+
+  .save-pill {
+    font-size: 10px;
+    color: var(--forest);
+    background: var(--forest-tint);
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.04em;
+    display: inline-block;
+  }
+  .save-pill.saving { color: var(--muted); background: #F3F3F0; }
+  .save-pill.error { color: var(--red); background: var(--tint-red); }
+
+  /* completed toggle */
+  .completed-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px dashed var(--border);
+    padding: 8px 14px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    margin-top: 6px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .completed-toggle:hover { color: var(--ink); border-color: var(--muted); }
+
+  /* empty state */
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-family: "Fraunces", serif;
+    font-size: 15px;
+    font-style: italic;
+  }
+
+  /* responsive */
+  @media (max-width: 960px) {
+    .account-card { grid-template-columns: 1fr; gap: 16px; }
+    .log-panel { grid-template-columns: 1fr; }
+    .coll-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .coll-overall { flex-wrap: wrap; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="collections-page" x-data="collectionsPage()" x-cloak>
+
+  <!-- Page header -->
+  <header class="coll-header">
+    <div>
+      <h1 class="coll-title">Collections</h1>
+      <div class="coll-subtitle">Past-due 90+ accounts · call queue</div>
+    </div>
+    <div class="coll-overall">
+      <div class="stat">
+        <div class="stat-label">Accounts</div>
+        <div class="stat-value big">{{ overall_stats.count }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Past Due 90</div>
+        <div class="stat-value big">$<span x-text="fmtShort({{ overall_stats.past_due_90 }})"></span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Past Due 90+</div>
+        <div class="stat-value">$<span x-text="fmtShort({{ overall_stats.past_due_over_90 }})"></span></div>
+      </div>
+    </div>
+    <div class="header-actions">
+      {% if last_refresh %}<span class="last-refresh">Updated {{ last_refresh | fmt_datetime }}</span>{% endif %}
+      <button class="refresh-btn" @click="refresh()" :disabled="loading">
+        <span x-show="!loading">Refresh</span>
+        <span x-show="loading" x-cloak>Loading…</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Progress bar -->
+  <div class="progress-row">
+    <span><span x-text="contactedToday()"></span> of <span x-text="overall.count"></span> contacted today</span>
+    <div class="progress-track">
+      <div class="progress-fill" :style="'width: ' + progressPct() + '%'"></div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 1 — General Aging ============ -->
+  <section class="coll-section" x-data="{ showCompleted: false }">
+    <div class="section-header">
+      <h2 class="section-title">General Aging · $500+
+        <span class="count" x-text="activeRows(section1).length + ' active'"></span>
+      </h2>
+      <div class="section-stats">
+        <span><span class="label">Past Due 90</span>${{ '%0.2f' | format(section_stats.section1.past_due_90) }}</span>
+        <span><span class="label">Past Due 90+</span>${{ '%0.2f' | format(section_stats.section1.past_due_over_90) }}</span>
+      </div>
+    </div>
+
+    <template x-if="section1.length === 0">
+      <div class="empty-state">No accounts in this bucket — nice work.</div>
+    </template>
+
+    <template x-for="row in activeRows(section1)" :key="row.CustomerID">
+      <div class="account-card"
+           :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
+           :style="'--rail: ' + railColor(row)">
+        <!-- identity -->
+        <div class="ident">
+          <div class="practice" x-text="row.PracticeName || '—'"></div>
+          <div class="person" x-text="row.FullName || ''"></div>
+          <div class="contact-row">
+            <template x-if="row.OfficePhone">
+              <a class="phone-chip" :href="'tel:' + telHref(row.OfficePhone)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span x-text="row.OfficePhone"></span>
+              </a>
+            </template>
+            <template x-if="row.Email">
+              <a class="email" :href="'mailto:' + row.Email" x-text="row.Email"></a>
+            </template>
+          </div>
+          <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+        </div>
+
+        <!-- balance grid -->
+        <div class="bal-grid">
+          <div class="bal-hero">
+            <div class="bal-label">Past Due 90</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Past Due 90+</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Total Past Due</div>
+            <div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Current Balance</div>
+            <div class="bal-value" x-text="fmtUSD(row.CurrentBalance)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Total Balance</div>
+            <div class="bal-value" x-text="fmtUSD(row.TotalBalance)"></div>
+          </div>
+        </div>
+
+        <!-- cases tile -->
+        <div class="cases-tile">
+          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 }">
+            <span class="cases-count" x-text="row.OpenCaseCount"></span>
+            <span class="cases-sublabel" x-text="row.OpenCaseCount === 1 ? 'case on hold' : 'cases on hold'"></span>
+          </div>
+          <template x-if="row.OpenCaseCount > 0">
+            <button class="view-cases-btn" @click="toggleCases(row.CustomerID)">
+              <span x-text="expanded[row.CustomerID] ? 'Hide cases ▴' : 'View cases ▾'"></span>
+            </button>
+          </template>
+          <div class="cases-hint">Cases held until balance resolved</div>
+        </div>
+
+        <!-- last-contacted chip -->
+        <template x-if="entry(row.CustomerID).LastContacted">
+          <span class="lc-chip" :class="lastContactedTone(row.CustomerID)" x-text="lastContactedLabel(row.CustomerID)"></span>
+        </template>
+
+        <!-- cases expansion -->
+        <div class="cases-expansion" :class="{ open: expanded[row.CustomerID] }">
+          <template x-if="casesByCustomer[row.CustomerID]">
+            <table class="cases-table">
+              <thead>
+                <tr>
+                  <th>Case #</th><th>Patient</th><th>Status</th>
+                  <th>Entered</th><th class="num">Days</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="c in casesByCustomer[row.CustomerID]" :key="c.CaseID">
+                  <tr>
+                    <td class="mono" x-text="c.CaseNumber || c.CaseID"></td>
+                    <td x-text="((c.PatientFirstName || '') + ' ' + (c.PatientLastName || '')).trim() || '—'"></td>
+                    <td x-text="c.Status"></td>
+                    <td class="mono" x-text="fmtShortDate(c.DateEntered)"></td>
+                    <td class="mono num" x-text="daysSince(c.DateEntered)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </template>
+        </div>
+
+        <!-- call log panel -->
+        <div class="log-panel">
+          <div class="log-field">
+            <label>Outcome</label>
+            <select class="log-select"
+                    x-model="entry(row.CustomerID).Outcome"
+                    @change="saveLog(row.CustomerID, { outcome: entry(row.CustomerID).Outcome })">
+              <option value="">—</option>
+              <option>Left Voicemail</option>
+              <option>Spoke with Someone</option>
+              <option>No Answer</option>
+              <option>Promise to Pay</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="log-field">
+            <label>Notes <span class="save-pill" :class="_saveState[row.CustomerID] || ''" x-show="_saveState[row.CustomerID]" x-text="_saveState[row.CustomerID] === 'saved' ? 'Saved ✓' : _saveState[row.CustomerID] === 'saving' ? 'Saving…' : 'Error'"></span></label>
+            <textarea class="log-textarea"
+                      x-model="entry(row.CustomerID).Notes"
+                      @input="debouncedSaveNotes(row.CustomerID)"
+                      @blur="saveLog(row.CustomerID, { notes: entry(row.CustomerID).Notes })"
+                      placeholder="Call notes…"></textarea>
+          </div>
+          <div class="log-field">
+            <label>Logged by</label>
+            <input type="text" class="log-input"
+                   x-model="entry(row.CustomerID).WhoLogged"
+                   @blur="saveLog(row.CustomerID, { who_logged: entry(row.CustomerID).WhoLogged })"
+                   placeholder="Name">
+          </div>
+          <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
+          <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="completedRows(section1).length > 0">
+      <button class="completed-toggle" @click="showCompleted = !showCompleted">
+        <span x-text="showCompleted ? 'Hide' : 'Show'"></span>
+        <span x-text="completedRows(section1).length"></span> resolved
+      </button>
+    </template>
+    <template x-if="showCompleted">
+      <div>
+        <template x-for="row in completedRows(section1)" :key="row.CustomerID">
+          <div class="account-card completed" :style="'--rail: #D1D1D1'">
+            <div class="ident">
+              <div class="practice" x-text="row.PracticeName"></div>
+              <div class="person" x-text="row.FullName"></div>
+            </div>
+            <div class="bal-grid">
+              <div class="bal-hero">
+                <div class="bal-label">Past Due 90</div>
+                <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+              </div>
+            </div>
+            <div class="cases-tile">
+              <button class="resolve-btn is-done" @click="markCompleted(row.CustomerID, false)">Undo</button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+  </section>
+
+  <!-- ============ SECTION 2 — Small Balances ============ -->
+  <section class="coll-section" x-data="{ showCompleted: false }">
+    <div class="section-header">
+      <h2 class="section-title">Small Balances · Under $500
+        <span class="count" x-text="activeRows(section2).length + ' active'"></span>
+      </h2>
+      <div class="section-stats">
+        <span><span class="label">Past Due 90</span>${{ '%0.2f' | format(section_stats.section2.past_due_90) }}</span>
+        <span><span class="label">Past Due 90+</span>${{ '%0.2f' | format(section_stats.section2.past_due_over_90) }}</span>
+      </div>
+    </div>
+
+    <template x-if="section2.length === 0">
+      <div class="empty-state">No small balances in this bucket.</div>
+    </template>
+
+    <template x-for="row in activeRows(section2)" :key="row.CustomerID">
+      <div class="account-card"
+           :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
+           :style="'--rail: ' + railColor(row)">
+        <div class="ident">
+          <div class="practice" x-text="row.PracticeName || '—'"></div>
+          <div class="person" x-text="row.FullName || ''"></div>
+          <div class="contact-row">
+            <template x-if="row.OfficePhone">
+              <a class="phone-chip" :href="'tel:' + telHref(row.OfficePhone)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span x-text="row.OfficePhone"></span>
+              </a>
+            </template>
+            <template x-if="row.Email">
+              <a class="email" :href="'mailto:' + row.Email" x-text="row.Email"></a>
+            </template>
+          </div>
+          <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+        </div>
+        <div class="bal-grid">
+          <div class="bal-hero">
+            <div class="bal-label">Past Due 90</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Past Due 90+</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Total Past Due</div>
+            <div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Current Balance</div>
+            <div class="bal-value" x-text="fmtUSD(row.CurrentBalance)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Total Balance</div>
+            <div class="bal-value" x-text="fmtUSD(row.TotalBalance)"></div>
+          </div>
+        </div>
+        <div class="cases-tile">
+          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 }">
+            <span class="cases-count" x-text="row.OpenCaseCount"></span>
+            <span class="cases-sublabel" x-text="row.OpenCaseCount === 1 ? 'case on hold' : 'cases on hold'"></span>
+          </div>
+          <template x-if="row.OpenCaseCount > 0">
+            <button class="view-cases-btn" @click="toggleCases(row.CustomerID)">
+              <span x-text="expanded[row.CustomerID] ? 'Hide cases ▴' : 'View cases ▾'"></span>
+            </button>
+          </template>
+          <div class="cases-hint">Cases held until balance resolved</div>
+        </div>
+        <template x-if="entry(row.CustomerID).LastContacted">
+          <span class="lc-chip" :class="lastContactedTone(row.CustomerID)" x-text="lastContactedLabel(row.CustomerID)"></span>
+        </template>
+        <div class="cases-expansion" :class="{ open: expanded[row.CustomerID] }">
+          <template x-if="casesByCustomer[row.CustomerID]">
+            <table class="cases-table">
+              <thead>
+                <tr><th>Case #</th><th>Patient</th><th>Status</th><th>Entered</th><th class="num">Days</th></tr>
+              </thead>
+              <tbody>
+                <template x-for="c in casesByCustomer[row.CustomerID]" :key="c.CaseID">
+                  <tr>
+                    <td class="mono" x-text="c.CaseNumber || c.CaseID"></td>
+                    <td x-text="((c.PatientFirstName || '') + ' ' + (c.PatientLastName || '')).trim() || '—'"></td>
+                    <td x-text="c.Status"></td>
+                    <td class="mono" x-text="fmtShortDate(c.DateEntered)"></td>
+                    <td class="mono num" x-text="daysSince(c.DateEntered)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </template>
+        </div>
+        <div class="log-panel">
+          <div class="log-field">
+            <label>Outcome</label>
+            <select class="log-select"
+                    x-model="entry(row.CustomerID).Outcome"
+                    @change="saveLog(row.CustomerID, { outcome: entry(row.CustomerID).Outcome })">
+              <option value="">—</option>
+              <option>Left Voicemail</option>
+              <option>Spoke with Someone</option>
+              <option>No Answer</option>
+              <option>Promise to Pay</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="log-field">
+            <label>Notes <span class="save-pill" :class="_saveState[row.CustomerID] || ''" x-show="_saveState[row.CustomerID]" x-text="_saveState[row.CustomerID] === 'saved' ? 'Saved ✓' : _saveState[row.CustomerID] === 'saving' ? 'Saving…' : 'Error'"></span></label>
+            <textarea class="log-textarea"
+                      x-model="entry(row.CustomerID).Notes"
+                      @input="debouncedSaveNotes(row.CustomerID)"
+                      @blur="saveLog(row.CustomerID, { notes: entry(row.CustomerID).Notes })"
+                      placeholder="Call notes…"></textarea>
+          </div>
+          <div class="log-field">
+            <label>Logged by</label>
+            <input type="text" class="log-input"
+                   x-model="entry(row.CustomerID).WhoLogged"
+                   @blur="saveLog(row.CustomerID, { who_logged: entry(row.CustomerID).WhoLogged })"
+                   placeholder="Name">
+          </div>
+          <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
+          <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="completedRows(section2).length > 0">
+      <button class="completed-toggle" @click="showCompleted = !showCompleted">
+        <span x-text="showCompleted ? 'Hide' : 'Show'"></span>
+        <span x-text="completedRows(section2).length"></span> resolved
+      </button>
+    </template>
+    <template x-if="showCompleted">
+      <div>
+        <template x-for="row in completedRows(section2)" :key="row.CustomerID">
+          <div class="account-card completed" :style="'--rail: #D1D1D1'">
+            <div class="ident"><div class="practice" x-text="row.PracticeName"></div></div>
+            <div class="bal-grid"><div class="bal-hero"><div class="bal-label">Past Due 90</div><div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div></div></div>
+            <div class="cases-tile"><button class="resolve-btn is-done" @click="markCompleted(row.CustomerID, false)">Undo</button></div>
+          </div>
+        </template>
+      </div>
+    </template>
+  </section>
+
+  <!-- ============ SECTION 3 — Smile Doctors ============ -->
+  <section class="coll-section" x-data="{ showCompleted: false }">
+    <div class="section-header">
+      <h2 class="section-title">Smile Doctors
+        <span class="count" x-text="activeRows(section3).length + ' active'"></span>
+      </h2>
+      <div class="section-stats">
+        <span><span class="label">Past Due 90</span>${{ '%0.2f' | format(section_stats.section3.past_due_90) }}</span>
+        <span><span class="label">Past Due 90+</span>${{ '%0.2f' | format(section_stats.section3.past_due_over_90) }}</span>
+      </div>
+    </div>
+
+    <template x-if="section3.length === 0">
+      <div class="empty-state">No Smile Doctors accounts past due.</div>
+    </template>
+
+    <template x-for="row in activeRows(section3)" :key="row.CustomerID">
+      <div class="account-card"
+           :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
+           :style="'--rail: ' + railColor(row)">
+        <div class="ident">
+          <div class="practice" x-text="row.PracticeName || '—'"></div>
+          <div class="person" x-text="row.FullName || ''"></div>
+          <div class="contact-row">
+            <template x-if="row.OfficePhone">
+              <a class="phone-chip" :href="'tel:' + telHref(row.OfficePhone)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span x-text="row.OfficePhone"></span>
+              </a>
+            </template>
+            <template x-if="row.Email">
+              <a class="email" :href="'mailto:' + row.Email" x-text="row.Email"></a>
+            </template>
+          </div>
+          <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+        </div>
+        <div class="bal-grid">
+          <div class="bal-hero">
+            <div class="bal-label">Past Due 90</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Past Due 90+</div>
+            <div class="bal-value" x-text="fmtUSD(row.PastDueOver90)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Total Past Due</div>
+            <div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Current Balance</div>
+            <div class="bal-value" x-text="fmtUSD(row.CurrentBalance)"></div>
+          </div>
+          <div>
+            <div class="bal-label">Total Balance</div>
+            <div class="bal-value" x-text="fmtUSD(row.TotalBalance)"></div>
+          </div>
+        </div>
+        <div class="cases-tile">
+          <div class="cases-count-box" :class="{ active: row.OpenCaseCount > 0 }">
+            <span class="cases-count" x-text="row.OpenCaseCount"></span>
+            <span class="cases-sublabel" x-text="row.OpenCaseCount === 1 ? 'case on hold' : 'cases on hold'"></span>
+          </div>
+          <template x-if="row.OpenCaseCount > 0">
+            <button class="view-cases-btn" @click="toggleCases(row.CustomerID)">
+              <span x-text="expanded[row.CustomerID] ? 'Hide cases ▴' : 'View cases ▾'"></span>
+            </button>
+          </template>
+          <div class="cases-hint">Cases held until balance resolved</div>
+        </div>
+        <template x-if="entry(row.CustomerID).LastContacted">
+          <span class="lc-chip" :class="lastContactedTone(row.CustomerID)" x-text="lastContactedLabel(row.CustomerID)"></span>
+        </template>
+        <div class="cases-expansion" :class="{ open: expanded[row.CustomerID] }">
+          <template x-if="casesByCustomer[row.CustomerID]">
+            <table class="cases-table">
+              <thead>
+                <tr><th>Case #</th><th>Patient</th><th>Status</th><th>Entered</th><th class="num">Days</th></tr>
+              </thead>
+              <tbody>
+                <template x-for="c in casesByCustomer[row.CustomerID]" :key="c.CaseID">
+                  <tr>
+                    <td class="mono" x-text="c.CaseNumber || c.CaseID"></td>
+                    <td x-text="((c.PatientFirstName || '') + ' ' + (c.PatientLastName || '')).trim() || '—'"></td>
+                    <td x-text="c.Status"></td>
+                    <td class="mono" x-text="fmtShortDate(c.DateEntered)"></td>
+                    <td class="mono num" x-text="daysSince(c.DateEntered)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </template>
+        </div>
+        <div class="log-panel">
+          <div class="log-field">
+            <label>Outcome</label>
+            <select class="log-select"
+                    x-model="entry(row.CustomerID).Outcome"
+                    @change="saveLog(row.CustomerID, { outcome: entry(row.CustomerID).Outcome })">
+              <option value="">—</option>
+              <option>Left Voicemail</option>
+              <option>Spoke with Someone</option>
+              <option>No Answer</option>
+              <option>Promise to Pay</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="log-field">
+            <label>Notes <span class="save-pill" :class="_saveState[row.CustomerID] || ''" x-show="_saveState[row.CustomerID]" x-text="_saveState[row.CustomerID] === 'saved' ? 'Saved ✓' : _saveState[row.CustomerID] === 'saving' ? 'Saving…' : 'Error'"></span></label>
+            <textarea class="log-textarea"
+                      x-model="entry(row.CustomerID).Notes"
+                      @input="debouncedSaveNotes(row.CustomerID)"
+                      @blur="saveLog(row.CustomerID, { notes: entry(row.CustomerID).Notes })"
+                      placeholder="Call notes…"></textarea>
+          </div>
+          <div class="log-field">
+            <label>Logged by</label>
+            <input type="text" class="log-input"
+                   x-model="entry(row.CustomerID).WhoLogged"
+                   @blur="saveLog(row.CustomerID, { who_logged: entry(row.CustomerID).WhoLogged })"
+                   placeholder="Name">
+          </div>
+          <button class="log-btn" @click="logCall(row.CustomerID)">Log Call</button>
+          <button class="resolve-btn" @click="markCompleted(row.CustomerID, true)">✓ Mark Resolved</button>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="completedRows(section3).length > 0">
+      <button class="completed-toggle" @click="showCompleted = !showCompleted">
+        <span x-text="showCompleted ? 'Hide' : 'Show'"></span>
+        <span x-text="completedRows(section3).length"></span> resolved
+      </button>
+    </template>
+    <template x-if="showCompleted">
+      <div>
+        <template x-for="row in completedRows(section3)" :key="row.CustomerID">
+          <div class="account-card completed" :style="'--rail: #D1D1D1'">
+            <div class="ident"><div class="practice" x-text="row.PracticeName"></div></div>
+            <div class="bal-grid"><div class="bal-hero"><div class="bal-label">Past Due 90</div><div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div></div></div>
+            <div class="cases-tile"><button class="resolve-btn is-done" @click="markCompleted(row.CustomerID, false)">Undo</button></div>
+          </div>
+        </template>
+      </div>
+    </template>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function collectionsPage() {
+  return {
+    section1: {{ section1_records | tojson }},
+    section2: {{ section2_records | tojson }},
+    section3: {{ section3_records | tojson }},
+    casesByCustomer: {{ cases_by_customer | tojson }},
+    logEntries: {{ log_entries | tojson }},
+    overall: { count: {{ overall_stats.count }} },
+
+    expanded: {},
+    loading: false,
+    _debounce: {},
+    _saveState: {},
+
+    init() {
+      const seed = (rows) => rows.forEach(r => {
+        const id = String(r.CustomerID);
+        r.CustomerID = id;
+        if (!this.logEntries[id]) {
+          this.logEntries[id] = { Outcome: '', Notes: '', WhoLogged: '',
+                                  LastContacted: '', Completed: '0' };
+        }
+      });
+      seed(this.section1); seed(this.section2); seed(this.section3);
+    },
+
+    entry(id) {
+      id = String(id);
+      if (!this.logEntries[id]) {
+        this.logEntries[id] = { Outcome: '', Notes: '', WhoLogged: '',
+                                LastContacted: '', Completed: '0' };
+      }
+      return this.logEntries[id];
+    },
+
+    activeRows(section) {
+      return section.filter(r => (this.entry(r.CustomerID).Completed || '0') !== '1');
+    },
+    completedRows(section) {
+      return section.filter(r => this.entry(r.CustomerID).Completed === '1');
+    },
+
+    railColor(row) {
+      const e = this.entry(row.CustomerID);
+      if (e.Completed === '1') return '#D1D1D1';
+      if (e.Outcome === 'Promise to Pay') return 'var(--amber)';
+      if (e.Outcome) return 'var(--forest)';
+      if ((Number(row.PastDueOver90) || 0) > 5000 && !e.LastContacted) return 'var(--red)';
+      return 'var(--border)';
+    },
+
+    toggleCases(id) {
+      id = String(id);
+      this.expanded[id] = !this.expanded[id];
+    },
+
+    telHref(phone) { return (phone || '').toString().replace(/[^\d+]/g, ''); },
+
+    fmtUSD(n) {
+      const v = Number(n || 0);
+      return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    fmtShort(n) {
+      const v = Number(n || 0);
+      if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+      return v.toFixed(0);
+    },
+    fmtShortDate(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return s;
+      return (d.getMonth() + 1) + '/' + d.getDate();
+    },
+    daysSince(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return '';
+      const diff = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+      return diff >= 0 ? diff : 0;
+    },
+
+    lastContactedLabel(id) {
+      const ts = this.entry(id).LastContacted;
+      if (!ts) return '';
+      const d = new Date(ts.replace(' ', 'T'));
+      if (isNaN(d.getTime())) return ts;
+      const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+      if (mins < 60) return mins <= 1 ? 'just now' : mins + 'm ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      const days = Math.floor(hrs / 24);
+      if (days === 1) return 'yesterday';
+      if (days < 14) return days + 'd ago';
+      return days + 'd ago';
+    },
+    lastContactedTone(id) {
+      const ts = this.entry(id).LastContacted;
+      if (!ts) return '';
+      const d = new Date(ts.replace(' ', 'T'));
+      if (isNaN(d.getTime())) return '';
+      const days = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+      if (days < 3) return 'recent';
+      if (days >= 14) return 'stale';
+      return '';
+    },
+
+    contactedToday() {
+      const today = new Date().toISOString().slice(0, 10);
+      let n = 0;
+      for (const id in this.logEntries) {
+        const ts = this.logEntries[id].LastContacted;
+        if (ts && ts.slice(0, 10) === today) n++;
+      }
+      return n;
+    },
+    progressPct() {
+      if (!this.overall.count) return 0;
+      return Math.min(100, Math.round(100 * this.contactedToday() / this.overall.count));
+    },
+
+    debouncedSaveNotes(id) {
+      id = String(id);
+      clearTimeout(this._debounce[id]);
+      this._debounce[id] = setTimeout(() => {
+        this.saveLog(id, { notes: this.entry(id).Notes });
+      }, 1500);
+    },
+
+    async saveLog(id, fields) {
+      id = String(id);
+      this._saveState[id] = 'saving';
+      try {
+        const body = { customer_id: id };
+        if (fields.outcome !== undefined) body.outcome = fields.outcome;
+        if (fields.notes !== undefined) body.notes = fields.notes;
+        if (fields.who_logged !== undefined) body.who_logged = fields.who_logged;
+        if (fields.mark_contacted) body.mark_contacted = true;
+        const res = await fetch('/collections/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (fields.mark_contacted && data.last_contacted) {
+          this.entry(id).LastContacted = data.last_contacted;
+        }
+        this._saveState[id] = 'saved';
+        setTimeout(() => { if (this._saveState[id] === 'saved') delete this._saveState[id]; }, 1800);
+      } catch (e) {
+        console.error('saveLog failed', e);
+        this._saveState[id] = 'error';
+      }
+    },
+
+    async logCall(id) {
+      id = String(id);
+      clearTimeout(this._debounce[id]);
+      const e = this.entry(id);
+      await this.saveLog(id, {
+        outcome: e.Outcome,
+        notes: e.Notes,
+        who_logged: e.WhoLogged,
+        mark_contacted: true,
+      });
+    },
+
+    async markCompleted(id, completed) {
+      id = String(id);
+      try {
+        const res = await fetch('/collections/completed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer_id: id, completed: completed }),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        this.entry(id).Completed = completed ? '1' : '0';
+      } catch (e) {
+        console.error('markCompleted failed', e);
+      }
+    },
+
+    async refresh() {
+      this.loading = true;
+      try {
+        const res = await fetch('/collections/refresh', { method: 'POST' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        window.location.reload();
+      } catch (e) {
+        console.error('refresh failed', e);
+        alert('Refresh failed: ' + e.message);
+        this.loading = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}

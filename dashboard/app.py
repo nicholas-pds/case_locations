@@ -112,6 +112,7 @@ def create_app() -> FastAPI:
     from dashboard.routes.customers import router as customers_router
     from dashboard.routes.efficiency import router as efficiency_router
     from dashboard.routes.remakes import router as remakes_router
+    from dashboard.routes.collections import router as collections_router
     from dashboard.routes.partials import router as partials_router
     from dashboard.routes.sse import router as sse_router
     from dashboard.routes.login import router as login_router
@@ -128,6 +129,7 @@ def create_app() -> FastAPI:
     app.include_router(customers_router)
     app.include_router(efficiency_router)
     app.include_router(remakes_router)
+    app.include_router(collections_router)
     app.include_router(partials_router)
     app.include_router(sse_router)
     app.include_router(status_router)
