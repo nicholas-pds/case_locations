@@ -33,43 +33,36 @@ _collections_lock = asyncio.Lock()
 
 _ACCOUNTS_SQL = """
 SELECT
-    lcs.LabName,
-    lcs.CustomerID,
+    c.LabName,
+    c.CustomerID,
     c.PracticeName,
     c.DentalGroup,
-    ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, '')  AS FullName,
+    ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, '')        AS FullName,
     c.OfficePhone,
-    c.BillEmail                                              AS Email,
+    c.BillEmail                                                    AS Email,
     c.SalesPerson,
     c.LastPaymentDate,
     c.LastPaymentAmount,
-    CAST(lcs.UnAppliedPC                                AS DECIMAL(12,2)) AS UnApplied,
-    CAST(ISNULL(c.ThisPeriodCharges, 0)                 AS DECIMAL(12,2)) AS ThisPeriod,
-    CAST(lcs.CurrentBalance                             AS DECIMAL(12,2)) AS CurrentBalance,
-    CAST(lcs.PastDue30                                  AS DECIMAL(12,2)) AS PastDue30,
-    CAST(lcs.PastDue60                                  AS DECIMAL(12,2)) AS PastDue60,
-    CAST(lcs.PastDue90                                  AS DECIMAL(12,2)) AS PastDue90,
-    CAST(lcs.PastDueOver90                              AS DECIMAL(12,2)) AS PastDueOver90,
-    CAST(lcs.PastDue30 + lcs.PastDue60 + lcs.PastDue90
-         + lcs.PastDueOver90                            AS DECIMAL(12,2)) AS TotalPastDue,
-    CAST(
-        ISNULL(c.ThisPeriodCharges, 0)
-        + lcs.CurrentBalance
-        + lcs.PastDue30 + lcs.PastDue60
-        + lcs.PastDue90 + lcs.PastDueOver90
-        - lcs.UnAppliedPC
-    AS DECIMAL(12,2))                                                      AS TotalBalance,
+    CAST(c.UnAppliedPayments + c.UnAppliedCredits AS DECIMAL(12,2)) AS UnApplied,
+    CAST(ISNULL(c.ThisPeriodCharges, 0)           AS DECIMAL(12,2)) AS ThisPeriod,
+    CAST(c.CurrentBalance                         AS DECIMAL(12,2)) AS CurrentBalance,
+    CAST(c.PastDue30                              AS DECIMAL(12,2)) AS PastDue30,
+    CAST(c.PastDue60                              AS DECIMAL(12,2)) AS PastDue60,
+    CAST(c.PastDue90                              AS DECIMAL(12,2)) AS PastDue90,
+    CAST(c.PastDueOver90                          AS DECIMAL(12,2)) AS PastDueOver90,
+    CAST(c.PastDue30 + c.PastDue60 + c.PastDue90
+         + c.PastDueOver90                        AS DECIMAL(12,2)) AS TotalPastDue,
+    CAST(c.TotalBalance                           AS DECIMAL(12,2)) AS TotalBalance,
     CASE
         WHEN c.IsOnCOD = 1      THEN 'COD'
         WHEN c.OnCreditHold = 1 THEN 'Credit Hold'
         WHEN c.InCollection = 1 THEN 'In Collection'
         ELSE ''
-    END                                                                    AS AccountFlag
-FROM dbo.LabCustomerStatements lcs
-JOIN dbo.Customers c ON lcs.CustomerID = c.CustomerID
-WHERE lcs.StatementID = (SELECT MAX(StatementID) FROM dbo.LabCustomerStatements)
-  AND (lcs.PastDue30 + lcs.PastDue60 + lcs.PastDue90 + lcs.PastDueOver90) > 0
-ORDER BY (lcs.PastDue30 + lcs.PastDue60 + lcs.PastDue90 + lcs.PastDueOver90) DESC;
+    END                                                             AS AccountFlag
+FROM dbo.Customers c
+WHERE c.Deleted = 0
+  AND (c.PastDue30 + c.PastDue60 + c.PastDue90 + c.PastDueOver90) > 0
+ORDER BY (c.PastDue30 + c.PastDue60 + c.PastDue90 + c.PastDueOver90) DESC;
 """
 
 _OPEN_CASES_SQL = """
@@ -86,10 +79,9 @@ FROM dbo.customers AS cu
 INNER JOIN dbo.cases AS ca
     ON cu.CustomerID = ca.CustomerID
 WHERE ca.CustomerID IN (
-    SELECT lcs2.CustomerID
-    FROM dbo.LabCustomerStatements lcs2
-    WHERE lcs2.StatementID = (SELECT MAX(StatementID) FROM dbo.LabCustomerStatements)
-      AND (lcs2.PastDue30 + lcs2.PastDue60 + lcs2.PastDue90 + lcs2.PastDueOver90) > 0
+    SELECT CustomerID FROM dbo.Customers
+    WHERE Deleted = 0
+      AND (PastDue30 + PastDue60 + PastDue90 + PastDueOver90) > 0
 )
   AND ca.Status IN ('In Production')
   AND ca.Deleted = 0
