@@ -4,8 +4,9 @@ import asyncio
 import csv
 import logging
 import time
+from io import BytesIO
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor
 
@@ -46,8 +47,8 @@ SELECT
     cu.CurrentBalance,
     cu.TotalBalance
 FROM dbo.customers AS cu
-WHERE cu.PastDue90 > 0
-ORDER BY cu.PastDue90 DESC;
+WHERE (cu.PastDue90 > 0 OR cu.PastDueOver90 > 0)
+ORDER BY (ISNULL(cu.PastDue90,0) + ISNULL(cu.PastDueOver90,0)) DESC;
 """
 
 _OPEN_CASES_SQL = """
@@ -63,7 +64,7 @@ SELECT
 FROM dbo.customers AS cu
 INNER JOIN dbo.cases AS ca
     ON cu.CustomerID = ca.CustomerID
-WHERE cu.PastDue90 > 0
+WHERE (cu.PastDue90 > 0 OR cu.PastDueOver90 > 0)
   AND ca.Status IN ('In Production')
   AND ca.Deleted = 0
 ORDER BY cu.CustomerID, ca.DateIn ASC;
@@ -110,9 +111,22 @@ def get_db_connection():
 
 # ─── Call-log CSV persistence ────────────────────────────────────────────────
 
+def _current_week_start() -> datetime:
+    """Most recent Sunday at 18:00 local time — start of the collection week."""
+    now = datetime.now()
+    days_back = (now.weekday() + 1) % 7  # Mon=1 … Sat=6 … Sun=0
+    last_sunday = now.date() - timedelta(days=days_back)
+    cutoff = datetime(last_sunday.year, last_sunday.month, last_sunday.day, 18, 0, 0)
+    if cutoff > now:  # it's Sunday but before 6 PM
+        cutoff -= timedelta(days=7)
+    return cutoff
+
+
 def load_collections_log() -> pd.DataFrame:
     """Load User_Inputs/collections_log.csv.
-    Returns empty DataFrame with expected columns if file missing."""
+    Returns empty DataFrame with expected columns if file missing.
+    Auto-resets Completed='1' entries whose LastUpdated is before the current
+    week start (Sunday 6 PM) so the resolved list refreshes each week."""
     if _LOG_PATH.exists():
         try:
             df = pd.read_csv(_LOG_PATH, dtype=str, quoting=csv.QUOTE_ALL,
@@ -122,6 +136,20 @@ def load_collections_log() -> pd.DataFrame:
                     df[col] = ""
             df["CustomerID"] = df["CustomerID"].astype(str)
             df["Completed"] = df["Completed"].replace("", "0").astype(str)
+
+            # Weekly reset: flip Completed back to "0" if marked resolved before this week
+            cutoff = _current_week_start()
+            last_updated_dt = pd.to_datetime(df["LastUpdated"], errors="coerce")
+            needs_reset = (
+                (df["Completed"] == "1")
+                & last_updated_dt.notna()
+                & (last_updated_dt < cutoff)
+            )
+            if needs_reset.any():
+                df.loc[needs_reset, "Completed"] = "0"
+                _write_log(df)
+                logger.info(f"Weekly reset: cleared Completed for {needs_reset.sum()} entries")
+
             return df[_LOG_COLUMNS]
         except Exception as e:
             logger.warning(f"Failed to read collections_log.csv: {e}")
@@ -252,3 +280,55 @@ def get_cached_collections() -> dict:
         "cases": cache.get_sync("collections_cases"),
         "last_refresh": _collections_last_refresh,
     }
+
+
+# ─── Excel export ─────────────────────────────────────────────────────────────
+
+_EXPORT_COLUMNS = [
+    "PracticeName", "DentalGroup", "FullName", "OfficePhone", "Email",
+    "SalesPerson", "PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
+    "CurrentBalance", "TotalBalance", "OpenCaseCount",
+    "LastContacted", "Outcome", "WhoLogged", "Notes", "Completed",
+]
+_MONEY_COLS = {"PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
+               "CurrentBalance", "TotalBalance"}
+
+
+def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
+                          s3: pd.DataFrame, log_dict: dict) -> BytesIO:
+    """Return BytesIO XLSX with three sheets — one per collection bucket."""
+
+    def _merge(df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        for col, key in [("LastContacted", "LastContacted"), ("Outcome", "Outcome"),
+                         ("WhoLogged", "WhoLogged"), ("Notes", "Notes")]:
+            df[col] = df["CustomerID"].map(
+                lambda cid, k=key: log_dict.get(str(cid), {}).get(k, ""))
+        df["Completed"] = df["CustomerID"].map(
+            lambda cid: "Yes" if log_dict.get(str(cid), {}).get("Completed") == "1" else "")
+        cols = [c for c in _EXPORT_COLUMNS if c in df.columns]
+        return df[cols]
+
+    buf = BytesIO()
+    sheets = [
+        ("General Aging", _merge(s1) if not s1.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
+        ("Small Balances", _merge(s2) if not s2.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
+        ("Smile Doctors", _merge(s3) if not s3.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
+    ]
+
+    with pd.ExcelWriter(buf, engine="openpyxl") as xw:
+        for sheet_name, df in sheets:
+            df.to_excel(xw, sheet_name=sheet_name, index=False)
+            ws = xw.sheets[sheet_name]
+            ws.freeze_panes = "A2"
+            # Column widths + number format
+            for col_idx, col_name in enumerate(_EXPORT_COLUMNS, start=1):
+                if col_idx > ws.max_column:
+                    break
+                letter = ws.cell(row=1, column=col_idx).column_letter
+                ws.column_dimensions[letter].width = 14 if col_name in _MONEY_COLS else 22
+                if col_name in _MONEY_COLS:
+                    for row_idx in range(2, ws.max_row + 1):
+                        ws.cell(row=row_idx, column=col_idx).number_format = '"$"#,##0.00'
+    buf.seek(0)
+    return buf

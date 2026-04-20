@@ -533,8 +533,202 @@
     font-style: italic;
   }
 
+  /* ── Shell: sidebar + main grid ── */
+  .coll-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .coll-main { min-width: 0; }
+
+  /* ── Tree nav ── */
+  .tree-nav {
+    position: sticky;
+    top: 72px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 0 8px;
+    scrollbar-width: thin;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  .tree-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border-left: 2px solid transparent;
+    transition: background 0.1s;
+    user-select: none;
+    color: var(--ink);
+  }
+  .tree-item:hover { background: rgba(0,0,0,0.025); }
+  .tree-item.active {
+    background: var(--forest-tint);
+    border-left-color: var(--forest);
+    font-weight: 600;
+  }
+  .tree-count {
+    margin-left: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .tree-chevron {
+    font-size: 9px;
+    color: var(--muted);
+    flex-shrink: 0;
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  .tree-chevron.open { transform: rotate(90deg); }
+  .tree-item .tree-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+  .tree-customer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px 5px 30px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--gray);
+    transition: background 0.1s;
+    user-select: none;
+  }
+  .tree-customer:hover { background: rgba(0,0,0,0.02); color: var(--ink); }
+  .tree-customer .cname {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    font-size: 11px;
+  }
+  .tree-customer .camount {
+    margin-left: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    color: var(--muted);
+    flex-shrink: 0;
+    padding-left: 6px;
+  }
+  .tree-show-all {
+    display: block;
+    width: 100%;
+    padding: 4px 12px 4px 30px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--forest);
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-weight: 500;
+  }
+  .tree-show-all:hover { text-decoration: underline; }
+  .tree-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 6px 0;
+  }
+  .tree-resolved .tree-label { color: var(--muted); }
+
+  /* ── Export button ── */
+  .export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .export-btn:hover { border-color: var(--ink); background: #f9f9f9; }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .bc-link {
+    background: none;
+    border: none;
+    color: var(--forest);
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .bc-link:hover { color: var(--ink); }
+  .bc-sep { color: var(--border); font-size: 14px; }
+  .bc-current { color: var(--ink); font-weight: 500; }
+
+  /* ── Bucket chip (resolved view) ── */
+  .bucket-chip {
+    display: inline-block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    background: var(--canvas);
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+
   /* responsive */
+  @media (max-width: 1100px) {
+    .coll-shell { grid-template-columns: 220px 1fr; gap: 20px; }
+  }
   @media (max-width: 960px) {
+    .coll-shell { grid-template-columns: 1fr; }
+    .tree-nav {
+      position: static;
+      max-height: none;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      flex-direction: row;
+      padding: 4px 8px;
+      gap: 4px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    .tree-nav > div { flex-shrink: 0; }
+    .tree-customer, .tree-show-all { display: none; }
+    .tree-item { white-space: nowrap; border-left: none; border-bottom: 2px solid transparent; padding: 6px 10px; border-radius: 3px; }
+    .tree-item.active { border-bottom-color: var(--forest); border-left-color: transparent; }
+    .tree-divider { display: none; }
     .account-card { grid-template-columns: 1fr; gap: 16px; }
     .log-panel { grid-template-columns: 1fr; }
     .coll-header { flex-direction: column; align-items: flex-start; gap: 16px; }
@@ -558,8 +752,12 @@
         <div class="stat-value big">{{ overall_stats.count }}</div>
       </div>
       <div class="stat">
+        <div class="stat-label">Total Past Due</div>
+        <div class="stat-value big">$<span x-text="fmtShort({{ overall_stats.total_past_due }})"></span></div>
+      </div>
+      <div class="stat">
         <div class="stat-label">Past Due 90</div>
-        <div class="stat-value big">$<span x-text="fmtShort({{ overall_stats.past_due_90 }})"></span></div>
+        <div class="stat-value">$<span x-text="fmtShort({{ overall_stats.past_due_90 }})"></span></div>
       </div>
       <div class="stat">
         <div class="stat-label">Past Due 90+</div>
@@ -568,6 +766,10 @@
     </div>
     <div class="header-actions">
       {% if last_refresh %}<span class="last-refresh">Updated {{ last_refresh | fmt_datetime }}</span>{% endif %}
+      <a class="export-btn" href="/collections/export.xlsx" download>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export XLSX
+      </a>
       <button class="refresh-btn" @click="refresh()" :disabled="loading">
         <span x-show="!loading">Refresh</span>
         <span x-show="loading" x-cloak>Loading…</span>
@@ -577,13 +779,121 @@
 
   <!-- Progress bar -->
   <div class="progress-row">
-    <span><span x-text="contactedToday()"></span> of <span x-text="overall.count"></span> contacted today</span>
+    <span><span x-text="contactedThisWeek()"></span> of <span x-text="overall.count"></span> contacted this week</span>
     <div class="progress-track">
       <div class="progress-fill" :style="'width: ' + progressPct() + '%'"></div>
     </div>
   </div>
 
+  <!-- ── Shell: tree sidebar + main pane ── -->
+  <div class="coll-shell">
+
+    <!-- Left: tree nav -->
+    <nav class="tree-nav">
+      <!-- All Accounts -->
+      <div class="tree-item" :class="{ active: view === 'all' }" @click="view = 'all'">
+        <span class="tree-label">All Accounts</span>
+        <span class="tree-count" x-text="totalActive()"></span>
+      </div>
+
+      <!-- General Aging branch -->
+      <div>
+        <div class="tree-item" :class="{ active: view === 's1' }"
+             @click="view = 's1'; treeOpen.s1 = !treeOpen.s1">
+          <span class="tree-chevron" :class="{ open: treeOpen.s1 }">▶</span>
+          <span class="tree-label">General Aging</span>
+          <span class="tree-count" x-text="activeRows(section1).length"></span>
+        </div>
+        <template x-if="treeOpen.s1">
+          <div>
+            <template x-for="row in treeRows(section1, 's1')" :key="row.CustomerID">
+              <div class="tree-customer" @click="goToCard(row.CustomerID, 's1')">
+                <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
+                <span class="camount" x-text="fmtCompact(row.PastDue90)"></span>
+              </div>
+            </template>
+            <template x-if="activeRows(section1).length > 8 && !showAllTree.s1">
+              <button class="tree-show-all" @click.stop="showAllTree.s1 = true">
+                + Show all <span x-text="activeRows(section1).length"></span>
+              </button>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- Small Balances branch -->
+      <div>
+        <div class="tree-item" :class="{ active: view === 's2' }"
+             @click="view = 's2'; treeOpen.s2 = !treeOpen.s2">
+          <span class="tree-chevron" :class="{ open: treeOpen.s2 }">▶</span>
+          <span class="tree-label">Small Balances</span>
+          <span class="tree-count" x-text="activeRows(section2).length"></span>
+        </div>
+        <template x-if="treeOpen.s2">
+          <div>
+            <template x-for="row in treeRows(section2, 's2')" :key="row.CustomerID">
+              <div class="tree-customer" @click="goToCard(row.CustomerID, 's2')">
+                <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
+                <span class="camount" x-text="fmtCompact(row.PastDue90)"></span>
+              </div>
+            </template>
+            <template x-if="activeRows(section2).length > 8 && !showAllTree.s2">
+              <button class="tree-show-all" @click.stop="showAllTree.s2 = true">
+                + Show all <span x-text="activeRows(section2).length"></span>
+              </button>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- Smile Doctors branch -->
+      <div>
+        <div class="tree-item" :class="{ active: view === 's3' }"
+             @click="view = 's3'; treeOpen.s3 = !treeOpen.s3">
+          <span class="tree-chevron" :class="{ open: treeOpen.s3 }">▶</span>
+          <span class="tree-label">Smile Doctors</span>
+          <span class="tree-count" x-text="activeRows(section3).length"></span>
+        </div>
+        <template x-if="treeOpen.s3">
+          <div>
+            <template x-for="row in treeRows(section3, 's3')" :key="row.CustomerID">
+              <div class="tree-customer" @click="goToCard(row.CustomerID, 's3')">
+                <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
+                <span class="camount" x-text="fmtCompact(row.PastDue90)"></span>
+              </div>
+            </template>
+            <template x-if="activeRows(section3).length > 8 && !showAllTree.s3">
+              <button class="tree-show-all" @click.stop="showAllTree.s3 = true">
+                + Show all <span x-text="activeRows(section3).length"></span>
+              </button>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <hr class="tree-divider">
+
+      <!-- Resolved -->
+      <div class="tree-item tree-resolved" :class="{ active: view === 'resolved' }" @click="view = 'resolved'">
+        <span class="tree-label">● Resolved</span>
+        <span class="tree-count" x-text="totalResolved()"></span>
+      </div>
+    </nav>
+
+    <!-- Right: main pane -->
+    <div class="coll-main">
+
+      <!-- breadcrumb shown when filtered -->
+      <template x-if="view !== 'all'">
+        <div class="breadcrumb">
+          <button class="bc-link" @click="view = 'all'">All Accounts</button>
+          <span class="bc-sep">/</span>
+          <span class="bc-current" x-text="viewLabel()"></span>
+        </div>
+      </template>
+
   <!-- ============ SECTION 1 — General Aging ============ -->
+  <template x-if="view === 'all' || view === 's1'">
   <section class="coll-section" x-data="{ showCompleted: false }">
     <div class="section-header">
       <h2 class="section-title">General Aging · $500+
@@ -601,6 +911,7 @@
 
     <template x-for="row in activeRows(section1)" :key="row.CustomerID">
       <div class="account-card"
+           :id="'card-' + row.CustomerID"
            :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
            :style="'--rail: ' + railColor(row)">
         <!-- identity -->
@@ -753,8 +1064,10 @@
       </div>
     </template>
   </section>
+  </template>
 
   <!-- ============ SECTION 2 — Small Balances ============ -->
+  <template x-if="view === 'all' || view === 's2'">
   <section class="coll-section" x-data="{ showCompleted: false }">
     <div class="section-header">
       <h2 class="section-title">Small Balances · Under $500
@@ -772,6 +1085,7 @@
 
     <template x-for="row in activeRows(section2)" :key="row.CustomerID">
       <div class="account-card"
+           :id="'card-' + row.CustomerID"
            :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
            :style="'--rail: ' + railColor(row)">
         <div class="ident">
@@ -900,8 +1214,10 @@
       </div>
     </template>
   </section>
+  </template>
 
   <!-- ============ SECTION 3 — Smile Doctors ============ -->
+  <template x-if="view === 'all' || view === 's3'">
   <section class="coll-section" x-data="{ showCompleted: false }">
     <div class="section-header">
       <h2 class="section-title">Smile Doctors
@@ -919,6 +1235,7 @@
 
     <template x-for="row in activeRows(section3)" :key="row.CustomerID">
       <div class="account-card"
+           :id="'card-' + row.CustomerID"
            :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
            :style="'--rail: ' + railColor(row)">
         <div class="ident">
@@ -1047,6 +1364,50 @@
       </div>
     </template>
   </section>
+  </template>
+
+  <!-- ============ RESOLVED — unified view ============ -->
+  <template x-if="view === 'resolved'">
+    <section class="coll-section">
+      <div class="section-header">
+        <h2 class="section-title">Resolved
+          <span class="count" x-text="totalResolved() + ' total'"></span>
+        </h2>
+      </div>
+      <template x-if="totalResolved() === 0">
+        <div class="empty-state">No resolved accounts yet.</div>
+      </template>
+      <template x-for="row in resolvedRows()" :key="row.CustomerID">
+        <div class="account-card completed" :style="'--rail: #D1D1D1'">
+          <div class="ident">
+            <div class="practice" x-text="row.PracticeName"></div>
+            <div class="person" x-text="row.FullName || ''"></div>
+            <span class="bucket-chip" x-text="row._bucket" style="margin-top: 8px; display: inline-block;"></span>
+          </div>
+          <div class="bal-grid">
+            <div class="bal-hero">
+              <div class="bal-label">Past Due 90</div>
+              <div class="bal-value" x-text="fmtUSD(row.PastDue90)"></div>
+            </div>
+            <div>
+              <div class="bal-label">Last Contacted</div>
+              <div class="bal-value" style="font-size: 12px;" x-text="entry(row.CustomerID).LastContacted || '—'"></div>
+            </div>
+            <div>
+              <div class="bal-label">Outcome</div>
+              <div class="bal-value" style="font-size: 12px;" x-text="entry(row.CustomerID).Outcome || '—'"></div>
+            </div>
+          </div>
+          <div class="cases-tile">
+            <button class="resolve-btn is-done" @click="markCompleted(row.CustomerID, false)">Undo Resolved</button>
+          </div>
+        </div>
+      </template>
+    </section>
+  </template>
+
+    </div><!-- /coll-main -->
+  </div><!-- /coll-shell -->
 
 </div>
 {% endblock %}
@@ -1062,6 +1423,9 @@ function collectionsPage() {
     logEntries: {{ log_entries | tojson }},
     overall: { count: {{ overall_stats.count }} },
 
+    view: 'all',
+    treeOpen: { s1: true, s2: false, s3: false },
+    showAllTree: { s1: false, s2: false, s3: false },
     expanded: {},
     loading: false,
     _debounce: {},
@@ -1102,6 +1466,47 @@ function collectionsPage() {
       if (e.Outcome) return 'var(--forest)';
       if ((Number(row.PastDueOver90) || 0) > 5000 && !e.LastContacted) return 'var(--red)';
       return 'var(--border)';
+    },
+
+    totalActive() {
+      return this.activeRows(this.section1).length
+           + this.activeRows(this.section2).length
+           + this.activeRows(this.section3).length;
+    },
+    totalResolved() {
+      return this.completedRows(this.section1).length
+           + this.completedRows(this.section2).length
+           + this.completedRows(this.section3).length;
+    },
+    resolvedRows() {
+      return [
+        ...this.completedRows(this.section1).map(r => ({ ...r, _bucket: 'General Aging' })),
+        ...this.completedRows(this.section2).map(r => ({ ...r, _bucket: 'Small Balances' })),
+        ...this.completedRows(this.section3).map(r => ({ ...r, _bucket: 'Smile Doctors' })),
+      ];
+    },
+    treeRows(section, sKey) {
+      const active = this.activeRows(section).slice()
+        .sort((a, b) => Number(b.TotalPastDue || 0) - Number(a.TotalPastDue || 0));
+      return this.showAllTree[sKey] ? active : active.slice(0, 8);
+    },
+    fmtCompact(n) {
+      const v = Number(n || 0);
+      if (v >= 10000) return '$' + (v / 1000).toFixed(0) + 'k';
+      if (v >= 1000)  return '$' + (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      return '$' + v.toFixed(0);
+    },
+    viewLabel() {
+      const map = { s1: 'General Aging · $500+', s2: 'Small Balances · Under $500',
+                    s3: 'Smile Doctors', resolved: 'Resolved' };
+      return map[this.view] || '';
+    },
+    goToCard(id, sectionView) {
+      this.view = sectionView;
+      this.$nextTick(() => {
+        const el = document.getElementById('card-' + id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
     },
 
     toggleCases(id) {
@@ -1159,18 +1564,28 @@ function collectionsPage() {
       return '';
     },
 
-    contactedToday() {
-      const today = new Date().toISOString().slice(0, 10);
+    _weekStart() {
+      const now = new Date();
+      const d = new Date(now);
+      d.setDate(now.getDate() - now.getDay()); // roll back to Sunday (getDay: 0=Sun)
+      d.setHours(18, 0, 0, 0);
+      if (d > now) d.setDate(d.getDate() - 7); // before this Sunday's 6pm → prior week
+      return d;
+    },
+    contactedThisWeek() {
+      const ws = this._weekStart();
       let n = 0;
       for (const id in this.logEntries) {
         const ts = this.logEntries[id].LastContacted;
-        if (ts && ts.slice(0, 10) === today) n++;
+        if (!ts) continue;
+        const d = new Date(ts.replace(' ', 'T'));
+        if (!isNaN(d.getTime()) && d >= ws) n++;
       }
       return n;
     },
     progressPct() {
       if (!this.overall.count) return 0;
-      return Math.min(100, Math.round(100 * this.contactedToday() / this.overall.count));
+      return Math.min(100, Math.round(100 * this.contactedThisWeek() / this.overall.count));
     },
 
     debouncedSaveNotes(id) {

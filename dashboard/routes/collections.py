@@ -1,9 +1,10 @@
 """Past Due Collections page routes."""
 import logging
+from datetime import datetime
 
 import pandas as pd
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 from dashboard.data.cache import cache
 from dashboard.data.collections_queries import (
@@ -12,6 +13,7 @@ from dashboard.data.collections_queries import (
     load_collections_log,
     save_collection_entry,
     save_collection_completed,
+    build_export_workbook,
     _collections_lock,
 )
 
@@ -38,8 +40,8 @@ def _df_to_records(df):
     return records
 
 
-def _build_sections(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
-    """Join accounts + cases, split into 3 sections, compute stats."""
+def _split_sections_df(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
+    """Return (s1_df, s2_df, s3_df, cases_by_customer) — raw DataFrames for export + page rendering."""
     if accounts_df is None:
         accounts_df = pd.DataFrame()
     if cases_df is None:
@@ -50,8 +52,6 @@ def _build_sections(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
 
     if not df.empty:
         df["CustomerID"] = df["CustomerID"].astype(str)
-
-        # Cases grouping
         if not cases_df.empty:
             cases_df = cases_df.copy()
             cases_df["CustomerID"] = cases_df["CustomerID"].astype(str)
@@ -62,40 +62,57 @@ def _build_sections(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
             counts = {}
 
         df["OpenCaseCount"] = df["CustomerID"].map(counts).fillna(0).astype(int)
-        df["TotalPastDue"] = (df["PastDue90"].astype(float)
-                              + df["PastDueOver90"].astype(float))
+        df["TotalPastDue"] = df["PastDue90"].astype(float) + df["PastDueOver90"].astype(float)
 
         is_smile = df["DentalGroup"].fillna("") == "Smile Doctors"
-        section1 = df[~is_smile & (df["PastDue90"] >= 500)]
-        section2 = df[~is_smile & (df["PastDue90"] < 500)]
-        section3 = df[is_smile]
+        is_large = (df["PastDue90"].astype(float) >= 500) | (df["PastDueOver90"].astype(float) >= 500)
+        s1 = df[~is_smile & is_large]
+        s2 = df[~is_smile & ~is_large]
+        s3 = df[is_smile]
     else:
-        section1 = section2 = section3 = pd.DataFrame()
+        s1 = s2 = s3 = pd.DataFrame()
+
+    return s1, s2, s3, cases_by_customer
+
+
+def _build_sections(accounts_df: pd.DataFrame, cases_df: pd.DataFrame):
+    """Join accounts + cases, split into 3 sections, compute stats."""
+    s1, s2, s3, cases_by_customer = _split_sections_df(accounts_df, cases_df)
 
     def _stats(s: pd.DataFrame) -> dict:
         if s.empty:
-            return {"count": 0, "past_due_90": 0.0, "past_due_over_90": 0.0}
+            return {"count": 0, "past_due_90": 0.0, "past_due_over_90": 0.0, "total_past_due": 0.0}
         return {
             "count": int(len(s)),
             "past_due_90": float(s["PastDue90"].sum()),
             "past_due_over_90": float(s["PastDueOver90"].sum()),
+            "total_past_due": float(
+                s["PastDue30"].astype(float).sum()
+                + s["PastDue60"].astype(float).sum()
+                + s["PastDue90"].astype(float).sum()
+                + s["PastDueOver90"].astype(float).sum()
+            ),
         }
 
     stats = {
-        "section1": _stats(section1),
-        "section2": _stats(section2),
-        "section3": _stats(section3),
+        "section1": _stats(s1),
+        "section2": _stats(s2),
+        "section3": _stats(s3),
     }
     overall = {
         "count": stats["section1"]["count"] + stats["section2"]["count"] + stats["section3"]["count"],
-        "past_due_90": stats["section1"]["past_due_90"] + stats["section2"]["past_due_90"] + stats["section3"]["past_due_90"],
-        "past_due_over_90": stats["section1"]["past_due_over_90"] + stats["section2"]["past_due_over_90"] + stats["section3"]["past_due_over_90"],
+        "past_due_90": (stats["section1"]["past_due_90"] + stats["section2"]["past_due_90"]
+                        + stats["section3"]["past_due_90"]),
+        "past_due_over_90": (stats["section1"]["past_due_over_90"] + stats["section2"]["past_due_over_90"]
+                             + stats["section3"]["past_due_over_90"]),
+        "total_past_due": (stats["section1"]["total_past_due"] + stats["section2"]["total_past_due"]
+                           + stats["section3"]["total_past_due"]),
     }
 
     return (
-        _df_to_records(section1),
-        _df_to_records(section2),
-        _df_to_records(section3),
+        _df_to_records(s1),
+        _df_to_records(s2),
+        _df_to_records(s3),
         stats,
         overall,
         cases_by_customer,
@@ -206,4 +223,22 @@ async def collections_completed(request: Request):
         return JSONResponse({"status": "ok"})
     except Exception as e:
         logger.error(f"Collections completed save failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@router.get("/collections/export.xlsx")
+async def collections_export():
+    try:
+        cached = get_cached_collections()
+        s1, s2, s3, _ = _split_sections_df(cached["accounts"], cached["cases"])
+        log_dict = _build_log_dict(load_collections_log())
+        buf = build_export_workbook(s1, s2, s3, log_dict)
+        fname = f"collections_{datetime.now().strftime('%Y-%m-%d')}.xlsx"
+        return StreamingResponse(
+            buf,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+        )
+    except Exception as e:
+        logger.error(f"Collections export failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
