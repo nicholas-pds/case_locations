@@ -905,7 +905,7 @@
             <template x-for="row in treeRows(section1, 's1')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's1')">
                 <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
-                <span class="camount" x-text="fmtCompact(row.PastDue90)"></span>
+                <span class="camount" x-text="fmtCompact(row.TotalPastDue)"></span>
               </div>
             </template>
             <template x-if="activeRows(section1).length > 8 && !showAllTree.s1">
@@ -930,7 +930,7 @@
             <template x-for="row in treeRows(section2, 's2')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's2')">
                 <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
-                <span class="camount" x-text="fmtCompact(row.PastDue90)"></span>
+                <span class="camount" x-text="fmtCompact(row.TotalPastDue)"></span>
               </div>
             </template>
             <template x-if="activeRows(section2).length > 8 && !showAllTree.s2">
@@ -955,7 +955,7 @@
             <template x-for="row in treeRows(section3, 's3')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's3')">
                 <span class="cname" x-text="(row.PracticeName || row.FullName || '—').substring(0, 26)"></span>
-                <span class="camount" x-text="fmtCompact(row.PastDue90)"></span>
+                <span class="camount" x-text="fmtCompact(row.TotalPastDue)"></span>
               </div>
             </template>
             <template x-if="activeRows(section3).length > 8 && !showAllTree.s3">
@@ -1636,8 +1636,7 @@ function collectionsPage() {
     },
     fmtCompact(n) {
       const v = Number(n || 0);
-      if (v >= 10000) return '$' + (v / 1000).toFixed(0) + 'k';
-      if (v >= 1000)  return '$' + (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      if (v >= 1000) return '$' + (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
       return '$' + v.toFixed(0);
     },
     viewLabel() {
