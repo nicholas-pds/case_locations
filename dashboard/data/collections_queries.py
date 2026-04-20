@@ -168,10 +168,11 @@ def save_collection_entry(
     notes: Optional[str] = None,
     who_logged: Optional[str] = None,
     mark_contacted: bool = False,
+    clear_contacted: bool = False,
 ) -> str:
     """Partial upsert by CustomerID. Only non-None fields are written;
     missing fields leave existing values alone. Returns the timestamp
-    used for LastContacted (empty string if not updated)."""
+    used for LastContacted (empty string if not updated or cleared)."""
     customer_id = str(customer_id)
     existing = load_collections_log()
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -187,6 +188,8 @@ def save_collection_entry(
             existing.loc[mask, "WhoLogged"] = who_logged
         if mark_contacted:
             existing.loc[mask, "LastContacted"] = now_str
+        elif clear_contacted:
+            existing.loc[mask, "LastContacted"] = ""
         existing.loc[mask, "LastUpdated"] = now_str
     else:
         new_row = {

@@ -368,16 +368,31 @@
     position: absolute;
     top: 14px;
     right: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-family: "IBM Plex Mono", monospace;
     font-size: 10px;
     letter-spacing: 0.02em;
-    padding: 2px 8px;
+    padding: 2px 6px 2px 8px;
     border-radius: 10px;
     background: #F3F3F0;
     color: var(--muted);
   }
   .lc-chip.recent { color: var(--forest); background: var(--forest-tint); }
   .lc-chip.stale { color: var(--amber); background: var(--amber-tint); }
+  .lc-clear {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.5;
+    font-size: 11px;
+    font-family: inherit;
+  }
+  .lc-clear:hover { opacity: 1; }
 
   /* cases expansion */
   .cases-expansion {
@@ -779,7 +794,7 @@
 
   <!-- Progress bar -->
   <div class="progress-row">
-    <span><span x-text="contactedThisWeek()"></span> of <span x-text="overall.count"></span> contacted this week</span>
+    <span><span x-text="contactedThisWeek()"></span> of <span x-text="overall.count"></span> resolved this week</span>
     <div class="progress-track">
       <div class="progress-fill" :style="'width: ' + progressPct() + '%'"></div>
     </div>
@@ -972,7 +987,10 @@
 
         <!-- last-contacted chip -->
         <template x-if="entry(row.CustomerID).LastContacted">
-          <span class="lc-chip" :class="lastContactedTone(row.CustomerID)" x-text="lastContactedLabel(row.CustomerID)"></span>
+          <span class="lc-chip" :class="lastContactedTone(row.CustomerID)">
+            <span x-text="lastContactedLabel(row.CustomerID)"></span>
+            <button class="lc-clear" @click.stop="clearContact(row.CustomerID)" title="Clear contact timestamp">×</button>
+          </span>
         </template>
 
         <!-- cases expansion -->
@@ -1564,22 +1582,10 @@ function collectionsPage() {
       return '';
     },
 
-    _weekStart() {
-      const now = new Date();
-      const d = new Date(now);
-      d.setDate(now.getDate() - now.getDay()); // roll back to Sunday (getDay: 0=Sun)
-      d.setHours(18, 0, 0, 0);
-      if (d > now) d.setDate(d.getDate() - 7); // before this Sunday's 6pm → prior week
-      return d;
-    },
     contactedThisWeek() {
-      const ws = this._weekStart();
       let n = 0;
       for (const id in this.logEntries) {
-        const ts = this.logEntries[id].LastContacted;
-        if (!ts) continue;
-        const d = new Date(ts.replace(' ', 'T'));
-        if (!isNaN(d.getTime()) && d >= ws) n++;
+        if (this.logEntries[id].Completed === '1') n++;
       }
       return n;
     },
@@ -1633,6 +1639,21 @@ function collectionsPage() {
         who_logged: e.WhoLogged,
         mark_contacted: true,
       });
+    },
+
+    async clearContact(id) {
+      id = String(id);
+      try {
+        const res = await fetch('/collections/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer_id: id, clear_contacted: true }),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        this.entry(id).LastContacted = '';
+      } catch (e) {
+        console.error('clearContact failed', e);
+      }
     },
 
     async markCompleted(id, completed) {

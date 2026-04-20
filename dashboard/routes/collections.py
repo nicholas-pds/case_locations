@@ -189,6 +189,7 @@ async def collections_log(request: Request):
         notes = body.get("notes")
         who_logged = body.get("who_logged")
         mark_contacted = bool(body.get("mark_contacted", False))
+        clear_contacted = bool(body.get("clear_contacted", False))
 
         async with _collections_lock:
             last_contacted = save_collection_entry(
@@ -197,6 +198,7 @@ async def collections_log(request: Request):
                 notes=notes,
                 who_logged=who_logged,
                 mark_contacted=mark_contacted,
+                clear_contacted=clear_contacted,
             )
         return JSONResponse({
             "status": "ok",
