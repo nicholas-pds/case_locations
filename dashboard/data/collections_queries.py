@@ -6,7 +6,7 @@ import logging
 import time
 from io import BytesIO
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor
 
@@ -134,22 +134,11 @@ def get_db_connection():
 
 # ─── Call-log CSV persistence ────────────────────────────────────────────────
 
-def _current_week_start() -> datetime:
-    """Most recent Sunday at 18:00 local time — start of the collection week."""
-    now = datetime.now()
-    days_back = (now.weekday() + 1) % 7  # Mon=1 … Sat=6 … Sun=0
-    last_sunday = now.date() - timedelta(days=days_back)
-    cutoff = datetime(last_sunday.year, last_sunday.month, last_sunday.day, 18, 0, 0)
-    if cutoff > now:  # it's Sunday but before 6 PM
-        cutoff -= timedelta(days=7)
-    return cutoff
-
-
 def load_collections_log() -> pd.DataFrame:
     """Load User_Inputs/collections_log.csv.
     Returns empty DataFrame with expected columns if file missing.
-    Auto-resets Completed='1' entries whose LastUpdated is before the current
-    week start (Sunday 6 PM) so the resolved list refreshes each week."""
+    Data is never mutated automatically — resolved entries persist until the
+    user explicitly unmarks them."""
     if _LOG_PATH.exists():
         try:
             df = pd.read_csv(_LOG_PATH, dtype=str, quoting=csv.QUOTE_ALL,
@@ -159,20 +148,6 @@ def load_collections_log() -> pd.DataFrame:
                     df[col] = ""
             df["CustomerID"] = df["CustomerID"].astype(str)
             df["Completed"] = df["Completed"].replace("", "0").astype(str)
-
-            # Weekly reset: flip Completed back to "0" if marked resolved before this week
-            cutoff = _current_week_start()
-            last_updated_dt = pd.to_datetime(df["LastUpdated"], errors="coerce")
-            needs_reset = (
-                (df["Completed"] == "1")
-                & last_updated_dt.notna()
-                & (last_updated_dt < cutoff)
-            )
-            if needs_reset.any():
-                df.loc[needs_reset, "Completed"] = "0"
-                _write_log(df)
-                logger.info(f"Weekly reset: cleared Completed for {needs_reset.sum()} entries")
-
             return df[_LOG_COLUMNS]
         except Exception as e:
             logger.warning(f"Failed to read collections_log.csv: {e}")

@@ -21,4 +21,5 @@ dependencies = [
     "sse-starlette>=2.0.0",
     "uvicorn[standard]>=0.34.0",
     "pymupdf>=1.24.0",
+    "openpyxl>=3.1.5",
 ]

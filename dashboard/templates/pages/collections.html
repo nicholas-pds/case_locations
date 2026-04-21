@@ -117,29 +117,93 @@
     color: var(--muted);
   }
 
-  /* ── Progress bar ── */
-  .progress-row {
+  /* ── Search bar ── */
+  .search-row {
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-bottom: 20px;
+    margin: 4px 0 18px;
+    flex-shrink: 0;
+  }
+  .search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 440px;
+    background: #fff;
+    border: 1px solid var(--ink);
+    border-radius: 9999px;
+    transition: box-shadow 0.15s;
+  }
+  .search-wrap:focus-within {
+    box-shadow: 0 0 0 3px rgba(26,26,26,0.08);
+  }
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .search-wrap:focus-within .search-icon,
+  .search-wrap.has-query .search-icon { color: var(--ink); }
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 40px 10px 42px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+    outline: none;
+    border-radius: 9999px;
+  }
+  .search-input::placeholder {
+    color: var(--muted);
+    font-style: italic;
+  }
+  .search-clear {
+    position: absolute;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.15s;
+  }
+  .search-clear:hover { background: #000; }
+  .search-meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
     font-size: 11px;
     color: var(--muted);
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    flex-shrink: 0;
   }
-  .progress-track {
-    flex: 1;
-    height: 2px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
+  .search-empty {
+    padding: 48px 24px;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 14px;
   }
-  .progress-fill {
-    height: 100%;
-    background: var(--forest);
-    transition: width 0.3s ease;
+  .search-empty .q {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    color: var(--ink);
+    font-size: 16px;
   }
 
   /* ── Section headers ── */
@@ -201,24 +265,26 @@
     gap: 28px;
     padding: 20px 24px 20px 36px;
     background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    margin-bottom: 10px;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    border: 2px solid rgba(26,26,26,0.82);
+    border-radius: 30px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.9);
+    transition: box-shadow 0.18s, transform 0.18s;
   }
   .account-card::before {
     content: "";
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    width: 12px;
-    background: var(--rail, var(--border));
-    border-top-left-radius: 2px;
-    border-bottom-left-radius: 2px;
+    width: 13px;
+    background: rgba(26,26,26,0.88);
   }
-  .account-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .account-card:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,0.09), inset 0 1px 0 rgba(255,255,255,0.9);
+    transform: translateY(-1px);
+  }
   .account-card:focus-within { outline: 2px solid var(--red); outline-offset: -2px; }
   .account-card.completed { opacity: 0.55; }
-  .account-card.promise { background: var(--amber-tint); }
 
   /* identity */
   .ident .practice {
@@ -903,12 +969,30 @@
     </div>
   </header>
 
-  <!-- Progress bar -->
-  <div class="progress-row">
-    <span><span x-text="contactedThisWeek()"></span> of <span x-text="overall.count"></span> resolved this week</span>
-    <div class="progress-track">
-      <div class="progress-fill" :style="'width: ' + progressPct() + '%'"></div>
+  <!-- ── Search bar ── -->
+  <div class="search-row">
+    <div class="search-wrap" :class="{ 'has-query': isSearching }">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search practices by name…"
+        x-model.debounce.180ms="searchQuery"
+        @keydown.escape="searchQuery = ''"
+        autocomplete="off"
+        spellcheck="false" />
+      <button
+        class="search-clear"
+        x-show="isSearching"
+        x-cloak
+        @click="searchQuery = ''"
+        title="Clear search (Esc)"
+        aria-label="Clear search">×</button>
     </div>
+    <span class="search-meta" x-show="isSearching" x-cloak>
+      <span x-text="searchMatchCount()"></span>
+      <span x-text="searchMatchCount() === 1 ? 'match' : 'matches'"></span>
+    </span>
   </div>
 
   <!-- ── Shell: tree sidebar + main pane ── -->
@@ -930,7 +1014,7 @@
           <span class="tree-label">General Aging</span>
           <span class="tree-count" x-text="activeRows(section1).length"></span>
         </div>
-        <template x-if="treeOpen.s1">
+        <template x-if="treeOpen.s1 || isSearching">
           <div>
             <template x-for="row in treeRows(section1, 's1')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's1')">
@@ -956,7 +1040,7 @@
           <span class="tree-label">Small Balances</span>
           <span class="tree-count" x-text="activeRows(section2).length"></span>
         </div>
-        <template x-if="treeOpen.s2">
+        <template x-if="treeOpen.s2 || isSearching">
           <div>
             <template x-for="row in treeRows(section2, 's2')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's2')">
@@ -982,7 +1066,7 @@
           <span class="tree-label">Smile Doctors</span>
           <span class="tree-count" x-text="activeRows(section3).length"></span>
         </div>
-        <template x-if="treeOpen.s3">
+        <template x-if="treeOpen.s3 || isSearching">
           <div>
             <template x-for="row in treeRows(section3, 's3')" :key="row.CustomerID">
               <div class="tree-customer" @click="goToCard(row.CustomerID, 's3')">
@@ -1021,8 +1105,15 @@
         </div>
       </template>
 
+  <!-- No-results state when searching -->
+  <template x-if="isSearching && searchMatchCount() === 0">
+    <div class="search-empty">
+      No accounts match <span class="q" x-text="'“' + searchQuery + '”'"></span>
+    </div>
+  </template>
+
   <!-- ============ SECTION 1 — General Aging ============ -->
-  <template x-if="view === 'all' || view === 's1'">
+  <template x-if="isSearching ? (activeRows(section1).length + completedRows(section1).length > 0) : (view === 'all' || view === 's1')">
   <section class="coll-section" x-data="{ showCompleted: false }">
     <div class="section-header">
       <h2 class="section-title">General Aging · $500+
@@ -1040,9 +1131,7 @@
 
     <template x-for="row in activeRows(section1)" :key="row.CustomerID">
       <div class="account-card"
-           :id="'card-' + row.CustomerID"
-           :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
-           :style="'--rail: ' + railColor(row)">
+           :id="'card-' + row.CustomerID">
         <!-- identity -->
         <div class="ident">
           <div class="practice" x-text="row.PracticeName || '—'"></div>
@@ -1058,7 +1147,7 @@
               <a class="email" :href="'mailto:' + row.Email" x-text="row.Email"></a>
             </template>
           </div>
-          <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+          <div class="am-row">Account Mgr<span class="value" x-text="fmtShortName(row.SalesPerson)"></span></div>
           <template x-if="row.AccountFlag">
             <span class="flag-badge"
                   :class="{ 'flag-cod': row.AccountFlag === 'COD', 'flag-hold': row.AccountFlag === 'Credit Hold', 'flag-coll': row.AccountFlag === 'In Collection' }"
@@ -1189,10 +1278,10 @@
         <span x-text="completedRows(section1).length"></span> resolved
       </button>
     </template>
-    <template x-if="showCompleted">
+    <template x-if="showCompleted || isSearching">
       <div>
         <template x-for="row in completedRows(section1)" :key="row.CustomerID">
-          <div class="account-card completed" :style="'--rail: #D1D1D1'">
+          <div class="account-card completed">
             <div class="ident">
               <div class="practice" x-text="row.PracticeName"></div>
               <div class="person" x-text="row.FullName"></div>
@@ -1214,7 +1303,7 @@
   </template>
 
   <!-- ============ SECTION 2 — Small Balances ============ -->
-  <template x-if="view === 'all' || view === 's2'">
+  <template x-if="isSearching ? (activeRows(section2).length + completedRows(section2).length > 0) : (view === 'all' || view === 's2')">
   <section class="coll-section" x-data="{ showCompleted: false }">
     <div class="section-header">
       <h2 class="section-title">Small Balances · Under $500
@@ -1232,9 +1321,7 @@
 
     <template x-for="row in activeRows(section2)" :key="row.CustomerID">
       <div class="account-card"
-           :id="'card-' + row.CustomerID"
-           :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
-           :style="'--rail: ' + railColor(row)">
+           :id="'card-' + row.CustomerID">
         <div class="ident">
           <div class="practice" x-text="row.PracticeName || '—'"></div>
           <div class="person" x-text="row.FullName || ''"></div>
@@ -1249,7 +1336,7 @@
               <a class="email" :href="'mailto:' + row.Email" x-text="row.Email"></a>
             </template>
           </div>
-          <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+          <div class="am-row">Account Mgr<span class="value" x-text="fmtShortName(row.SalesPerson)"></span></div>
           <template x-if="row.AccountFlag">
             <span class="flag-badge"
                   :class="{ 'flag-cod': row.AccountFlag === 'COD', 'flag-hold': row.AccountFlag === 'Credit Hold', 'flag-coll': row.AccountFlag === 'In Collection' }"
@@ -1364,10 +1451,10 @@
         <span x-text="completedRows(section2).length"></span> resolved
       </button>
     </template>
-    <template x-if="showCompleted">
+    <template x-if="showCompleted || isSearching">
       <div>
         <template x-for="row in completedRows(section2)" :key="row.CustomerID">
-          <div class="account-card completed" :style="'--rail: #D1D1D1'">
+          <div class="account-card completed">
             <div class="ident"><div class="practice" x-text="row.PracticeName"></div></div>
             <div class="bal-grid"><div class="bal-hero"><div class="bal-label">Total Past Due</div><div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div></div></div>
             <div class="cases-tile"><button class="resolve-btn is-done" @click="markCompleted(row.CustomerID, false)">Undo</button></div>
@@ -1379,7 +1466,7 @@
   </template>
 
   <!-- ============ SECTION 3 — Smile Doctors ============ -->
-  <template x-if="view === 'all' || view === 's3'">
+  <template x-if="isSearching ? (activeRows(section3).length + completedRows(section3).length > 0) : (view === 'all' || view === 's3')">
   <section class="coll-section" x-data="{ showCompleted: false }">
     <div class="section-header">
       <h2 class="section-title">Smile Doctors
@@ -1397,9 +1484,7 @@
 
     <template x-for="row in activeRows(section3)" :key="row.CustomerID">
       <div class="account-card"
-           :id="'card-' + row.CustomerID"
-           :class="{ promise: entry(row.CustomerID).Outcome === 'Promise to Pay' }"
-           :style="'--rail: ' + railColor(row)">
+           :id="'card-' + row.CustomerID">
         <div class="ident">
           <div class="practice" x-text="row.PracticeName || '—'"></div>
           <div class="person" x-text="row.FullName || ''"></div>
@@ -1414,7 +1499,7 @@
               <a class="email" :href="'mailto:' + row.Email" x-text="row.Email"></a>
             </template>
           </div>
-          <div class="am-row">Account Mgr<span class="value" x-text="row.SalesPerson || '—'"></span></div>
+          <div class="am-row">Account Mgr<span class="value" x-text="fmtShortName(row.SalesPerson)"></span></div>
           <template x-if="row.AccountFlag">
             <span class="flag-badge"
                   :class="{ 'flag-cod': row.AccountFlag === 'COD', 'flag-hold': row.AccountFlag === 'Credit Hold', 'flag-coll': row.AccountFlag === 'In Collection' }"
@@ -1529,10 +1614,10 @@
         <span x-text="completedRows(section3).length"></span> resolved
       </button>
     </template>
-    <template x-if="showCompleted">
+    <template x-if="showCompleted || isSearching">
       <div>
         <template x-for="row in completedRows(section3)" :key="row.CustomerID">
-          <div class="account-card completed" :style="'--rail: #D1D1D1'">
+          <div class="account-card completed">
             <div class="ident"><div class="practice" x-text="row.PracticeName"></div></div>
             <div class="bal-grid"><div class="bal-hero"><div class="bal-label">Total Past Due</div><div class="bal-value" x-text="fmtUSD(row.TotalPastDue)"></div></div></div>
             <div class="cases-tile"><button class="resolve-btn is-done" @click="markCompleted(row.CustomerID, false)">Undo</button></div>
@@ -1555,7 +1640,7 @@
         <div class="empty-state">No resolved accounts yet.</div>
       </template>
       <template x-for="row in resolvedRows()" :key="row.CustomerID">
-        <div class="account-card completed" :style="'--rail: #D1D1D1'">
+        <div class="account-card completed">
           <div class="ident">
             <div class="practice" x-text="row.PracticeName"></div>
             <div class="person" x-text="row.FullName || ''"></div>
@@ -1605,8 +1690,30 @@ function collectionsPage() {
     showAllTree: { s1: false, s2: false, s3: false },
     expanded: {},
     loading: false,
+    searchQuery: '',
     _debounce: {},
     _saveState: {},
+
+    get isSearching() {
+      return (this.searchQuery || '').trim().length > 0;
+    },
+    get _searchTerm() {
+      return (this.searchQuery || '').trim().toLowerCase();
+    },
+    matchesSearch(row) {
+      const q = this._searchTerm;
+      if (!q) return true;
+      return (row.PracticeName || '').toLowerCase().includes(q);
+    },
+    searchMatchCount() {
+      if (!this.isSearching) return 0;
+      return this.activeRows(this.section1).length
+           + this.activeRows(this.section2).length
+           + this.activeRows(this.section3).length
+           + this.completedRows(this.section1).length
+           + this.completedRows(this.section2).length
+           + this.completedRows(this.section3).length;
+    },
 
     init() {
       const seed = (rows) => rows.forEach(r => {
@@ -1643,19 +1750,16 @@ function collectionsPage() {
     },
 
     activeRows(section) {
-      return section.filter(r => (this.entry(r.CustomerID).Completed || '0') !== '1');
+      return section.filter(r =>
+        (this.entry(r.CustomerID).Completed || '0') !== '1'
+        && this.matchesSearch(r)
+      );
     },
     completedRows(section) {
-      return section.filter(r => this.entry(r.CustomerID).Completed === '1');
-    },
-
-    railColor(row) {
-      const e = this.entry(row.CustomerID);
-      if (e.Completed === '1') return '#D1D1D1';
-      if (e.Outcome === 'Promise to Pay') return 'var(--amber)';
-      if (e.Outcome) return 'var(--forest)';
-      if ((Number(row.PastDueOver90) || 0) > 5000 && !e.LastContacted) return 'var(--red)';
-      return 'var(--border)';
+      return section.filter(r =>
+        this.entry(r.CustomerID).Completed === '1'
+        && this.matchesSearch(r)
+      );
     },
 
     totalActive() {
@@ -1703,6 +1807,12 @@ function collectionsPage() {
       this.expanded[id] = !this.expanded[id];
     },
 
+    fmtShortName(name) {
+      if (!name) return '—';
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0];
+      return parts[0] + ' ' + parts[parts.length - 1][0] + '.';
+    },
     telHref(phone) { return (phone || '').toString().replace(/[^\d+]/g, ''); },
 
     fmtUSD(n) {
@@ -1751,18 +1861,6 @@ function collectionsPage() {
       if (days < 3) return 'recent';
       if (days >= 14) return 'stale';
       return '';
-    },
-
-    contactedThisWeek() {
-      let n = 0;
-      for (const id in this.logEntries) {
-        if (this.logEntries[id].Completed === '1') n++;
-      }
-      return n;
-    },
-    progressPct() {
-      if (!this.overall.count) return 0;
-      return Math.min(100, Math.round(100 * this.contactedThisWeek() / this.overall.count));
     },
 
     debouncedSaveNotes(id) {
