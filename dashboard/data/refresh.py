@@ -23,6 +23,9 @@ logger = logging.getLogger("dashboard.refresh")
 # Track which midday jobs have already fired today (reset at midnight)
 _midday_jobs_fired: set = set()  # values: ('noon', date) or ('3pm', date)
 
+# Track which 2 AM collections refresh has already fired today
+_2am_jobs_fired: set = set()  # values: ('2am', date)
+
 # SSE subscribers - routes/sse.py will register callbacks here
 _subscribers: list = []
 
@@ -117,6 +120,17 @@ def _is_business_day(d: date = None) -> bool:
     return d not in get_all_company_holidays()
 
 
+async def _run_2am_collections_refresh() -> None:
+    """Refresh collections cache from SQL. Called once at 2 AM Mon-Fri."""
+    try:
+        from dashboard.data.collections_queries import refresh_collections_cache
+        logger.info("Running 2 AM collections refresh")
+        result = await refresh_collections_cache()
+        logger.info(f"2 AM collections refresh complete: {result}")
+    except Exception as e:
+        logger.error(f"2 AM collections refresh failed: {e}")
+
+
 async def _run_midday_job(window: str) -> None:
     """Run a midday snapshot job ('noon' or '3pm') in the thread pool."""
     loop = asyncio.get_event_loop()
@@ -176,8 +190,16 @@ async def refresh_loop():
                 _midday_jobs_fired.add(pm3_key)
                 asyncio.create_task(_run_midday_job("3pm"))
 
+            # 2 AM collections refresh: fires once during the 2 AM hour Mon–Fri
+            am2_key = ("2am", today)
+            if now.hour == 2 and am2_key not in _2am_jobs_fired:
+                _2am_jobs_fired.add(am2_key)
+                asyncio.create_task(_run_2am_collections_refresh())
+
             # Clean up old keys (keep only today's)
-            old_keys = {k for k in _midday_jobs_fired if k[1] != today}
-            _midday_jobs_fired.difference_update(old_keys)
+            old_midday = {k for k in _midday_jobs_fired if k[1] != today}
+            _midday_jobs_fired.difference_update(old_midday)
+            old_2am = {k for k in _2am_jobs_fired if k[1] != today}
+            _2am_jobs_fired.difference_update(old_2am)
 
         await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
