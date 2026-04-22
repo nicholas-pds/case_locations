@@ -989,7 +989,7 @@
       <span class="date-sep" style="margin-left:4px;">
         (<span x-text="filteredMeeting.length"></span> cases)
       </span>
-      <span style="margin-left:auto; display:flex; gap:8px;" x-show="filteredMeeting.length > 0" x-cloak>
+      <span class="hide-on-mobile" style="margin-left:auto; display:flex; gap:8px;" x-show="filteredMeeting.length > 0" x-cloak>
         <button class="pres-btn" style="background:#3A3A3A;" @click="openLDExport()">&#x21E9; Export L&amp;D CSV</button>
         <button class="pres-btn" @click="openPres()">&#x229E; Presentation View</button>
       </span>
@@ -1572,7 +1572,7 @@
               @click="showCompleted = !showCompleted" style="margin-left:auto;">
         <span x-text="showCompleted ? 'Hide Completed' : 'Show Completed'"></span>
       </button>
-      <button class="preset-btn" @click="exportAM()">Export CSV</button>
+      <button class="preset-btn hide-on-mobile" @click="exportAM()">Export CSV</button>
     </div>
 
     <template x-if="filteredAM.length > 0">

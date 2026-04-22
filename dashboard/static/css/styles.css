@@ -968,3 +968,172 @@ tbody tr.overdue-row:hover { background: #FFE8E8; }
   transition: background 0.2s;
 }
 .clear-filters-btn:hover { background: #E0E0E0; color: #333; }
+
+/* ══════════════════════════════════════════════════════════
+   === Mobile / Responsive ===
+   Breakpoints:
+     900px — tablet: collapse top nav into hamburger
+     640px — phone:  single-column grids, hide non-essential UI
+   ══════════════════════════════════════════════════════════ */
+
+/* Utility classes — sprinkle on exports, refresh controls, notes editors,
+   secondary charts, and low-priority table columns */
+.hide-on-mobile { /* hidden at <= 640px */ }
+.hide-on-tablet { /* hidden at <= 900px */ }
+.mobile-only    { display: none; }
+
+/* Hamburger toggle — desktop off */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: var(--text-on-dark);
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 12px;
+  padding: 0;
+}
+.nav-toggle:hover { background: rgba(255,255,255,0.1); }
+.nav-toggle svg { width: 22px; height: 22px; }
+
+/* ─── Tablet (≤ 900px): collapse nav into a drawer ──────── */
+@media (max-width: 900px) {
+  .hide-on-tablet { display: none !important; }
+  .nav-toggle { display: inline-flex; }
+
+  .nav { padding: 0 12px; }
+  .nav-brand { margin-right: 0; flex: 1; font-size: 15px; }
+
+  .nav-links {
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 8px;
+    background: var(--bg-nav);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+    display: none;
+    z-index: 99;
+  }
+  .nav[data-open="true"] .nav-links { display: flex; }
+
+  .nav-link {
+    font-size: 15px;
+    padding: 14px 16px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+  }
+  .nav-link.active::after { display: none; }
+  .nav-link.active { background: rgba(255,255,255,0.1); }
+
+  /* Flatten the dropdown — show children inline */
+  .nav-dropdown { display: contents; }
+  .nav-dropdown > .nav-link { display: none; }
+  .nav-dropdown-menu {
+    display: block;
+    position: static;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+  .nav-dropdown-menu .nav-link { padding-left: 16px; }
+
+  .nav-meta {
+    gap: 8px;
+    margin-left: 0;
+  }
+  /* Keep the freshness badge, drop the manual-refresh button and bare Logout
+     (Logout is still reachable via the hamburger drawer, added in base.html) */
+  .nav-meta .nav-refresh-btn,
+  .nav-meta > a[href="/logout"] { display: none; }
+  .nav-badge { font-size: 11px; padding: 4px 10px; }
+}
+
+/* ─── Phone (≤ 640px): stack everything ─────────────────── */
+@media (max-width: 640px) {
+  .hide-on-mobile { display: none !important; }
+  .mobile-only { display: initial; }
+
+  body { font-size: 13px; }
+
+  /* Page-level spacing */
+  .page-content { padding: 12px; }
+  .page-header { flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .page-title { font-size: 17px; }
+
+  /* Stack all known grids to a single column */
+  .split-layout,
+  .two-col,
+  .pace-grid,
+  .daily-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px;
+  }
+  /* Grid items default to min-width:auto (min-content), which lets wide
+     tables push the column beyond viewport. Force 0 so the column stays
+     inside the viewport and the table scrolls inside its wrapper. */
+  .split-left, .split-right, .two-col > *, .daily-row > * {
+    min-width: 0;
+  }
+  .split-right {
+    position: static;
+    max-height: none;
+  }
+  /* Defensive: any chart/table wrapper should never exceed viewport */
+  .chart-container, .table-container, .card { max-width: 100%; min-width: 0; }
+
+  /* Metric/summary card grids — !important needed because workload_summary
+     partial sets grid-template-columns inline. */
+  .summary-cards { grid-template-columns: 1fr !important; gap: 12px; }
+  .location-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .location-card { padding: 12px 8px; }
+  .donut { width: 64px; height: 64px; }
+  .donut-center { width: 44px; height: 44px; font-size: 17px; }
+
+  /* Pace tiles */
+  .pace-card { padding: 14px 12px; }
+  .pace-fraction { font-size: 20px; }
+  /* Compact pace inside a charts row collapses too */
+  .pace-compact .pace-grid { grid-template-columns: 1fr; gap: 6px; }
+
+  /* Charts — shrink heights so multiple charts fit without huge scroll */
+  .chart-container { padding: 14px; margin-bottom: 14px; }
+  .chart-container canvas { max-height: 240px !important; }
+
+  /* Tables — readable but allow horizontal scroll for overflow */
+  .table-header-bar { padding: 10px 12px; gap: 8px; }
+  .table-scroll { -webkit-overflow-scrolling: touch; }
+  thead th { padding: 8px 10px; font-size: 11px; }
+  tbody td { padding: 6px 10px; font-size: 12px; }
+  .customer-table-wrap table { min-width: 0; }
+
+  /* Filter inputs — stretch to row width instead of fixed 200px */
+  .search-input { width: 100%; max-width: 100%; }
+  .filter-bar { gap: 6px; }
+  .filter-bar .btn { height: 40px; padding: 0 12px; font-size: 12px; }
+
+  /* Big badges shrink */
+  .total-badge { padding: 10px 16px; }
+  .total-badge-count { font-size: 24px; }
+
+  /* Tap targets inside tables/cards — at least 44px */
+  .table-footer button,
+  .btn { min-height: 40px; }
+
+  /* Banners */
+  .banner { padding: 8px 12px; font-size: 12px; }
+}

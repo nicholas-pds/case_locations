@@ -317,3 +317,36 @@
   padding: 0 22px 12px;
   font-family: 'Barlow', sans-serif;
 }
+
+/* ─── Mobile (≤ 640px) ────────────────────────────────────
+   Stack metric cards, shrink title, collapse header layout.
+   Secondary charts + Edit Goals button are hidden at the
+   template level via .hide-on-mobile.
+   ───────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .ds-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-left: 12px;
+    margin-bottom: 18px;
+  }
+  .ds-page-title { font-size: 24px; }
+  .ds-page-date { font-size: 12px; }
+  .ds-header-right { align-items: flex-start; }
+
+  .ds-cards {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .ds-card { padding: 16px 20px; }
+  .ds-card-value { font-size: 40px; }
+
+  .ds-chart-container { padding: 14px; }
+  .ds-chart-container canvas { max-height: 240px !important; }
+  .ds-chart-title { font-size: 14px; }
+  .ds-chart-subtitle { font-size: 11px; }
+
+  .ds-legend { flex-wrap: wrap; gap: 8px; font-size: 11px; }
+}
