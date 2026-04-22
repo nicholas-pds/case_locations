@@ -17,7 +17,7 @@
         <div class="eff-subtitle" x-text="getSubtitleDate()"></div>
       </div>
     </div>
-    <div class="eff-header-actions">
+    <div class="eff-header-actions hide-on-mobile">
       <span x-show="uploadStatus" x-text="uploadStatus"
             :class="uploadError ? 'eff-error' : 'eff-success'"></span>
       <label class="eff-btn eff-btn-upload" x-show="activeTab === 'daily'">

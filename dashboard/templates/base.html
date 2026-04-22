@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Dashboard{% endblock %} - Partners Dental</title>
-  <link rel="stylesheet" href="/static/css/styles.css?v=8">
+  <link rel="stylesheet" href="/static/css/styles.css?v=9">
   {% block extra_css %}{% endblock %}
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
   <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
@@ -13,9 +13,17 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body hx-ext="sse" sse-connect="/sse/stream">
-  <nav class="nav">
+  <nav class="nav" x-data="{ navOpen: false }" :data-open="navOpen" @click.outside="navOpen = false">
+    <button type="button"
+            class="nav-toggle"
+            @click="navOpen = !navOpen"
+            :aria-expanded="navOpen"
+            aria-label="Toggle navigation menu">
+      <svg x-show="!navOpen" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <svg x-show="navOpen" x-cloak xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
     <a href="/" class="nav-brand">Partners Dental</a>
-    <div class="nav-links">
+    <div class="nav-links" @click="navOpen = false">
       <a href="/daily-summary" class="nav-link {% if active_page == 'daily-summary' %}active{% endif %}">Daily Summary</a>
       <a href="/case-locations" class="nav-link {% if active_page == 'main' %}active{% endif %}">Case Locations</a>
       <a href="/workload" class="nav-link {% if active_page == 'workload' %}active{% endif %}">Workload</a>
@@ -31,6 +39,7 @@
       <a href="/customers" class="nav-link {% if active_page == 'customers' %}active{% endif %}">Customers</a>
       <a href="/efficiency" class="nav-link {% if active_page == 'efficiency' %}active{% endif %}">Efficiency</a>
       <a href="/remakes" class="nav-link {% if active_page == 'remakes' %}active{% endif %}">Remakes</a>
+      <a href="/logout" class="nav-link mobile-only">Logout</a>
     </div>
     <div class="nav-meta">
       <button class="nav-refresh-btn" onclick="window.location.reload()" title="Refresh page">

@@ -507,7 +507,7 @@
   </div>
   <div class="ds-header-right">
     <span class="ds-page-date" id="ds-today-date"></span>
-    <button class="ds-goals-btn" @click="openGoalsModal()">Edit Revenue Goals</button>
+    <button class="ds-goals-btn hide-on-mobile" @click="openGoalsModal()">Edit Revenue Goals</button>
   </div>
 </div>
 <script>
@@ -545,7 +545,7 @@
   </div>
   {% endif %}
 
-  <div class="chart-container pace-compact" style="margin-bottom: 0;">
+  <div class="chart-container pace-compact hide-on-mobile" style="margin-bottom: 0;">
     <h3 class="chart-section-title">Invoicing Pace</h3>
     {% include "partials/workload_pace.html" %}
   </div>
@@ -571,7 +571,7 @@
 </div>
 
 <!-- Row 3: Monthly Summary | Daily Sales -->
-<div class="daily-row" style="margin-top: 20px;">
+<div class="daily-row hide-on-mobile" style="margin-top: 20px;">
   <div class="ds-chart-container">
     <h3 class="ds-chart-title">Monthly Sales Summary</h3>
     <p class="ds-chart-subtitle">Last 18 months &mdash; invoice revenue + 3-month trend</p>
@@ -585,7 +585,7 @@
 </div>
 
 <!-- Row 4: Monthly Goals | Annual Goals -->
-<div class="daily-row" style="margin-top: 20px;">
+<div class="daily-row hide-on-mobile" style="margin-top: 20px;">
   <div class="ds-chart-container">
     <h3 class="ds-chart-title">Monthly Revenue Goals &mdash; {{ monthly_goals_year }}</h3>
     <p class="ds-chart-subtitle">Gray = goal &nbsp;|&nbsp; Colored = actual</p>

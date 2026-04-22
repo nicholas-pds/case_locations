@@ -7,7 +7,7 @@
     <h1 class="page-title">Customers</h1>
     <div style="display: flex; align-items: center; gap: 12px;">
       <span class="customer-count" x-show="!loading" x-text="filteredCount + ' of ' + customers.length + ' customers'"></span>
-      <button class="export-btn" @click="exportCsv()" x-show="!loading">Export CSV</button>
+      <button class="export-btn hide-on-mobile" @click="exportCsv()" x-show="!loading">Export CSV</button>
     </div>
   </div>
 

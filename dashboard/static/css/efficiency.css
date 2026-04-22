@@ -1158,3 +1158,51 @@
   color: var(--eff-red-brand);
   border-bottom-color: var(--eff-red-brand);
 }
+
+/* ═══════════════════════════════════════════════════════
+   Mobile ≤ 640px — efficiency-specific stacking
+   Complements global breakpoints in styles.css.
+   ═══════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .eff-page-wrapper { padding: 0 !important; }
+  .eff-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0;
+  }
+  .eff-logo-area { width: 100%; }
+  .eff-title { font-size: 18px; }
+  .eff-subtitle { font-size: 11px; }
+
+  /* Collapse action buttons further — most are export/edit, hidden via
+     .hide-on-mobile on the template. What remains should wrap. */
+  .eff-header-actions { flex-wrap: wrap; gap: 6px; }
+
+  /* Tabs — allow horizontal scroll rather than wrap, since there are 8 */
+  .eff-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .eff-tabs::-webkit-scrollbar { display: none; }
+  .eff-tab {
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+
+  /* KPI cards — stack to single column at phone width */
+  .eff-kpi-row { grid-template-columns: 1fr !important; gap: 10px; }
+  .eff-kpi-card { padding: 12px 14px; }
+
+  /* Filter bar */
+  .eff-filter-bar { flex-wrap: wrap; gap: 6px; }
+  .eff-filter-select, .eff-filter-input { width: 100%; }
+
+  /* Data tables — let them scroll horizontally inside their container */
+  .eff-table-wrap, .eff-table-container { overflow-x: auto; }
+  .eff-table th, .eff-table td { padding: 6px 8px; font-size: 11px; }
+}
