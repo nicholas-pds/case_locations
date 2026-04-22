@@ -291,16 +291,14 @@ def get_cached_collections() -> dict:
 _EXPORT_COLUMNS = [
     "PracticeName", "DentalGroup", "FullName", "OfficePhone", "Email",
     "SalesPerson", "LastPaymentDate", "LastPaymentAmount",
-    "UnApplied", "ThisPeriod", "CurrentBalance",
-    "PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
+    "CurrentBalance", "PastDue60", "PastDue90", "PastDueOver90",
     "TotalPastDue", "TotalBalance",
     "AccountFlag", "OpenCaseCount",
-    "LastContacted", "Outcome", "WhoLogged", "Notes", "Completed",
 ]
 _MONEY_COLS = {
-    "UnApplied", "ThisPeriod", "CurrentBalance",
-    "PastDue30", "PastDue60", "PastDue90", "PastDueOver90",
-    "TotalPastDue", "TotalBalance", "LastPaymentAmount",
+    "LastPaymentAmount", "CurrentBalance",
+    "PastDue60", "PastDue90", "PastDueOver90",
+    "TotalPastDue", "TotalBalance",
 }
 
 
@@ -329,14 +327,7 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
         if align: c.alignment = align
         return c
 
-    def _merge(df: pd.DataFrame) -> pd.DataFrame:
-        df = df.copy()
-        for col, key in [("LastContacted", "LastContacted"), ("Outcome", "Outcome"),
-                         ("WhoLogged", "WhoLogged"), ("Notes", "Notes")]:
-            df[col] = df["CustomerID"].map(
-                lambda cid, k=key: log_dict.get(str(cid), {}).get(k, ""))
-        df["Completed"] = df["CustomerID"].map(
-            lambda cid: "Yes" if log_dict.get(str(cid), {}).get("Completed") == "1" else "")
+    def _select(df: pd.DataFrame) -> pd.DataFrame:
         cols = [c for c in _EXPORT_COLUMNS if c in df.columns]
         return df[cols]
 
@@ -359,18 +350,17 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
 
     now = datetime.now()
     report_date = now.strftime("%B %d, %Y").replace(" 0", " ")
-    generated_str = now.strftime("%B %d, %Y at %I:%M %p").replace(" 0", " ").replace("AM", "AM").replace("PM", "PM")
+    generated_str = now.strftime("%B %d, %Y at %I:%M %p").replace(" 0", " ")
     desc = (
         f"This workbook contains all accounts with 90+ day past due balances as of {report_date}. "
-        "Accounts are split into three tabs: General Aging (balances \u2265 $500), "
-        "Small Balances (balances < $500), and Smile Doctors (all Smile Doctors network accounts)."
+        "Accounts are split into three tabs: General Aging, Small Balances, and Smile Doctors."
     )
 
     buf = BytesIO()
     data_sheets = [
-        ("General Aging", _merge(s1) if not s1.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
-        ("Small Balances", _merge(s2) if not s2.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
-        ("Smile Doctors",  _merge(s3) if not s3.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
+        ("General Aging", _select(s1) if not s1.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
+        ("Small Balances", _select(s2) if not s2.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
+        ("Smile Doctors",  _select(s3) if not s3.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
     ]
 
     with pd.ExcelWriter(buf, engine="openpyxl") as xw:
@@ -381,9 +371,8 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
             ws.freeze_panes = "A2"
             ws.row_dimensions[1].height = 28
 
-            # header row styling
-            hdr_font = _font(size=11, bold=True, color=_C_WHITE)
-            hdr_fill = _fill(_C_DARK)
+            hdr_font  = _font(size=11, bold=True, color=_C_WHITE)
+            hdr_fill  = _fill(_C_DARK)
             hdr_align = Alignment(vertical="center", wrap_text=False)
             for col_idx in range(1, ws.max_column + 1):
                 c = ws.cell(row=1, column=col_idx)
@@ -391,7 +380,6 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
                 c.fill      = hdr_fill
                 c.alignment = hdr_align
 
-            # column widths + money format
             for col_idx, col_name in enumerate(_EXPORT_COLUMNS, start=1):
                 if col_idx > ws.max_column:
                     break
@@ -410,33 +398,26 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
         ws_s.column_dimensions["C"].width = 30
         ws_s.column_dimensions["D"].width = 3
 
-        row_heights = {1: 10, 2: 32, 3: 18, 5: 6, 6: 22, 7: 18,
-                       9: 38, 10: 20, 11: 38, 12: 20, 14: 20, 15: 24, 17: 60}
-        for r, h in row_heights.items():
+        for r, h in {1: 10, 2: 32, 3: 18, 5: 6, 6: 22, 7: 18,
+                     9: 38, 10: 20, 11: 38, 12: 20, 14: 20, 15: 24, 17: 60}.items():
             ws_s.row_dimensions[r].height = h
 
         light_fill  = _fill(_C_LIGHT)
         wrap_center = Alignment(horizontal="center", vertical="center", wrap_text=False)
         wrap_left   = Alignment(horizontal="left",   vertical="top",    wrap_text=True)
 
-        # title + subtitle
         _cell(ws_s, 2, 2, "PARTNERS DENTAL SOLUTIONS",
               font=_font(20, bold=True, color=_C_DARK))
         _cell(ws_s, 3, 2, "COLLECTIONS REPORT",
               font=_font(11, bold=True, color=_C_RED))
-
-        # report date
         _cell(ws_s, 6, 2, "REPORT DATE",
               font=_font(9, bold=True, color=_C_GRAY))
-        _cell(ws_s, 7, 2, f"{report_date} | Generated: {generated_str}",
+        _cell(ws_s, 7, 2, f"{report_date}    |    Generated: {generated_str}",
               font=_font(10, bold=False, color=_C_DGRAY))
 
-        # metric numbers row 9 (bg light)
         for col in (2, 3):
-            ws_s.cell(row=9,  column=col).fill = light_fill
-            ws_s.cell(row=10, column=col).fill = light_fill
-            ws_s.cell(row=11, column=col).fill = light_fill
-            ws_s.cell(row=12, column=col).fill = light_fill
+            for row in (9, 10, 11, 12):
+                ws_s.cell(row=row, column=col).fill = light_fill
 
         _cell(ws_s, 9,  2, total_accounts,
               font=_font(26, bold=True, color=_C_RED), align=wrap_center)
@@ -444,7 +425,7 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
               font=_font(26, bold=True, color=_C_RED), align=wrap_center)
         _cell(ws_s, 10, 2, "ACCOUNTS",
               font=_font(9, bold=True, color=_C_GRAY), align=wrap_center)
-        _cell(ws_s, 10, 3, "OPEN CASES",
+        _cell(ws_s, 10, 3, "CASES IN PRODUCTION",
               font=_font(9, bold=True, color=_C_GRAY), align=wrap_center)
         _cell(ws_s, 11, 2, f"${pd90:,.0f}",
               font=_font(26, bold=True, color=_C_RED), align=wrap_center)
@@ -454,14 +435,10 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
               font=_font(9, bold=True, color=_C_GRAY), align=wrap_center)
         _cell(ws_s, 12, 3, "PAST DUE 90+ DAY",
               font=_font(9, bold=True, color=_C_GRAY), align=wrap_center)
-
-        # buckets
         _cell(ws_s, 14, 2, "BUCKETS",
               font=_font(11, bold=True, color=_C_DARK))
-        _cell(ws_s, 15, 2, f"General Aging: {n1}  |  Small Balances: {n2}  |  Smile Doctors: {n3}",
+        _cell(ws_s, 15, 2, f"General Aging: {n1}    |    Small Balances: {n2}    |    Smile Doctors: {n3}",
               font=_font(11, bold=True, color=_C_DARK))
-
-        # description
         _cell(ws_s, 17, 2, desc,
               font=_font(10, bold=False, color=_C_DGRAY), align=wrap_left)
 
