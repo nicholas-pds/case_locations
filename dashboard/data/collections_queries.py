@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 import pyodbc
+from openpyxl.styles import Font, PatternFill, Alignment
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -305,7 +306,28 @@ _MONEY_COLS = {
 
 def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
                           s3: pd.DataFrame, log_dict: dict) -> BytesIO:
-    """Return BytesIO XLSX with three sheets — one per collection bucket."""
+    """Return BytesIO XLSX with Summary + three data sheets."""
+
+    # ── style constants ────────────────────────────────────────────────────────
+    _C_DARK  = "1A1A1A"
+    _C_RED   = "C41227"
+    _C_GRAY  = "666666"
+    _C_DGRAY = "333333"
+    _C_LIGHT = "F9FAFB"
+    _C_WHITE = "FFFFFF"
+
+    def _font(size=11, bold=False, color=_C_DARK, name="Calibri"):
+        return Font(name=name, size=size, bold=bold, color=color)
+
+    def _fill(hex_color):
+        return PatternFill("solid", fgColor=hex_color)
+
+    def _cell(ws, row, col, value, font=None, fill=None, align=None):
+        c = ws.cell(row=row, column=col, value=value)
+        if font:  c.font  = font
+        if fill:  c.fill  = fill
+        if align: c.alignment = align
+        return c
 
     def _merge(df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
@@ -318,19 +340,58 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
         cols = [c for c in _EXPORT_COLUMNS if c in df.columns]
         return df[cols]
 
+    # ── summary metrics ────────────────────────────────────────────────────────
+    def _safe_sum(df, col):
+        if df.empty or col not in df.columns:
+            return 0.0
+        return float(df[col].fillna(0).astype(float).sum())
+
+    n1, n2, n3 = len(s1), len(s2), len(s3)
+    total_accounts = n1 + n2 + n3
+    total_cases = int(
+        _safe_sum(s1, "OpenCaseCount") +
+        _safe_sum(s2, "OpenCaseCount") +
+        _safe_sum(s3, "OpenCaseCount")
+    )
+    pd90 = _safe_sum(s1, "PastDue90") + _safe_sum(s2, "PastDue90") + _safe_sum(s3, "PastDue90")
+    pd90_plus = (_safe_sum(s1, "PastDueOver90") + _safe_sum(s2, "PastDueOver90")
+                 + _safe_sum(s3, "PastDueOver90"))
+
+    now = datetime.now()
+    report_date = now.strftime("%B %d, %Y").replace(" 0", " ")
+    generated_str = now.strftime("%B %d, %Y at %I:%M %p").replace(" 0", " ").replace("AM", "AM").replace("PM", "PM")
+    desc = (
+        f"This workbook contains all accounts with 90+ day past due balances as of {report_date}. "
+        "Accounts are split into three tabs: General Aging (balances \u2265 $500), "
+        "Small Balances (balances < $500), and Smile Doctors (all Smile Doctors network accounts)."
+    )
+
     buf = BytesIO()
-    sheets = [
+    data_sheets = [
         ("General Aging", _merge(s1) if not s1.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
         ("Small Balances", _merge(s2) if not s2.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
-        ("Smile Doctors", _merge(s3) if not s3.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
+        ("Smile Doctors",  _merge(s3) if not s3.empty else pd.DataFrame(columns=_EXPORT_COLUMNS)),
     ]
 
     with pd.ExcelWriter(buf, engine="openpyxl") as xw:
-        for sheet_name, df in sheets:
+        # ── data sheets ───────────────────────────────────────────────────────
+        for sheet_name, df in data_sheets:
             df.to_excel(xw, sheet_name=sheet_name, index=False)
             ws = xw.sheets[sheet_name]
             ws.freeze_panes = "A2"
-            # Column widths + number format
+            ws.row_dimensions[1].height = 28
+
+            # header row styling
+            hdr_font = _font(size=11, bold=True, color=_C_WHITE)
+            hdr_fill = _fill(_C_DARK)
+            hdr_align = Alignment(vertical="center", wrap_text=False)
+            for col_idx in range(1, ws.max_column + 1):
+                c = ws.cell(row=1, column=col_idx)
+                c.font      = hdr_font
+                c.fill      = hdr_fill
+                c.alignment = hdr_align
+
+            # column widths + money format
             for col_idx, col_name in enumerate(_EXPORT_COLUMNS, start=1):
                 if col_idx > ws.max_column:
                     break
@@ -339,5 +400,70 @@ def build_export_workbook(s1: pd.DataFrame, s2: pd.DataFrame,
                 if col_name in _MONEY_COLS:
                     for row_idx in range(2, ws.max_row + 1):
                         ws.cell(row=row_idx, column=col_idx).number_format = '"$"#,##0.00'
+
+        # ── summary sheet (inserted first) ────────────────────────────────────
+        wb = xw.book
+        ws_s = wb.create_sheet("Summary", 0)
+
+        ws_s.column_dimensions["A"].width = 3
+        ws_s.column_dimensions["B"].width = 30
+        ws_s.column_dimensions["C"].width = 30
+        ws_s.column_dimensions["D"].width = 3
+
+        row_heights = {1: 10, 2: 32, 3: 18, 5: 6, 6: 22, 7: 18,
+                       9: 38, 10: 20, 11: 38, 12: 20, 14: 20, 15: 24, 17: 60}
+        for r, h in row_heights.items():
+            ws_s.row_dimensions[r].height = h
+
+        light_fill  = _fill(_C_LIGHT)
+        wrap_center = Alignment(horizontal="center", vertical="center", wrap_text=False)
+        wrap_left   = Alignment(horizontal="left",   vertical="top",    wrap_text=True)
+
+        # title + subtitle
+        _cell(ws_s, 2, 2, "PARTNERS DENTAL SOLUTIONS",
+              font=_font(20, bold=True, color=_C_DARK))
+        _cell(ws_s, 3, 2, "COLLECTIONS REPORT",
+              font=_font(11, bold=True, color=_C_RED))
+
+        # report date
+        _cell(ws_s, 6, 2, "REPORT DATE",
+              font=_font(9, bold=True, color=_C_GRAY))
+        _cell(ws_s, 7, 2, f"{report_date} | Generated: {generated_str}",
+              font=_font(10, bold=False, color=_C_DGRAY))
+
+        # metric numbers row 9 (bg light)
+        for col in (2, 3):
+            ws_s.cell(row=9,  column=col).fill = light_fill
+            ws_s.cell(row=10, column=col).fill = light_fill
+            ws_s.cell(row=11, column=col).fill = light_fill
+            ws_s.cell(row=12, column=col).fill = light_fill
+
+        _cell(ws_s, 9,  2, total_accounts,
+              font=_font(26, bold=True, color=_C_RED), align=wrap_center)
+        _cell(ws_s, 9,  3, total_cases,
+              font=_font(26, bold=True, color=_C_RED), align=wrap_center)
+        _cell(ws_s, 10, 2, "ACCOUNTS",
+              font=_font(9, bold=True, color=_C_GRAY), align=wrap_center)
+        _cell(ws_s, 10, 3, "OPEN CASES",
+              font=_font(9, bold=True, color=_C_GRAY), align=wrap_center)
+        _cell(ws_s, 11, 2, f"${pd90:,.0f}",
+              font=_font(26, bold=True, color=_C_RED), align=wrap_center)
+        _cell(ws_s, 11, 3, f"${pd90_plus:,.0f}",
+              font=_font(26, bold=True, color=_C_RED), align=wrap_center)
+        _cell(ws_s, 12, 2, "PAST DUE 90-DAY",
+              font=_font(9, bold=True, color=_C_GRAY), align=wrap_center)
+        _cell(ws_s, 12, 3, "PAST DUE 90+ DAY",
+              font=_font(9, bold=True, color=_C_GRAY), align=wrap_center)
+
+        # buckets
+        _cell(ws_s, 14, 2, "BUCKETS",
+              font=_font(11, bold=True, color=_C_DARK))
+        _cell(ws_s, 15, 2, f"General Aging: {n1}  |  Small Balances: {n2}  |  Smile Doctors: {n3}",
+              font=_font(11, bold=True, color=_C_DARK))
+
+        # description
+        _cell(ws_s, 17, 2, desc,
+              font=_font(10, bold=False, color=_C_DGRAY), align=wrap_left)
+
     buf.seek(0)
     return buf
