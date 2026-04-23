@@ -2,7 +2,7 @@
 {% block title %}Case Locations{% endblock %}
 
 {% block content %}
-<div x-data="{ activeFilter: null, selectedLocation: '', selectedCategory: '', selectedShipDate: '' }">
+<div id="case-locations-root" x-data="{ activeFilter: null, selectedLocation: '', selectedCategory: '', selectedShipDate: '' }">
 
   <!-- Filter Bar -->
   <div class="page-header">
@@ -138,7 +138,7 @@
 function exportTilesPDF() {
   // Collect filters
   var filters = [];
-  var alpineData = Alpine.$data(document.querySelector('[x-data]'));
+  var alpineData = Alpine.$data(document.getElementById('case-locations-root'));
   if (alpineData.activeFilter) {
     var labels = {rush: 'Rush', overdue: 'Overdue', leaves_today: 'Leaves Today'};
     filters.push(labels[alpineData.activeFilter] || alpineData.activeFilter);
