@@ -7,7 +7,6 @@ from dashboard.data.transforms import (
     build_workload_chart_data,
     build_workload_pace_data,
     build_sales_history,
-    aggregate_airway_stages,
     build_monthly_sales_chart,
     build_daily_sales_chart,
     build_monthly_goals_chart,
@@ -48,12 +47,10 @@ async def daily_summary_page(request: Request):
         'labels': [], 'invoiced': [], 'in_production': []
     }
     total_in_production = sum(chart_data['in_production'])
+    total_invoiced = sum(chart_data['invoiced'])
+    denom = total_invoiced + total_in_production
+    invoice_pace_pct = round(total_invoiced / denom * 100) if denom > 0 else 0
     pace_data = build_workload_pace_data(status_df) if status_df is not None else []
-
-    # Airway planning count (same as airway workflow page badge)
-    airway_df = await cache.get("airway_workflow")
-    stages = aggregate_airway_stages(airway_df) if airway_df is not None else {}
-    airway_planning_count = sum(s['total'] for group in stages.values() for s in group)
 
     # New charts: monthly sales + goals
     monthly_df = await cache.get("monthly_sales")
@@ -76,7 +73,7 @@ async def daily_summary_page(request: Request):
         "sales_history": sales_history,
         "sales_history_json": json.dumps(sales_history),
         "total_in_production": total_in_production,
-        "airway_planning_count": airway_planning_count,
+        "invoice_pace_pct": invoice_pace_pct,
         "pace_data": pace_data,
         "workload_chart_json": json.dumps(chart_data),
         "monthly_chart_json": json.dumps(monthly_chart),
