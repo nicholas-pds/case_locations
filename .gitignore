@@ -46,6 +46,7 @@ output/
 !User_Inputs/employee_lkups.csv
 !User_Inputs/tech_constants.csv
 !User_Inputs/revenue_goals.csv
+!User_Inputs/teams.csv
 
 # Efficiency data (runtime-generated, not source controlled)
 dashboard/data/efficiency_data/*.parquet

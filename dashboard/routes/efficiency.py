@@ -10,6 +10,7 @@ from dashboard.data.efficiency_store import (
     load_daily, load_aggregated, load_midday, save_midday,
     load_tech_constants, save_tech_constants,
     load_employee_lkups, save_employee_lkups,
+    load_teams, save_teams, apply_team_renames, TEAM_RENAME_MAP,
 )
 from dashboard.data.efficiency_processing import run_full_upload, process_midday_snapshot, backfill_midday_history
 from dashboard.data.airway_queries import fetch_airway_tasks
@@ -75,13 +76,8 @@ async def efficiency_page(request: Request):
     if not daily_df.empty:
         daily_df = daily_df.sort_values(["Date", "MT Name"], ascending=[False, True])
 
-    # Get unique teams for filter dropdown (from daily data, exclude z_Not On Report)
-    teams = []
-    if not daily_df.empty and "Team" in daily_df.columns:
-        teams = sorted([
-            t for t in daily_df["Team"].dropna().unique().tolist()
-            if t and t != "z_Not On Report"
-        ])
+    # Team list driven by teams.csv (not derived from data — canonical config)
+    teams = load_teams()
 
     # Get MM EFF column labels (all efficiency period columns)
     mm_eff_cols = []
@@ -299,3 +295,55 @@ async def save_employees(request: Request):
     except Exception as e:
         logger.error(f"Save employees failed: {e}")
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
+
+
+@router.get("/efficiency/teams")
+async def get_teams():
+    """Return team list with employee counts."""
+    teams = load_teams()
+    lkups = load_employee_lkups()
+    counts: dict = {}
+    if not lkups.empty and "Team" in lkups.columns:
+        counts = lkups["Team"].value_counts().to_dict()
+    return JSONResponse({"teams": teams, "counts": counts})
+
+
+@router.post("/efficiency/teams")
+async def save_teams_route(request: Request):
+    """
+    Save updated team list and apply any renames.
+    Payload: {"teams": [{"original": str|null, "name": str}, ...]}
+    Renames trigger reprocess of daily/parquet data.
+    """
+    try:
+        data = await request.json()
+        rows = data.get("teams", [])
+        rename_map = {
+            r["original"]: r["name"]
+            for r in rows
+            if r.get("original") and r["original"] != r["name"]
+        }
+        new_names = [r["name"] for r in rows if r.get("name", "").strip()]
+        save_teams(new_names)
+        result: dict = {"status": "ok", "teams": len(new_names)}
+        if rename_map:
+            from dashboard.data.efficiency_processing import reprocess_with_employee_lkups
+            result["migration"] = apply_team_renames(rename_map)
+            result["reprocess"] = reprocess_with_employee_lkups()
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"Save teams failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
+
+
+@router.post("/efficiency/migrate-teams")
+async def migrate_teams_once():
+    """One-time migration: apply TEAM_RENAME_MAP to all historical data."""
+    try:
+        from dashboard.data.efficiency_processing import reprocess_with_employee_lkups
+        stats = apply_team_renames(TEAM_RENAME_MAP)
+        result = reprocess_with_employee_lkups()
+        return JSONResponse({"status": "ok", "migration": stats, "reprocess": result})
+    except Exception as e:
+        logger.error(f"migrate_teams_once failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)

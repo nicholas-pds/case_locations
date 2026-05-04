@@ -24,6 +24,19 @@ _CONSTANTS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "tech_co
 # Employee lookups CSV
 _EMPLOYEE_LKUPS_PATH = Path(__file__).parent.parent.parent / "User_Inputs" / "employee_lkups.csv"
 
+# Teams CSV
+_TEAMS_CSV = Path(__file__).parent.parent.parent / "User_Inputs" / "teams.csv"
+_SYSTEM_TEAMS = {"z_Not On Report", "z_Unknown"}
+
+TEAM_RENAME_MAP: dict[str, str] = {
+    "ACRYLIC":    "Metal",
+    "BAnding":    "Metal",
+    "BEnding":    "Metal",
+    "Welding":    "Metal",
+    "ESSIX":      "Essix",
+    "MF & Marpe": "Marpe",
+}
+
 
 _TEAM_FIX_NAMES = {
     "Albert Cherniavskyi", "Andrii Mishyn", "Don William",
@@ -186,3 +199,61 @@ def save_employee_lkups(df: pd.DataFrame) -> None:
     """Write employee lookups back to CSV."""
     df.to_csv(_EMPLOYEE_LKUPS_PATH, index=False)
     logger.info(f"Saved employee lookups: {len(df)} rows")
+
+
+# ─────────────────────────────────────────────
+# Teams (CSV-based)
+# ─────────────────────────────────────────────
+
+def load_teams() -> list[str]:
+    """Return sorted production team names from teams.csv. Falls back to employee_lkups if CSV missing."""
+    if _TEAMS_CSV.exists():
+        try:
+            df = pd.read_csv(_TEAMS_CSV, dtype=str)
+            return sorted(df["Team"].dropna().str.strip().tolist())
+        except Exception as e:
+            logger.warning(f"Failed to read teams CSV: {e}")
+    lkups = load_employee_lkups()
+    if not lkups.empty:
+        return sorted([t for t in lkups["Team"].dropna().unique() if t not in _SYSTEM_TEAMS])
+    return []
+
+
+def save_teams(teams: list[str]) -> None:
+    pd.DataFrame({"Team": sorted(set(t.strip() for t in teams if t.strip()))}).to_csv(_TEAMS_CSV, index=False)
+    logger.info(f"Saved teams: {teams}")
+
+
+def apply_team_renames(rename_map: dict[str, str]) -> dict:
+    """Apply rename_map to daily/noon/3pm parquets and employee_lkups.csv in-place."""
+    if not rename_map:
+        return {}
+    stats: dict[str, int] = {}
+
+    def _rename(df: pd.DataFrame) -> pd.DataFrame:
+        if not df.empty and "Team" in df.columns:
+            df = df.copy()
+            df["Team"] = df["Team"].replace(rename_map)
+        return df
+
+    daily = _rename(load_daily())
+    if not daily.empty:
+        save_daily(daily)
+        stats["daily"] = len(daily)
+
+    for window in ("noon", "3pm"):
+        mid = _rename(load_midday(window))
+        if not mid.empty and "Data_Date" in mid.columns:
+            for dt in mid["Data_Date"].unique():
+                save_midday(window, mid[mid["Data_Date"] == dt].copy())
+            stats[window] = len(mid)
+
+    lkups = load_employee_lkups()
+    if not lkups.empty:
+        lkups = lkups.copy()
+        lkups["Team"] = lkups["Team"].replace(rename_map)
+        save_employee_lkups(lkups)
+        stats["lkups"] = len(lkups)
+
+    logger.info(f"apply_team_renames: {rename_map} → {stats}")
+    return stats

@@ -32,6 +32,7 @@
       <button class="eff-btn eff-btn-primary" @click="export3dDesignPdf()" x-show="activeTab === 'noon' || activeTab === '3pm'">Export 3D Design PDF</button>
       <button class="eff-btn eff-btn-secondary" @click="openConstantsModal()" x-show="activeTab === 'noon' || activeTab === '3pm'">Edit Constants</button>
       <button class="eff-btn eff-btn-secondary" @click="openEmployeesModal()" x-show="activeTab === 'daily'">Edit Employees</button>
+      <button class="eff-btn eff-btn-secondary" @click="openTeamsModal()" x-show="activeTab === 'daily'">Manage Teams</button>
       <button class="eff-btn eff-btn-secondary" @click="refreshMidday()" x-show="activeTab === 'noon' || activeTab === '3pm'">Refresh Data</button>
       <a class="eff-btn eff-btn-secondary" href="/efficiency/export/mm" x-show="activeTab === 'mm'">Download CSV</a>
     </div>
@@ -1107,17 +1108,9 @@
               <td>
                 <select x-model="row.Team" class="eff-modal-select" style="width:100%;">
                   <option value="">—</option>
-                  <option value="3D Design">3D Design</option>
-                  <option value="3D Manufacturing">3D Manufacturing</option>
-                  <option value="ACRYLIC">ACRYLIC</option>
-                  <option value="Airway">Airway</option>
-                  <option value="BAnding">BAnding</option>
-                  <option value="BEnding">BEnding</option>
-                  <option value="ESSIX">ESSIX</option>
-                  <option value="Finishing">Finishing</option>
-                  <option value="MF &amp; Marpe">MF &amp; Marpe</option>
-                  <option value="QC">QC</option>
-                  <option value="Welding">Welding</option>
+                  <template x-for="t in availableTeams" :key="t">
+                    <option :value="t" x-text="t"></option>
+                  </template>
                   <option value="z_Not On Report">z_Not On Report</option>
                 </select>
               </td>
@@ -1143,6 +1136,55 @@
         <button @click="showEmployeesModal = false" class="eff-modal-btn eff-modal-btn-secondary">Cancel</button>
       </div>
       <p x-show="employeesError" x-text="employeesError" class="eff-modal-error"></p>
+    </div>
+  </div>
+
+  <!-- Manage Teams Modal -->
+  <div x-show="showTeamsModal" x-cloak class="eff-modal-overlay" @click.self="showTeamsModal = false">
+    <div class="eff-modal" style="max-width:480px; min-width:400px; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
+      <div class="eff-modal-header">
+        <h3 class="eff-modal-title">Manage Teams</h3>
+        <button @click="showTeamsModal = false" class="eff-modal-close">&times;</button>
+      </div>
+      <div style="overflow-y:auto; max-height:45vh; margin-bottom:12px;">
+        <table class="eff-modal-table" style="font-size:12px; width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Team Name</th>
+              <th style="width:90px; text-align:center; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Employees</th>
+              <th style="width:44px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="(t, i) in teamsData" :key="'tm-'+i">
+              <tr style="transition:background 0.1s;" @mouseenter="$el.style.background='#f9f9f9'" @mouseleave="$el.style.background=''">
+                <td><input type="text" x-model="t.name" class="eff-modal-input" style="width:100%;"></td>
+                <td style="text-align:center; color:var(--gray);" x-text="t.count || 0"></td>
+                <td style="text-align:center;">
+                  <button @click="removeTeam(i)"
+                          :disabled="(t.count || 0) > 0"
+                          :title="(t.count || 0) > 0 ? (t.count) + ' employees assigned — reassign first' : 'Remove team'"
+                          style="background:none; border:none; cursor:pointer; font-size:16px; padding:0 4px;"
+                          :style="(t.count || 0) > 0 ? 'color:#ccc; cursor:not-allowed;' : 'color:var(--red);'">&times;</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <input type="text" x-model="newTeamName" placeholder="New team name..."
+               class="eff-modal-input" style="flex:1;"
+               @keydown.enter="addNewTeam()">
+        <button @click="addNewTeam()" class="eff-modal-btn eff-modal-btn-secondary">+ Add</button>
+      </div>
+      <div class="eff-modal-footer">
+        <button @click="saveTeams()" class="eff-modal-btn eff-modal-btn-primary"
+                :disabled="teamsSaving"
+                x-text="teamsSaving ? 'Saving...' : 'Save Changes'"></button>
+        <button @click="showTeamsModal = false" class="eff-modal-btn eff-modal-btn-secondary">Cancel</button>
+      </div>
+      <p x-show="teamsError" x-text="teamsError" class="eff-modal-error"></p>
     </div>
   </div>
 
@@ -1213,6 +1255,14 @@ function efficiencyPage() {
     employeesSaving: false,
     employeesError: '',
     employeesFilter: '',
+
+    // Teams modal state
+    availableTeams: [],
+    showTeamsModal: false,
+    teamsData: [],
+    teamsSaving: false,
+    teamsError: '',
+    newTeamName: '',
 
     // Upload state
     uploadStatus: '',
@@ -1646,8 +1696,13 @@ function efficiencyPage() {
       this.employeesSaving = false;
       this.employeesFilter = '';
       try {
-        const resp = await fetch('/efficiency/employees');
-        this.employeesData = await resp.json();
+        const [empResp, teamsResp] = await Promise.all([
+          fetch('/efficiency/employees'),
+          fetch('/efficiency/teams'),
+        ]);
+        this.employeesData = await empResp.json();
+        const td = await teamsResp.json();
+        this.availableTeams = td.teams || [];
       } catch (e) {
         this.employeesData = [];
         this.employeesError = 'Failed to load employees';
@@ -1676,6 +1731,57 @@ function efficiencyPage() {
         this.employeesError = 'Save failed — check console';
       }
       this.employeesSaving = false;
+    },
+
+    // ─── Manage Teams Modal ──────────────────────
+    async openTeamsModal() {
+      this.teamsError = '';
+      this.newTeamName = '';
+      try {
+        const resp = await fetch('/efficiency/teams');
+        const d = await resp.json();
+        this.teamsData = (d.teams || []).map(t => ({ original: t, name: t, count: d.counts[t] || 0 }));
+        this.availableTeams = d.teams || [];
+      } catch (e) {
+        this.teamsData = [];
+        this.teamsError = 'Failed to load teams';
+      }
+      this.showTeamsModal = true;
+    },
+
+    addNewTeam() {
+      const n = this.newTeamName.trim();
+      if (!n || this.teamsData.some(t => t.name.toLowerCase() === n.toLowerCase())) return;
+      this.teamsData.push({ original: null, name: n, count: 0 });
+      this.newTeamName = '';
+    },
+
+    removeTeam(i) {
+      if ((this.teamsData[i].count || 0) > 0) return;
+      this.teamsData.splice(i, 1);
+    },
+
+    async saveTeams() {
+      this.teamsSaving = true;
+      this.teamsError = '';
+      try {
+        const resp = await fetch('/efficiency/teams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ teams: this.teamsData }),
+        });
+        const d = await resp.json();
+        if (d.status === 'ok') {
+          this.showTeamsModal = false;
+          this.gonculating = true;
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          this.teamsError = d.message || 'Save failed';
+        }
+      } catch (e) {
+        this.teamsError = 'Save failed — check console';
+      }
+      this.teamsSaving = false;
     },
 
     // ─── Upload ──────────────────────────────────
