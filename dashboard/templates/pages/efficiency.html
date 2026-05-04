@@ -1350,7 +1350,13 @@ function efficiencyPage() {
         this.employeesSort = { col, dir: 'asc' };
       }
       const { dir } = this.employeesSort;
+      const numeric = col === 'Employee ID' || col === 'Training Plan';
       this.employeesData.sort((a, b) => {
+        if (numeric) {
+          const av = Number(a[col]) || 0;
+          const bv = Number(b[col]) || 0;
+          return dir === 'asc' ? av - bv : bv - av;
+        }
         const av = String(a[col] || '').toLowerCase();
         const bv = String(b[col] || '').toLowerCase();
         return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
