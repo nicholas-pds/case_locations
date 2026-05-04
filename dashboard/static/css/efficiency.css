@@ -1206,3 +1206,116 @@
   .eff-table-wrap, .eff-table-container { overflow-x: auto; }
   .eff-table th, .eff-table td { padding: 6px 8px; font-size: 11px; }
 }
+
+/* ── Employee modal: fixed header + scrollable body ────────────── */
+.emp-header-table,
+.emp-body-table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+.emp-col-id       { width: 72px; }
+.emp-col-mt       { width: 160px; }
+.emp-col-gusto    { width: 185px; }
+.emp-col-team     { width: 155px; }
+.emp-col-training { width: 80px; }
+.emp-col-del      { width: 36px; }
+
+.emp-header-strip {
+  background: var(--eff-surface2);
+  border: 1px solid var(--eff-border);
+  border-bottom: 2px solid var(--eff-border);
+  border-radius: 6px 6px 0 0;
+}
+.emp-header-strip th {
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--eff-accent);
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+}
+.emp-header-strip th.sortable { cursor: pointer; }
+.emp-header-strip th.sortable:hover { color: var(--eff-text); }
+.sort-arrow { margin-left: 3px; opacity: 0.4; font-size: 9px; }
+.sort-arrow.active { opacity: 1; }
+
+.emp-scroll-body {
+  overflow-y: auto;
+  max-height: 46vh;
+  border: 1px solid var(--eff-border);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+.emp-body-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--eff-border);
+  vertical-align: middle;
+}
+.emp-body-table tr:last-child td { border-bottom: none; }
+.emp-body-table tr:hover td { background: var(--eff-surface2); }
+.emp-row-new td { background: #f0fdf4 !important; }
+.emp-row-deleted td {
+  background: #fff5f5 !important;
+  opacity: 0.65;
+  text-decoration: line-through;
+}
+
+.emp-id-badge {
+  display: inline-block;
+  background: var(--eff-surface2);
+  border: 1px solid var(--eff-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--eff-muted);
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.eff-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+.eff-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.eff-toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--eff-border);
+  border-radius: 20px;
+  transition: background 0.2s;
+}
+.eff-toggle input:checked + .eff-toggle-track { background: var(--eff-green); }
+.eff-toggle-track::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.eff-toggle input:checked + .eff-toggle-track::after { transform: translateX(16px); }
+
+.emp-count-badge {
+  font-size: 11px;
+  color: var(--eff-muted);
+  white-space: nowrap;
+}

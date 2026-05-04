@@ -2,7 +2,7 @@
 {% block title %}Efficiency{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/efficiency.css?v=13">
+<link rel="stylesheet" href="/static/css/efficiency.css?v=14">
 {% endblock %}
 
 {% block content %}
@@ -801,61 +801,121 @@
   <!-- EDIT EMPLOYEES MODAL                       -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="showEmployeesModal" x-cloak class="eff-modal-overlay" @click.self="showEmployeesModal = false">
-    <div class="eff-modal" style="max-width:780px; min-width:720px; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
+    <div class="eff-modal" style="max-width:800px; min-width:740px; max-height:88vh; overflow:hidden; display:flex; flex-direction:column; gap:0;">
+
+      <!-- Modal title -->
       <div class="eff-modal-header">
         <h3 class="eff-modal-title">Edit Employees</h3>
         <button @click="showEmployeesModal = false" class="eff-modal-close">&times;</button>
       </div>
-      <div style="margin-bottom:14px;">
-        <input type="text" x-model="employeesFilter" placeholder="Filter by name, team, department..."
-               class="eff-modal-input" style="max-width:300px;">
+
+      <!-- Filter + count -->
+      <div style="display:flex; align-items:center; margin-bottom:12px; gap:10px;">
+        <input type="text" x-model="employeesFilter" placeholder="Filter by name or team..."
+               class="eff-modal-input" style="max-width:260px;">
+        <span class="emp-count-badge"
+              x-text="filteredEmployees().length + ' of ' + employeesData.filter(r => !r._deleted).length + ' employees'"></span>
       </div>
-      <div style="overflow-y:auto; max-height:55vh;">
-      <table class="eff-modal-table" style="font-size:11px; width:100%; border-collapse:collapse;">
-        <thead>
-          <tr>
-            <th style="width:80px; min-width:80px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Emp ID</th>
-            <th style="width:160px; min-width:160px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">MT Name</th>
-            <th style="width:180px; min-width:180px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Gusto Name</th>
-            <th style="width:150px; min-width:150px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Team</th>
-            <th style="width:90px; min-width:90px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;">Training</th>
-            <th style="width:40px; position:sticky; top:0; background:var(--light); border-bottom:2px solid var(--border); z-index:1;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="(row, idx) in filteredEmployees()" :key="'emp-'+idx">
-            <tr style="transition:background 0.1s;" @mouseenter="$el.style.background='#f9f9f9'" @mouseleave="$el.style.background=''">
-              <td><input type="text" x-model="row['Employee ID']" class="eff-modal-input" style="width:100%; text-align:center;"></td>
-              <td><input type="text" x-model="row['MT Name']" class="eff-modal-input" style="width:100%;"></td>
-              <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input" style="width:100%;"></td>
-              <td>
-                <select x-model="row.Team" class="eff-modal-select" style="width:100%;">
-                  <option value="">—</option>
-                  <template x-for="t in availableTeams" :key="t">
-                    <option :value="t" x-text="t"></option>
-                  </template>
-                  <option value="z_Not On Report">z_Not On Report</option>
-                </select>
-              </td>
-              <td>
-                <select x-model="row['Training Plan']" class="eff-modal-select" style="width:100%;">
-                  <option value="0">0</option>
-                  <option value="1">1</option>
-                </select>
-              </td>
-              <td style="text-align:center;">
-                <button @click="employeesData.splice(employeesData.indexOf(row), 1)" style="background:none; border:none; color:var(--eff-red); cursor:pointer; font-size:16px;" title="Remove">&times;</button>
-              </td>
+
+      <!-- Fixed column header strip -->
+      <div class="emp-header-strip">
+        <table class="emp-header-table">
+          <colgroup>
+            <col class="emp-col-id">
+            <col class="emp-col-mt">
+            <col class="emp-col-gusto">
+            <col class="emp-col-team">
+            <col class="emp-col-training">
+            <col class="emp-col-del">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Emp ID</th>
+              <th class="sortable" @click="empSortBy('MT Name')">
+                MT Name
+                <span class="sort-arrow" :class="{ active: employeesSort.col === 'MT Name' }"
+                      x-text="employeesSort.col === 'MT Name' ? (employeesSort.dir === 'asc' ? '▲' : '▼') : '⇅'"></span>
+              </th>
+              <th class="sortable" @click="empSortBy('Gusto Name')">
+                Gusto Name
+                <span class="sort-arrow" :class="{ active: employeesSort.col === 'Gusto Name' }"
+                      x-text="employeesSort.col === 'Gusto Name' ? (employeesSort.dir === 'asc' ? '▲' : '▼') : '⇅'"></span>
+              </th>
+              <th class="sortable" @click="empSortBy('Team')">
+                Team
+                <span class="sort-arrow" :class="{ active: employeesSort.col === 'Team' }"
+                      x-text="employeesSort.col === 'Team' ? (employeesSort.dir === 'asc' ? '▲' : '▼') : '⇅'"></span>
+              </th>
+              <th style="text-align:center;">Training</th>
+              <th></th>
             </tr>
-          </template>
-        </tbody>
-      </table>
+          </thead>
+        </table>
       </div>
-      <div class="eff-modal-footer">
-        <button @click="employeesData.push({'Employee ID':'', 'MT Name':'', 'Gusto Name':'', 'Team':'z_Not On Report', 'Training Plan':'0'})"
-                class="eff-modal-btn eff-modal-btn-secondary">+ Add Row</button>
-        <button @click="saveEmployees()" class="eff-modal-btn eff-modal-btn-primary" :disabled="employeesSaving"
-                x-text="employeesSaving ? 'Saving...' : 'Save Employees'"></button>
+
+      <!-- Scrollable data rows -->
+      <div class="emp-scroll-body" id="empScrollBody">
+        <table class="emp-body-table" style="font-size:12px;">
+          <colgroup>
+            <col class="emp-col-id">
+            <col class="emp-col-mt">
+            <col class="emp-col-gusto">
+            <col class="emp-col-team">
+            <col class="emp-col-training">
+            <col class="emp-col-del">
+          </colgroup>
+          <tbody>
+            <template x-for="(row, idx) in filteredEmployees()" :key="'emp-'+idx">
+              <tr :class="{ 'emp-row-new': row._isNew, 'emp-row-deleted': row._deleted }">
+                <td>
+                  <span class="emp-id-badge" x-text="row['Employee ID'] || '—'"></span>
+                </td>
+                <td><input type="text" x-model="row['MT Name']" class="eff-modal-input"
+                           style="width:100%;" :disabled="row._deleted"></td>
+                <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input"
+                           style="width:100%;" :disabled="row._deleted"></td>
+                <td>
+                  <select x-model="row.Team" class="eff-modal-select"
+                          style="width:100%;" :disabled="row._deleted">
+                    <option value="">—</option>
+                    <template x-for="t in availableTeams" :key="t">
+                      <option :value="t" x-text="t"></option>
+                    </template>
+                    <option value="z_Not On Report">z_Not On Report</option>
+                  </select>
+                </td>
+                <td style="text-align:center;">
+                  <label class="eff-toggle"
+                         :title="row['Training Plan'] == '1' ? 'On training plan' : 'Not on training plan'">
+                    <input type="checkbox"
+                           :checked="row['Training Plan'] == '1'"
+                           @change="row['Training Plan'] = $event.target.checked ? '1' : '0'"
+                           :disabled="row._deleted">
+                    <span class="eff-toggle-track"></span>
+                  </label>
+                </td>
+                <td style="text-align:center;">
+                  <button x-show="!row._deleted"
+                          @click="row._deleted = true"
+                          style="background:none; border:none; color:var(--eff-red); cursor:pointer; font-size:18px; line-height:1; padding:0;"
+                          title="Remove">&times;</button>
+                  <button x-show="row._deleted"
+                          @click="row._deleted = false"
+                          style="background:none; border:none; color:var(--eff-green); cursor:pointer; font-size:10px; font-weight:700; padding:0;"
+                          title="Undo remove">undo</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div class="eff-modal-footer" style="margin-top:14px;">
+        <button @click="addEmployee()" class="eff-modal-btn eff-modal-btn-secondary">+ Add Row</button>
+        <button @click="saveEmployees()" class="eff-modal-btn eff-modal-btn-primary"
+                :disabled="employeesSaving"
+                x-text="employeesSaving ? 'Saving...' : (empPendingCount() > 0 ? 'Save (' + empPendingCount() + ' changes)' : 'Save Employees')"></button>
         <button @click="showEmployeesModal = false" class="eff-modal-btn eff-modal-btn-secondary">Cancel</button>
       </div>
       <p x-show="employeesError" x-text="employeesError" class="eff-modal-error"></p>
@@ -965,6 +1025,7 @@ function efficiencyPage() {
     employeesSaving: false,
     employeesError: '',
     employeesFilter: '',
+    employeesSort: { col: 'MT Name', dir: 'asc' },
 
     // Teams modal state
     availableTeams: [],
@@ -1286,11 +1347,45 @@ function efficiencyPage() {
 
     // ─── Employees Modal ────────────────────────
     filteredEmployees() {
-      if (!this.employeesFilter.trim()) return this.employeesData;
-      const q = this.employeesFilter.trim().toLowerCase();
-      return this.employeesData.filter(r =>
-        Object.values(r).some(v => String(v || '').toLowerCase().includes(q))
-      );
+      let rows = this.employeesData;
+      if (this.employeesFilter.trim()) {
+        const q = this.employeesFilter.trim().toLowerCase();
+        rows = rows.filter(r => Object.values(r).some(v => String(v || '').toLowerCase().includes(q)));
+      }
+      const { col, dir } = this.employeesSort;
+      rows = [...rows].sort((a, b) => {
+        const av = String(a[col] || '').toLowerCase();
+        const bv = String(b[col] || '').toLowerCase();
+        return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+      return rows;
+    },
+
+    empSortBy(col) {
+      if (this.employeesSort.col === col) {
+        this.employeesSort.dir = this.employeesSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.employeesSort = { col, dir: 'asc' };
+      }
+    },
+
+    empPendingCount() {
+      return this.employeesData.filter(r => r._isNew || r._deleted).length;
+    },
+
+    addEmployee() {
+      this.employeesData.push({
+        'Employee ID': '',
+        'MT Name': '',
+        'Gusto Name': '',
+        'Team': 'z_Not On Report',
+        'Training Plan': '0',
+        _isNew: true,
+      });
+      this.$nextTick(() => {
+        const body = document.getElementById('empScrollBody');
+        if (body) body.scrollTop = body.scrollHeight;
+      });
     },
 
     async openEmployeesModal() {
@@ -1316,10 +1411,13 @@ function efficiencyPage() {
       this.employeesSaving = true;
       this.employeesError = '';
       try {
+        const payload = this.employeesData
+          .filter(r => !r._deleted)
+          .map(({ _isNew, _deleted, ...rest }) => rest);
         const resp = await fetch('/efficiency/employees', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.employeesData),
+          body: JSON.stringify(payload),
         });
         const data = await resp.json();
         if (data.status === 'ok') {
