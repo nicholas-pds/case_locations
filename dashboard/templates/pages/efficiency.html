@@ -65,7 +65,7 @@
         {% endfor %}
       </select>
       <button class="eff-clear-btn" @click="clearDailyFilters()"
-              x-show="dailySearch || dailyTeam || dailyDate !== {{ latest_date | tojson }}">Clear</button>
+              x-show='dailySearch || dailyTeam || dailyDate !== {{ latest_date | tojson }}'>Clear</button>
     </div>
 
     <!-- KPI Cards -->
