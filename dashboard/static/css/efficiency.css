@@ -1222,9 +1222,9 @@
 .emp-col-del      { width: 36px; }
 
 .emp-header-strip {
-  background: var(--eff-surface2);
-  border: 1px solid var(--eff-border);
-  border-bottom: 2px solid var(--eff-border);
+  background: #c41227;
+  border: 1px solid #a30f20;
+  border-bottom: 2px solid #a30f20;
   border-radius: 6px 6px 0 0;
 }
 .emp-header-strip th {
@@ -1234,14 +1234,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--eff-accent);
+  color: #fff;
   cursor: default;
   user-select: none;
   white-space: nowrap;
 }
 .emp-header-strip th.sortable { cursor: pointer; }
-.emp-header-strip th.sortable:hover { color: var(--eff-text); }
-.sort-arrow { margin-left: 3px; opacity: 0.4; font-size: 9px; }
+.emp-header-strip th.sortable:hover { color: rgba(255,255,255,0.75); }
+.sort-arrow { margin-left: 3px; opacity: 0.5; font-size: 9px; }
 .sort-arrow.active { opacity: 1; }
 
 .emp-scroll-body {

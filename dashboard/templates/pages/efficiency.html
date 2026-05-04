@@ -830,7 +830,11 @@
           </colgroup>
           <thead>
             <tr>
-              <th>Emp ID</th>
+              <th class="sortable" @click="empSortBy('Employee ID')">
+                Emp ID
+                <span class="sort-arrow" :class="{ active: employeesSort.col === 'Employee ID' }"
+                      x-text="employeesSort.col === 'Employee ID' ? (employeesSort.dir === 'asc' ? '▲' : '▼') : '⇅'"></span>
+              </th>
               <th class="sortable" @click="empSortBy('MT Name')">
                 MT Name
                 <span class="sort-arrow" :class="{ active: employeesSort.col === 'MT Name' }"
@@ -846,7 +850,11 @@
                 <span class="sort-arrow" :class="{ active: employeesSort.col === 'Team' }"
                       x-text="employeesSort.col === 'Team' ? (employeesSort.dir === 'asc' ? '▲' : '▼') : '⇅'"></span>
               </th>
-              <th style="text-align:center;">Training</th>
+              <th class="sortable" style="text-align:center;" @click="empSortBy('Training Plan')">
+                Training
+                <span class="sort-arrow" :class="{ active: employeesSort.col === 'Training Plan' }"
+                      x-text="employeesSort.col === 'Training Plan' ? (employeesSort.dir === 'asc' ? '▲' : '▼') : '⇅'"></span>
+              </th>
               <th></th>
             </tr>
           </thead>
