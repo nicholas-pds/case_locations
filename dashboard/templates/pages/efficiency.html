@@ -1032,7 +1032,13 @@ function efficiencyPage() {
     // Efficiency column names for MM
     mmEffCols: {{ mm_eff_cols | tojson }},
 
-    init() {},
+    async init() {
+      try {
+        const resp = await fetch('/efficiency/teams');
+        const d = await resp.json();
+        this.availableTeams = d.teams || [];
+      } catch (e) {}
+    },
 
     async loadAirwayData() {
       if (this.airwayLoaded) {
@@ -1387,16 +1393,8 @@ function efficiencyPage() {
       this.employeesSaving = false;
       this.employeesFilter = '';
       try {
-        const [empResp, teamsResp] = await Promise.all([
-          fetch('/efficiency/employees'),
-          fetch('/efficiency/teams'),
-        ]);
-        const [empData, td] = await Promise.all([
-          empResp.json(),
-          teamsResp.json(),
-        ]);
-        this.availableTeams = td.teams || [];
-        this.employeesData = empData;
+        const resp = await fetch('/efficiency/employees');
+        this.employeesData = await resp.json();
       } catch (e) {
         this.employeesData = [];
         this.employeesError = 'Failed to load employees';
