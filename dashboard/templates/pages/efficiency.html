@@ -29,11 +29,8 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
         Export PDF
       </button>
-      <button class="eff-btn eff-btn-primary" @click="export3dDesignPdf()" x-show="activeTab === 'noon' || activeTab === '3pm'">Export 3D Design PDF</button>
-      <button class="eff-btn eff-btn-secondary" @click="openConstantsModal()" x-show="activeTab === 'noon' || activeTab === '3pm'">Edit Constants</button>
       <button class="eff-btn eff-btn-secondary" @click="openEmployeesModal()" x-show="activeTab === 'daily'">Edit Employees</button>
       <button class="eff-btn eff-btn-secondary" @click="openTeamsModal()" x-show="activeTab === 'daily'">Manage Teams</button>
-      <button class="eff-btn eff-btn-secondary" @click="refreshMidday()" x-show="activeTab === 'noon' || activeTab === '3pm'">Refresh Data</button>
       <a class="eff-btn eff-btn-secondary" href="/efficiency/export/mm" x-show="activeTab === 'mm'">Download CSV</a>
     </div>
   </div>
@@ -43,8 +40,6 @@
     <button class="eff-tab" :class="{ active: activeTab === 'daily' }" @click="activeTab = 'daily'">Daily EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === 'week' }" @click="activeTab = 'week'">Week EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === 'mm' }" @click="activeTab = 'mm'">MM EFF</button>
-    <button class="eff-tab" :class="{ active: activeTab === 'noon' }" @click="activeTab = 'noon'">Noon EFF</button>
-    <button class="eff-tab" :class="{ active: activeTab === '3pm' }" @click="activeTab = '3pm'">3PM EFF</button>
     <button class="eff-tab" :class="{ active: activeTab === 'airway' }" @click="activeTab = 'airway'; loadAirwayData()">Airway</button>
     <button class="eff-tab" :class="{ active: activeTab === 'design' }" @click="activeTab = 'design'; loadDesignData()">Design</button>
     <button class="eff-tab" :class="{ active: activeTab === 'checkin' }" @click="activeTab = 'checkin'; loadCheckinData()">Check-In</button>
@@ -469,221 +464,6 @@
     </template>
   </div>
 
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- NOON EFF TAB                                -->
-  <!-- ═══════════════════════════════════════════ -->
-  <div x-show="activeTab === 'noon'">
-    <!-- Filter Bar -->
-    <div class="eff-filter-bar">
-      <select class="eff-filter-select" x-model="noonDate">
-        {% for d in noon_available_dates %}
-        <option value="{{ d }}">{{ d }}</option>
-        {% endfor %}
-      </select>
-      <button class="eff-clear-btn" @click="noonDate = {{ noon_latest_date | tojson }}"
-              x-show="noonDate !== {{ noon_latest_date | tojson }}">Reset</button>
-    </div>
-    <div style="padding:0 0 16px; color:var(--eff-muted); font-size:13px;">
-      Snapshot: 3:00 AM – 12:00 PM · Updated automatically at noon on business days
-    </div>
-
-    <!-- KPI Cards -->
-    <template x-if="filteredNoonRows().length > 0">
-      <div class="eff-section">
-        <div class="eff-section-title">Overview</div>
-        <div class="eff-kpi-row eff-kpi-row-4">
-          <div class="eff-kpi-card">
-            <div class="eff-kpi-label">People</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredNoonRows()).people"></div>
-            <div class="eff-kpi-sub" x-text="'across ' + middaySummaryTeams(filteredNoonRows()).length + ' teams'"></div>
-          </div>
-          <div class="eff-kpi-card">
-            <div class="eff-kpi-label">Cases</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredNoonRows()).cases.toLocaleString()"></div>
-            <div class="eff-kpi-sub">total worked on</div>
-          </div>
-          <div class="eff-kpi-card">
-            <div class="eff-kpi-label">Tasks</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredNoonRows()).tasks.toLocaleString()"></div>
-            <div class="eff-kpi-sub">total completed</div>
-          </div>
-          <div class="eff-kpi-card">
-            <div class="eff-kpi-label">Duration</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredNoonRows()).duration.toFixed(1)"></div>
-            <div class="eff-kpi-sub">hours</div>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <!-- Team Cards -->
-    <template x-if="filteredNoonRows().length > 0">
-      <div class="eff-section">
-        <div class="eff-section-title">Team Breakdowns</div>
-        <div class="eff-teams-grid">
-          <template x-for="section in middayTeamSections(filteredNoonRows())" :key="'ncard-'+section.team">
-            <div class="eff-team-card">
-              <div class="eff-card-header">
-                <div class="eff-card-name" x-text="section.team"></div>
-                <div class="eff-card-eff" style="color:var(--eff-muted)">
-                  <span x-text="section.rows.length + ' people'"></span>
-                </div>
-              </div>
-              <table class="eff-person-table">
-                <thead>
-                  <tr><th>Name</th><th>Cases</th><th>Goal</th><th>Tasks</th><th>Hrs</th></tr>
-                </thead>
-                <tbody>
-                  <template x-for="row in section.rows" :key="'np-'+row.Name">
-                    <tr>
-                      <td x-text="shortName(row.Name)"></td>
-                      <td :class="caseGoalClass(row.Cases, row.Noon_Goal)" x-text="row.Cases || 0"></td>
-                      <td x-text="row.Noon_Goal || ''"></td>
-                      <td x-text="row.Tasks_Completed || 0"></td>
-                      <td x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
-                    </tr>
-                  </template>
-                </tbody>
-              </table>
-            </div>
-          </template>
-        </div>
-      </div>
-    </template>
-
-    <!-- Empty State -->
-    <div x-show="filteredNoonRows().length === 0" class="eff-empty">
-      <div class="eff-empty-icon">🕛</div>
-      <div class="eff-empty-text">No noon data yet — updates automatically at 12:00 PM on business days</div>
-    </div>
-
-    <!-- Footer -->
-    <template x-if="filteredNoonRows().length > 0">
-      <div class="eff-footer">
-        <div>Partners Dental Solutions — Internal Use Only</div>
-        <div class="eff-legend">
-          <span class="eff-legend-item">
-            <span class="eff-legend-dot" style="background:var(--eff-green)"></span>
-            Met Goal
-          </span>
-          <span class="eff-legend-item">
-            <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
-            Below Goal
-          </span>
-        </div>
-        <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
-      </div>
-    </template>
-  </div>
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- 3PM EFF TAB                                 -->
-  <!-- ═══════════════════════════════════════════ -->
-  <div x-show="activeTab === '3pm'">
-    <!-- Filter Bar -->
-    <div class="eff-filter-bar">
-      <select class="eff-filter-select" x-model="pm3Date">
-        {% for d in pm3_available_dates %}
-        <option value="{{ d }}">{{ d }}</option>
-        {% endfor %}
-      </select>
-      <button class="eff-clear-btn" @click="pm3Date = {{ pm3_latest_date | tojson }}"
-              x-show="pm3Date !== {{ pm3_latest_date | tojson }}">Reset</button>
-    </div>
-    <div style="padding:0 0 16px; color:var(--eff-muted); font-size:13px;">
-      Snapshot: 3:00 AM – 3:00 PM · Updated automatically at 3:00 PM on business days
-    </div>
-
-    <!-- KPI Cards -->
-    <template x-if="filteredPm3Rows().length > 0">
-      <div class="eff-section">
-        <div class="eff-section-title">Overview</div>
-        <div class="eff-kpi-row eff-kpi-row-4">
-          <div class="eff-kpi-card">
-            <div class="eff-kpi-label">People</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredPm3Rows()).people"></div>
-            <div class="eff-kpi-sub" x-text="'across ' + middaySummaryTeams(filteredPm3Rows()).length + ' teams'"></div>
-          </div>
-          <div class="eff-kpi-card">
-            <div class="eff-kpi-label">Cases</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredPm3Rows()).cases.toLocaleString()"></div>
-            <div class="eff-kpi-sub">total worked on</div>
-          </div>
-          <div class="eff-kpi-card">
-            <div class="eff-kpi-label">Tasks</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredPm3Rows()).tasks.toLocaleString()"></div>
-            <div class="eff-kpi-sub">total completed</div>
-          </div>
-          <div class="eff-kpi-card">
-            <div class="eff-kpi-label">Duration</div>
-            <div class="eff-kpi-value" style="color:var(--eff-accent)" x-text="middaySummaryAll(filteredPm3Rows()).duration.toFixed(1)"></div>
-            <div class="eff-kpi-sub">hours</div>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <!-- Team Cards -->
-    <template x-if="filteredPm3Rows().length > 0">
-      <div class="eff-section">
-        <div class="eff-section-title">Team Breakdowns</div>
-        <div class="eff-teams-grid">
-          <template x-for="section in middayTeamSections(filteredPm3Rows())" :key="'pcard-'+section.team">
-            <div class="eff-team-card">
-              <div class="eff-card-header">
-                <div class="eff-card-name" x-text="section.team"></div>
-                <div class="eff-card-eff" style="color:var(--eff-muted)">
-                  <span x-text="section.rows.length + ' people'"></span>
-                </div>
-              </div>
-              <table class="eff-person-table">
-                <thead>
-                  <tr><th>Name</th><th>Cases</th><th>Goal</th><th>Tasks</th><th>Hrs</th></tr>
-                </thead>
-                <tbody>
-                  <template x-for="row in section.rows" :key="'pp-'+row.Name">
-                    <tr>
-                      <td x-text="shortName(row.Name)"></td>
-                      <td :class="caseGoalClass(row.Cases, row.PM3_Goal)" x-text="row.Cases || 0"></td>
-                      <td x-text="row.PM3_Goal || ''"></td>
-                      <td x-text="row.Tasks_Completed || 0"></td>
-                      <td x-text="(row.Total_Duration_Hours || 0).toFixed(1)"></td>
-                    </tr>
-                  </template>
-                </tbody>
-              </table>
-            </div>
-          </template>
-        </div>
-      </div>
-    </template>
-
-    <!-- Empty State -->
-    <div x-show="filteredPm3Rows().length === 0" class="eff-empty">
-      <div class="eff-empty-icon">🕒</div>
-      <div class="eff-empty-text">No 3PM data yet — updates automatically at 3:00 PM on business days</div>
-    </div>
-
-    <!-- Footer -->
-    <template x-if="filteredPm3Rows().length > 0">
-      <div class="eff-footer">
-        <div>Partners Dental Solutions — Internal Use Only</div>
-        <div class="eff-legend">
-          <span class="eff-legend-item">
-            <span class="eff-legend-dot" style="background:var(--eff-green)"></span>
-            Met Goal
-          </span>
-          <span class="eff-legend-item">
-            <span class="eff-legend-dot" style="background:var(--eff-red)"></span>
-            Below Goal
-          </span>
-        </div>
-        <div x-text="'Generated ' + new Date().toISOString().slice(0,10)"></div>
-      </div>
-    </template>
-  </div>
-
   <!-- ═══════════════════════════════════════════ -->
   <!-- AIRWAY TAB                                 -->
   <!-- ═══════════════════════════════════════════ -->
@@ -1018,63 +798,6 @@
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- EDIT CONSTANTS MODAL                       -->
-  <!-- ═══════════════════════════════════════════ -->
-  <div x-show="showConstantsModal" x-cloak class="eff-modal-overlay" @click.self="showConstantsModal = false">
-    <div class="eff-modal">
-      <div class="eff-modal-header">
-        <h3 class="eff-modal-title">Edit Tech Constants</h3>
-        <button @click="showConstantsModal = false" class="eff-modal-close">&times;</button>
-      </div>
-      <table class="eff-modal-table" style="font-size:12px;">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th style="width:70px;">Noon</th>
-            <th style="width:70px;">3PM</th>
-            <th style="width:110px;">Shift Type</th>
-            <th style="width:100px;">Design Type</th>
-            <th style="width:40px;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="(row, idx) in constantsData" :key="'ce-'+idx">
-            <tr>
-              <td><input type="text" x-model="row.Name" class="eff-modal-input"></td>
-              <td><input type="text" x-model="row.Noon" class="eff-modal-input" style="text-align:center;"></td>
-              <td><input type="text" x-model="row['3PM']" class="eff-modal-input" style="text-align:center;"></td>
-              <td>
-                <select x-model="row.ShiftType" class="eff-modal-select">
-                  <option value="Morning">Morning</option>
-                  <option value="Evening">Evening</option>
-                  <option value="Outsource">Outsource</option>
-                </select>
-              </td>
-              <td>
-                <select x-model="row.DesignType" class="eff-modal-select">
-                  <option value="Regular">Regular</option>
-                  <option value="Marpe">Marpe</option>
-                </select>
-              </td>
-              <td style="text-align:center;">
-                <button @click="constantsData.splice(idx, 1)" style="background:none; border:none; color:var(--eff-red); cursor:pointer; font-size:16px;" title="Remove">&times;</button>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
-      <div class="eff-modal-footer">
-        <button @click="constantsData.push({Name:'', Noon:'0', '3PM':'0', ShiftType:'Morning', DesignType:'Regular'})"
-                class="eff-modal-btn eff-modal-btn-secondary">+ Add Row</button>
-        <button @click="saveConstants()" class="eff-modal-btn eff-modal-btn-primary" :disabled="constantsSaving"
-                x-text="constantsSaving ? 'Saving...' : 'Save Constants'"></button>
-        <button @click="showConstantsModal = false" class="eff-modal-btn eff-modal-btn-secondary">Cancel</button>
-      </div>
-      <p x-show="constantsError" x-text="constantsError" class="eff-modal-error"></p>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════ -->
   <!-- EDIT EMPLOYEES MODAL                       -->
   <!-- ═══════════════════════════════════════════ -->
   <div x-show="showEmployeesModal" x-cloak class="eff-modal-overlay" @click.self="showEmployeesModal = false">
@@ -1217,12 +940,6 @@ function efficiencyPage() {
     weekEffCols: {{ week_eff_cols | tojson }},
     weekTeam: '',
 
-    // Midday state
-    noonRows: {{ noon_records | tojson }},
-    pm3Rows: {{ pm3_records | tojson }},
-    noonDate: {{ noon_latest_date | tojson }},
-    pm3Date: {{ pm3_latest_date | tojson }},
-
     // Airway state — loaded lazily on first tab click
     airwayData: [],
     airwayLoaded: false,
@@ -1241,13 +958,6 @@ function efficiencyPage() {
     checkinCategoryTrends: [],
     checkinLoaded: false,
     checkinLoading: false,
-
-    // Constants state
-    constantsRecords: {{ constants_records | tojson }},
-    showConstantsModal: false,
-    constantsData: [],
-    constantsSaving: false,
-    constantsError: '',
 
     // Employees state
     showEmployeesModal: false,
@@ -1353,10 +1063,6 @@ function efficiencyPage() {
     getSubtitleDate() {
       if (this.activeTab === 'daily') {
         return this.dailyDate || 'All Dates';
-      } else if (this.activeTab === 'noon') {
-        return 'Snapshot: ' + (this.noonDate || new Date().toISOString().slice(0,10)) + ' (12:00 PM)';
-      } else if (this.activeTab === '3pm') {
-        return 'Snapshot: ' + (this.pm3Date || new Date().toISOString().slice(0,10)) + ' (3:00 PM)';
       } else {
         return 'Multi-Period View';
       }
@@ -1395,14 +1101,6 @@ function efficiencyPage() {
       if (pct >= 65)  return 'ok';
       if (pct >= 50)  return 'low';
       return 'poor';
-    },
-
-    // Case goal comparison (returns class name)
-    caseGoalClass(actual, goal) {
-      if (goal === null || goal === undefined || goal === 'NA' || goal === '') return '';
-      const g = Number(goal);
-      if (isNaN(g) || g === 0) return '';
-      return Number(actual) >= g ? 'eff-great' : 'eff-poor';
     },
 
     // ─── Daily EFF ───────────────────────────────
@@ -1476,16 +1174,6 @@ function efficiencyPage() {
       this.dailyDate = {{ latest_date | tojson }};
       this.dailySearch = '';
       this.dailyTeam = '';
-    },
-
-    filteredNoonRows() {
-      if (!this.noonDate) return this.noonRows;
-      return this.noonRows.filter(r => String(r.Data_Date || '') === this.noonDate);
-    },
-
-    filteredPm3Rows() {
-      if (!this.pm3Date) return this.pm3Rows;
-      return this.pm3Rows.filter(r => String(r.Data_Date || '') === this.pm3Date);
     },
 
     effColor(val) {
@@ -1594,92 +1282,6 @@ function efficiencyPage() {
       const n = Number(val);
       if (isNaN(n)) return '';
       return (n * 100).toFixed(0) + '%';
-    },
-
-    // ─── Midday ──────────────────────────────────
-    middaySummaryAll(rows) {
-      if (!rows.length) return { date: '', people: 0, cases: 0, tasks: 0, duration: 0 };
-      const people = rows.length;
-      const cases = rows.reduce((s, r) => s + (Number(r.Cases) || 0), 0);
-      const tasks = rows.reduce((s, r) => s + (Number(r.Tasks_Completed) || 0), 0);
-      const duration = rows.reduce((s, r) => s + (Number(r.Total_Duration_Hours) || 0), 0);
-      const date = (rows[0] && rows[0].Data_Date) ? rows[0].Data_Date : new Date().toISOString().slice(0, 10);
-      return { date, people, cases, tasks, duration };
-    },
-
-    middaySummaryTeams(rows) {
-      const teams = {};
-      rows.forEach(r => {
-        const t = r.Team || '#N/A';
-        if (!teams[t]) teams[t] = [];
-        teams[t].push(r);
-      });
-      return Object.keys(teams).sort().map(team => {
-        const tr = teams[team];
-        return {
-          team,
-          people: tr.length,
-          cases: tr.reduce((s, r) => s + (Number(r.Cases) || 0), 0),
-          tasks: tr.reduce((s, r) => s + (Number(r.Tasks_Completed) || 0), 0),
-          duration: tr.reduce((s, r) => s + (Number(r.Total_Duration_Hours) || 0), 0),
-        };
-      });
-    },
-
-    middayTeamSections(rows) {
-      const teams = {};
-      rows.forEach(r => {
-        const t = r.Team || '#N/A';
-        if (!teams[t]) teams[t] = [];
-        teams[t].push(r);
-      });
-      return Object.keys(teams).sort().map(team => ({
-        team,
-        rows: teams[team].sort((a, b) => String(a.Name || '').localeCompare(String(b.Name || '')))
-      }));
-    },
-
-    // ─── Goal Color ──────────────────────────────
-    caseGoalColor(actual, goal) {
-      if (goal === null || goal === undefined || goal === 'NA' || goal === '') return '';
-      const g = Number(goal);
-      if (isNaN(g) || g === 0) return '';
-      return Number(actual) >= g ? 'color:#27AE60; font-weight:600;' : 'color:#C0392B; font-weight:600;';
-    },
-
-    // ─── Constants Modal ─────────────────────────
-    async openConstantsModal() {
-      this.constantsError = '';
-      this.constantsSaving = false;
-      try {
-        const resp = await fetch('/efficiency/constants');
-        this.constantsData = await resp.json();
-      } catch (e) {
-        this.constantsData = JSON.parse(JSON.stringify(this.constantsRecords));
-      }
-      this.showConstantsModal = true;
-    },
-
-    async saveConstants() {
-      this.constantsSaving = true;
-      this.constantsError = '';
-      try {
-        const resp = await fetch('/efficiency/constants', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.constantsData),
-        });
-        const data = await resp.json();
-        if (data.status === 'ok') {
-          this.showConstantsModal = false;
-          setTimeout(() => window.location.reload(), 500);
-        } else {
-          this.constantsError = data.message || 'Save failed';
-        }
-      } catch (e) {
-        this.constantsError = 'Save failed — check console';
-      }
-      this.constantsSaving = false;
     },
 
     // ─── Employees Modal ────────────────────────
@@ -1815,26 +1417,6 @@ function efficiencyPage() {
       event.target.value = '';
     },
 
-    // ─── Refresh Midday ──────────────────────────
-    async refreshMidday() {
-      this.uploadStatus = 'Refreshing midday data...';
-      this.uploadError = false;
-      try {
-        const resp = await fetch('/efficiency/refresh-midday', { method: 'POST' });
-        const data = await resp.json();
-        if (data.status === 'ok') {
-          this.uploadStatus = `Midday refreshed — noon: ${data.rows.noon} rows, 3pm: ${data.rows['3pm']} rows`;
-          setTimeout(() => window.location.reload(), 1500);
-        } else {
-          this.uploadStatus = `Error: ${data.message}`;
-          this.uploadError = true;
-        }
-      } catch (e) {
-        this.uploadStatus = 'Refresh failed — check console';
-        this.uploadError = true;
-      }
-    },
-
     // ─── PDF Helpers ──────────────────────────────
     _pdfEffStyle(val) {
       const n = Number(val) || 0;
@@ -1866,7 +1448,7 @@ function efficiencyPage() {
 
     // ─── PDF Export ──────────────────────────────
     async exportPdf() {
-      const tabNames = { daily: 'Daily_EFF', mm: 'MM_EFF', noon: 'Noon_EFF', '3pm': '3PM_EFF' };
+      const tabNames = { daily: 'Daily_EFF', mm: 'MM_EFF' };
       const tabLabel = tabNames[this.activeTab] || 'Efficiency';
       const today = new Date().toISOString().slice(0, 10);
 
@@ -1874,9 +1456,6 @@ function efficiencyPage() {
       let reportDate = today;
       if (this.activeTab === 'daily') {
         reportDate = this.dailySummaryAll().date || today;
-      } else if (this.activeTab === 'noon' || this.activeTab === '3pm') {
-        const src = this.activeTab === 'noon' ? this.filteredNoonRows() : this.filteredPm3Rows();
-        reportDate = this.middaySummaryAll(src).date || today;
       }
 
       const filename = `Efficiency_${tabLabel}_${reportDate}.pdf`;
@@ -1979,46 +1558,6 @@ function efficiencyPage() {
           html += `</div>`;
         });
 
-      } else {
-        const isNoon = this.activeTab === 'noon';
-        const src = isNoon ? this.filteredNoonRows() : this.filteredPm3Rows();
-        const label = isNoon ? '12:00 PM' : '3:00 PM';
-        const goalKey = isNoon ? 'Noon_Goal' : 'PM3_Goal';
-
-        const summary = this.middaySummaryAll(src);
-
-        // ALL table (full-width)
-        html += `<p style="margin:0 0 2px; font-weight:700; font-size:9px; color:#C00;">ALL — ${label} Snapshot</p>`;
-        html += this._pdfTable(
-          ['Date','People','Cases','Tasks','Duration'],
-          [[summary.date, summary.people, summary.cases, summary.tasks, summary.duration.toFixed(1)]]
-        );
-
-        // Teams table (full-width)
-        html += `<p style="margin:8px 0 2px; font-weight:700; font-size:9px; color:#C00;">Teams</p>`;
-        const teamRows = this.middaySummaryTeams(src).map(ts => [ts.team, ts.people, ts.cases, ts.tasks, ts.duration.toFixed(1)]);
-        html += this._pdfTable(['Team/Group','People','Cases','Tasks','Duration'], teamRows);
-
-        // Per-team (2-column grid)
-        const sections = this.middayTeamSections(src);
-        html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">`;
-        sections.forEach(sec => {
-          html += `<div style="page-break-inside:avoid;">`;
-          html += `<p style="margin:0 0 2px; font-weight:700; font-size:8px; color:#C00;">${sec.team}</p>`;
-          const rows = sec.rows.map(r => {
-            const cases = r.Cases || 0;
-            const goal = r[goalKey];
-            let casesCell = String(cases);
-            if (goal !== null && goal !== undefined && goal !== 'NA' && goal !== '' && !isNaN(Number(goal)) && Number(goal) > 0) {
-              const color = Number(cases) >= Number(goal) ? '#27AE60' : '#C0392B';
-              casesCell = `<span style="color:${color}; font-weight:600;">${cases}</span>`;
-            }
-            return [this.shortName(r.Name), casesCell, r.Tasks_Completed || 0, (r.Total_Duration_Hours || 0).toFixed(1)];
-          });
-          html += this._pdfTable(['Name','Cases','Tasks','Duration'], rows);
-          html += `</div>`;
-        });
-        html += `</div>`;
       }
 
       html += `</div>`;
@@ -2099,207 +1638,6 @@ function efficiencyPage() {
       });
       h += `</tbody></table>`;
       return h;
-    },
-
-    // ─── 3D Design PDF (Larry_ex format) ─────────
-    _larryCell(actual, goal) {
-      // Actual cell with red/green background based on goal
-      if (goal === 'NA' || goal === null || goal === undefined || goal === '') return 'NA';
-      const a = Number(actual) || 0;
-      const g = Number(goal);
-      if (isNaN(g)) return String(a);
-      const bg = a >= g ? '#00B050' : '#FF0000';
-      return `<span style="background:${bg}; color:#fff; padding:1px 4px; font-weight:600;">${a}</span>`;
-    },
-
-    _larryTable(headers, rows, opts = {}) {
-      const headerBg = opts.headerBg || '#D9D2E9';
-      let h = `<table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:6px;">`;
-      h += `<thead><tr>`;
-      headers.forEach((hdr, idx) => {
-        const align = idx === 0 ? 'left' : 'center';
-        h += `<th style="border:1px solid #999; background:${headerBg}; padding:3px 6px; text-align:${align}; font-size:10px; font-weight:600;">${hdr}</th>`;
-      });
-      h += `</tr></thead><tbody>`;
-      rows.forEach((cells, i) => {
-        const isTotalRow = opts.totalRowIdx === i;
-        h += `<tr>`;
-        cells.forEach((c, idx) => {
-          const align = idx === 0 ? 'left' : 'center';
-          const fw = isTotalRow ? 'font-weight:700;' : '';
-          h += `<td style="border:1px solid #ddd; padding:2px 6px; background:#fff; font-size:10px; text-align:${align}; ${fw}">${c}</td>`;
-        });
-        h += `</tr>`;
-      });
-      h += `</tbody></table>`;
-      return h;
-    },
-
-    async export3dDesignPdf() {
-      const isNoon = this.activeTab === 'noon';
-      const constants = this.constantsRecords;
-
-      // Build lookup: name -> constant row
-      const constMap = {};
-      constants.forEach(c => {
-        const key = c.Name + '|' + (c.ShiftType || 'Morning');
-        constMap[key] = c;
-      });
-
-      // Build actual data lookup from noon/3pm rows
-      const noonMap = {};
-      this.filteredNoonRows().forEach(r => { noonMap[r.Name] = r; });
-      const pm3Map = {};
-      this.filteredPm3Rows().forEach(r => { pm3Map[r.Name] = r; });
-
-      // Get data date
-      const dataDate = this.middaySummaryAll(isNoon ? this.filteredNoonRows() : this.filteredPm3Rows()).date;
-      const d = new Date(dataDate + 'T00:00:00');
-      const dateStr = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
-
-      // Group constants by ShiftType
-      const morning = constants.filter(c => c.ShiftType === 'Morning');
-      const evening = constants.filter(c => c.ShiftType === 'Evening');
-      const outsource = constants.filter(c => c.ShiftType === 'Outsource');
-
-      let html = `<div style="font-family:Arial,sans-serif; padding:12px;">`;
-      html += `<p style="margin:0 0 2px; font-size:12px;"><strong>DATE:</strong> &nbsp; ${dateStr}</p>`;
-      html += `<p style="margin:0 0 8px; font-size:12px; font-weight:600;">Morning shift</p>`;
-
-      // Morning shift table
-      let mHeaders, mRows;
-      if (isNoon) {
-        mHeaders = ['Designer', 'By 12 PM', '12:00 PM', 'Notes'];
-        mRows = morning.map(c => {
-          const actual = noonMap[c.Name];
-          const noonGoal = c.Noon;
-          const noonActual = actual ? actual.Cases : null;
-          return [
-            this.shortName(c.Name),
-            noonGoal === 'NA' ? 'NA' : noonGoal,
-            this._larryCell(noonActual, noonGoal),
-            '',
-          ];
-        });
-        // Total row
-        const totalNoonGoal = morning.reduce((s, c) => c.Noon !== 'NA' ? s + (Number(c.Noon) || 0) : s, 0);
-        const totalNoonActual = morning.reduce((s, c) => {
-          const a = noonMap[c.Name];
-          return a && c.Noon !== 'NA' ? s + (Number(a.Cases) || 0) : s;
-        }, 0);
-        mRows.push([
-          '<strong>Total made by this time:</strong>',
-          totalNoonGoal,
-          this._larryCell(totalNoonActual, totalNoonGoal),
-          '',
-        ]);
-      } else {
-        mHeaders = ['Designer', 'By 12 PM', '12:00 PM', 'By 3 PM', '3:00 PM', 'Notes'];
-        mRows = morning.map(c => {
-          const noonActualRow = noonMap[c.Name];
-          const pm3ActualRow = pm3Map[c.Name];
-          const noonGoal = c.Noon;
-          const pm3Goal = c['3PM'];
-          const noonActual = noonActualRow ? noonActualRow.Cases : null;
-          const pm3Actual = pm3ActualRow ? pm3ActualRow.Cases : null;
-          return [
-            this.shortName(c.Name),
-            noonGoal === 'NA' ? 'NA' : noonGoal,
-            this._larryCell(noonActual, noonGoal),
-            pm3Goal === 'NA' ? 'NA' : pm3Goal,
-            this._larryCell(pm3Actual, pm3Goal),
-            '',
-          ];
-        });
-        // Total row
-        const totalNoonGoal = morning.reduce((s, c) => c.Noon !== 'NA' ? s + (Number(c.Noon) || 0) : s, 0);
-        const totalNoonActual = morning.reduce((s, c) => {
-          const a = noonMap[c.Name];
-          return a && c.Noon !== 'NA' ? s + (Number(a.Cases) || 0) : s;
-        }, 0);
-        const totalPm3Goal = morning.reduce((s, c) => c['3PM'] !== 'NA' ? s + (Number(c['3PM']) || 0) : s, 0);
-        const totalPm3Actual = morning.reduce((s, c) => {
-          const a = pm3Map[c.Name];
-          return a && c['3PM'] !== 'NA' ? s + (Number(a.Cases) || 0) : s;
-        }, 0);
-        mRows.push([
-          '<strong>Total made by this time:</strong>',
-          totalNoonGoal,
-          this._larryCell(totalNoonActual, totalNoonGoal),
-          totalPm3Goal,
-          this._larryCell(totalPm3Actual, totalPm3Goal),
-          '',
-        ]);
-      }
-      html += this._larryTable(mHeaders, mRows, { totalRowIdx: mRows.length - 1 });
-
-      // Evening Shift
-      if (evening.length) {
-        html += `<p style="margin:12px 0 2px; font-size:12px; font-weight:600;">Evening Shift</p>`;
-        const eHeaders = ['Designer', 'Capacity', 'Made', 'Notes'];
-        const eRows = evening.map(c => {
-          const actual = pm3Map[c.Name] || noonMap[c.Name];
-          const capacity = c['3PM'] === 'NA' ? 'NA' : c['3PM'];
-          const made = actual ? actual.Cases : 0;
-          return [this.shortName(c.Name), capacity, this._larryCell(made, capacity), ''];
-        });
-        html += this._larryTable(eHeaders, eRows, { headerBg: '#D9D2E9' });
-      }
-
-      // Outsource
-      if (outsource.length) {
-        html += `<p style="margin:12px 0 2px; font-size:12px; font-weight:600;">Outsource</p>`;
-        const oHeaders = ['Designer', 'Capacity', 'Made', 'Notes'];
-        const oRows = outsource.map(c => {
-          const actual = pm3Map[c.Name] || noonMap[c.Name];
-          const capacity = c['3PM'] === 'NA' ? 'NA' : c['3PM'];
-          const made = actual ? actual.Cases : 0;
-          return [this.shortName(c.Name), capacity, this._larryCell(made, capacity), ''];
-        });
-        html += this._larryTable(oHeaders, oRows, { headerBg: '#D9D2E9' });
-      }
-
-      // Yesterday totals from Daily EFF data
-      const dailyRows = this.dailyRows.filter(r => r.Team !== 'z_Not On Report');
-      if (dailyRows.length) {
-        // Get latest date
-        const dates = [...new Set(dailyRows.map(r => String(r.Date || '')))].sort().reverse();
-        const latestDate = dates[0];
-        const yesterdayRows = dailyRows.filter(r => String(r.Date || '').startsWith(latestDate));
-
-        // Match by MT Name to constants Name
-        const constNames = new Set(constants.map(c => c.Name));
-        const matchedRows = yesterdayRows.filter(r => constNames.has(r['MT Name']));
-
-        const totalParts = matchedRows.reduce((s, r) => s + (Number(r.Cases_Worked_On) || 0), 0);
-
-        // Total MARPEs: only DesignType=Marpe employees
-        const marpeNames = new Set(constants.filter(c => c.DesignType === 'Marpe').map(c => c.Name));
-        const totalMarpes = yesterdayRows
-          .filter(r => marpeNames.has(r['MT Name']))
-          .reduce((s, r) => s + (Number(r.Cases_Worked_On) || 0), 0);
-
-        html += `<p style="margin:16px 0 2px; font-size:11px;"><strong>Total parts made from yesterday:</strong> &nbsp; ${totalParts}</p>`;
-        html += `<p style="margin:2px 0; font-size:11px;"><strong>Total MARPEs made from yesterday:</strong> &nbsp; ${totalMarpes}</p>`;
-      }
-
-      html += `</div>`;
-
-      const opt = {
-        margin: [8, 8, 8, 8],
-        filename: `3D_Design_Report_${dataDate}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-      };
-
-      const el = document.createElement('div');
-      el.innerHTML = html;
-      document.body.appendChild(el);
-      html2pdf().set(opt).from(el).save().then(() => {
-        document.body.removeChild(el);
-      });
     },
 
     // ─── Airway Charts (3 separate) ─────────────────

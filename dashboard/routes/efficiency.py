@@ -7,12 +7,11 @@ from fastapi import APIRouter, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 from dashboard.data.efficiency_store import (
-    load_daily, load_aggregated, load_midday, save_midday,
-    load_tech_constants, save_tech_constants,
+    load_daily, load_aggregated,
     load_employee_lkups, save_employee_lkups,
     load_teams, save_teams, apply_team_renames, TEAM_RENAME_MAP,
 )
-from dashboard.data.efficiency_processing import run_full_upload, process_midday_snapshot, backfill_midday_history
+from dashboard.data.efficiency_processing import run_full_upload
 from dashboard.data.airway_queries import fetch_airway_tasks
 from dashboard.data.design_queries import fetch_design_tasks
 from dashboard.data.checkin_queries import fetch_checkin_tasks
@@ -46,31 +45,6 @@ def _df_to_records(df):
 async def efficiency_page(request: Request):
     daily_df = load_daily()
     agg_df = load_aggregated()
-    noon_df = load_midday("noon")
-    pm3_df = load_midday("3pm")
-
-    # One-time migration: regenerate midday if Data_Date column is missing
-    for window, df_check in [("noon", noon_df), ("3pm", pm3_df)]:
-        if not df_check.empty and "Data_Date" not in df_check.columns:
-            try:
-                refreshed = process_midday_snapshot(window)
-                if not refreshed.empty:
-                    save_midday(window, refreshed)
-                    if window == "noon":
-                        noon_df = refreshed
-                    else:
-                        pm3_df = refreshed
-            except Exception:
-                pass  # Will use JS fallback date
-
-    # Backfill historical snapshots (no-op if all dates present)
-    for _w in ("noon", "3pm"):
-        try:
-            backfill_midday_history(_w)
-        except Exception:
-            logger.warning(f"backfill_midday_history({_w}) failed", exc_info=True)
-    noon_df = load_midday("noon")
-    pm3_df = load_midday("3pm")
 
     # Sort daily: Date desc, then MT Name asc
     if not daily_df.empty:
@@ -104,33 +78,6 @@ async def efficiency_page(request: Request):
         available_dates = [str(d) for d in available_dates]
         latest_date = available_dates[0] if available_dates else None
 
-    # Load tech constants and join goals onto noon/3pm data
-    constants_df = load_tech_constants()
-    constants_records = _df_to_records(constants_df)
-
-    # Join constants onto noon/3pm by Name (left join preserves all midday rows)
-    if not constants_df.empty:
-        # Only Morning-shift constants for goal columns (Evening/Outsource have different semantics)
-        morning_constants = constants_df[constants_df["ShiftType"] == "Morning"][["Name", "Noon", "3PM"]].copy()
-        morning_constants = morning_constants.rename(columns={"Noon": "Noon_Goal", "3PM": "PM3_Goal"})
-        if not noon_df.empty:
-            noon_df = noon_df.merge(morning_constants, on="Name", how="left")
-        if not pm3_df.empty:
-            pm3_df = pm3_df.merge(morning_constants, on="Name", how="left")
-
-    # Date pickers for noon/3pm
-    noon_available_dates: list = []
-    noon_latest_date = None
-    if not noon_df.empty and "Data_Date" in noon_df.columns:
-        noon_available_dates = sorted(noon_df["Data_Date"].dropna().unique().tolist(), reverse=True)
-        noon_latest_date = noon_available_dates[0] if noon_available_dates else None
-
-    pm3_available_dates: list = []
-    pm3_latest_date = None
-    if not pm3_df.empty and "Data_Date" in pm3_df.columns:
-        pm3_available_dates = sorted(pm3_df["Data_Date"].dropna().unique().tolist(), reverse=True)
-        pm3_latest_date = pm3_available_dates[0] if pm3_available_dates else None
-
     templates = request.app.state.templates
     return templates.TemplateResponse("pages/efficiency.html", {
         "request": request,
@@ -138,19 +85,12 @@ async def efficiency_page(request: Request):
         "metadata": await cache.get_metadata(),
         "daily_records": _df_to_records(daily_df),
         "agg_records": _df_to_records(agg_df),
-        "noon_records": _df_to_records(noon_df),
-        "pm3_records": _df_to_records(pm3_df),
-        "constants_records": constants_records,
         "teams": teams,
         "mm_eff_cols": mm_eff_cols,
         "week_eff_cols": week_eff_cols,
         "week_eff_labels": week_eff_labels,
         "available_dates": available_dates,
         "latest_date": latest_date,
-        "noon_available_dates": noon_available_dates,
-        "noon_latest_date": noon_latest_date,
-        "pm3_available_dates": pm3_available_dates,
-        "pm3_latest_date": pm3_latest_date,
     })
 
 
@@ -163,24 +103,6 @@ async def efficiency_upload(file: UploadFile = File(...)):
         return JSONResponse(content=result)
     except Exception as e:
         logger.error(f"Upload failed: {e}")
-        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
-
-
-@router.post("/efficiency/refresh-midday")
-async def efficiency_refresh_midday():
-    """Manually trigger noon and 3pm midday snapshot refresh."""
-    try:
-        results = {}
-        for window in ("noon", "3pm"):
-            df = process_midday_snapshot(window)
-            if not df.empty:
-                save_midday(window, df)
-                results[window] = len(df)
-            else:
-                results[window] = 0
-        return JSONResponse(content={"status": "ok", "rows": results})
-    except Exception as e:
-        logger.error(f"Midday refresh failed: {e}")
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
 
 
@@ -215,33 +137,6 @@ async def get_checkin_data():
         logger.warning("Check-In tasks fetch failed", exc_info=True)
         records, fetched_at, category_trends = [], "", []
     return JSONResponse({"records": records, "fetched_at": fetched_at, "category_trends": category_trends})
-
-
-@router.get("/efficiency/constants")
-async def get_constants():
-    """Return tech constants as JSON."""
-    df = load_tech_constants()
-    return JSONResponse(content=_df_to_records(df))
-
-
-@router.post("/efficiency/constants")
-async def save_constants(request: Request):
-    """Save tech constants from JSON array."""
-    try:
-        data = await request.json()
-        df = pd.DataFrame(data)
-        # Ensure expected columns exist
-        for col in ["Name", "Noon", "3PM", "ShiftType", "DesignType"]:
-            if col not in df.columns:
-                return JSONResponse(
-                    content={"status": "error", "message": f"Missing column: {col}"},
-                    status_code=400,
-                )
-        save_tech_constants(df)
-        return JSONResponse(content={"status": "ok", "rows": len(df)})
-    except Exception as e:
-        logger.error(f"Save constants failed: {e}")
-        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=400)
 
 
 @router.get("/efficiency/export/mm")
