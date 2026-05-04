@@ -868,8 +868,10 @@
                 <td>
                   <select x-model="row.Team" class="eff-modal-select" style="width:100%;">
                     <option value="">—</option>
-                    <template x-for="t in availableTeams" :key="t">
-                      <option :value="t" x-text="t"></option>
+                    <template x-if="availableTeams.length > 0">
+                      <template x-for="t in availableTeams" :key="t">
+                        <option :value="t" x-text="t"></option>
+                      </template>
                     </template>
                     <option value="z_Not On Report">z_Not On Report</option>
                   </select>
@@ -1395,7 +1397,12 @@ function efficiencyPage() {
     },
 
     empPendingCount() {
-      return this.employeesData.filter(r => r._isNew || r._deleted).length;
+      const fields = ['MT Name', 'Gusto Name', 'Team', 'Training Plan'];
+      return this.employeesData.filter(r => {
+        if (r._isNew || r._deleted) return true;
+        if (!r._original) return false;
+        return fields.some(f => String(r[f] ?? '') !== String(r._original[f] ?? ''));
+      }).length;
     },
 
     teamsSortBy(col) {
@@ -1439,8 +1446,16 @@ function efficiencyPage() {
       this.employeesSaving = false;
       this.employeesFilter = '';
       try {
-        const resp = await fetch('/efficiency/employees');
-        this.employeesData = await resp.json();
+        const [empResp, teamsResp] = await Promise.all([
+          fetch('/efficiency/employees'),
+          fetch('/efficiency/teams'),
+        ]);
+        const [employees, teamsJson] = await Promise.all([
+          empResp.json(),
+          teamsResp.json(),
+        ]);
+        this.availableTeams = teamsJson.teams || [];
+        this.employeesData = employees.map(r => ({ ...r, _original: { ...r } }));
       } catch (e) {
         this.employeesData = [];
         this.employeesError = 'Failed to load employees';
@@ -1455,7 +1470,7 @@ function efficiencyPage() {
       try {
         const payload = this.employeesData
           .filter(r => !r._deleted)
-          .map(({ _isNew, _deleted, ...rest }) => rest);
+          .map(({ _isNew, _deleted, _original, ...rest }) => rest);
         const resp = await fetch('/efficiency/employees', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
