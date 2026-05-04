@@ -800,8 +800,7 @@
   <!-- ═══════════════════════════════════════════ -->
   <!-- EDIT EMPLOYEES MODAL                       -->
   <!-- ═══════════════════════════════════════════ -->
-  <template x-if="showEmployeesModal">
-  <div class="eff-modal-overlay" @click.self="showEmployeesModal = false">
+  <div x-show="showEmployeesModal" x-cloak class="eff-modal-overlay" @click.self="showEmployeesModal = false">
     <div class="eff-modal" style="max-width:800px; min-width:740px; max-height:88vh; overflow:hidden; display:flex; flex-direction:column; gap:0;">
 
       <!-- Modal title -->
@@ -867,7 +866,9 @@
                 <td><input type="text" x-model="row['MT Name']" class="eff-modal-input" style="width:100%;"></td>
                 <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input" style="width:100%;"></td>
                 <td>
-                  <select x-model="row.Team" class="eff-modal-select" style="width:100%;">
+                  <select x-model="row.Team"
+                          x-init="$nextTick(() => { $el.value = row.Team })"
+                          class="eff-modal-select" style="width:100%;">
                     <option value="">—</option>
                     <template x-for="t in availableTeams" :key="t">
                       <option :value="t" x-text="t"></option>
@@ -911,7 +912,6 @@
       <p x-show="employeesError" x-text="employeesError" class="eff-modal-error"></p>
     </div>
   </div>
-  </template>
 
   <!-- ═══════════════════════════════════════════ -->
   <!-- MANAGE TEAMS MODAL                         -->
