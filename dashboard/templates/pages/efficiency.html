@@ -1391,9 +1391,12 @@ function efficiencyPage() {
           fetch('/efficiency/employees'),
           fetch('/efficiency/teams'),
         ]);
-        this.employeesData = await empResp.json();
-        const td = await teamsResp.json();
+        const [empData, td] = await Promise.all([
+          empResp.json(),
+          teamsResp.json(),
+        ]);
         this.availableTeams = td.teams || [];
+        this.employeesData = empData;
       } catch (e) {
         this.employeesData = [];
         this.employeesError = 'Failed to load employees';
