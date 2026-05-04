@@ -51,6 +51,11 @@ output/
 # Efficiency data (runtime-generated, not source controlled)
 dashboard/data/efficiency_data/*.parquet
 
+# Notes / L&D SQLite store (per-environment runtime data)
+User_Inputs/dashboard.db
+User_Inputs/dashboard.db-wal
+User_Inputs/dashboard.db-shm
+
 # Other common ignores
 *.log
 *.bak

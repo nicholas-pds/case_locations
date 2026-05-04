@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from dashboard.config import TEMPLATE_DIR, STATIC_DIR
 from dashboard.auth import AuthMiddleware
 from dashboard.data.refresh import refresh_loop
+from dashboard.data import notes_db
 
 # Windows uses %#I instead of %-I for non-zero-padded hour
 _TIME_FMT = '%#I:%M %p' if os.name == 'nt' else '%-I:%M %p'
@@ -40,6 +41,10 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    # Initialize the notes/L&D SQLite store (creates schema, migrates legacy CSV/JSON
+    # on first run). Synchronous so the DB exists before any request is served.
+    notes_db.init_db()
+
     app = FastAPI(title="Partners Case Locations Dashboard", lifespan=lifespan)
 
     # Auth middleware

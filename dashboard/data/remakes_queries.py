@@ -325,124 +325,20 @@ def _apply_employee_names(df: pd.DataFrame, id_col: str, name_col: str) -> pd.Da
     return df
 
 
-# ─── Notes storage ────────────────────────────────────────────────────────────
+# ─── Notes / L&D storage (SQLite-backed via notes_db) ─────────────────────────
+# Function signatures and DataFrame return shapes preserved so routes/templates
+# don't change. See dashboard/data/notes_db.py for implementation.
 
-def load_remake_notes() -> pd.DataFrame:
-    """Load User_Inputs/remake_notes.csv.
-    Returns empty DataFrame with expected columns if file missing."""
-    if _NOTES_PATH.exists():
-        try:
-            df = pd.read_csv(_NOTES_PATH, dtype=str)
-            for col, default in [("FollowUpNote", ""), ("Completed", "0")]:
-                if col not in df.columns:
-                    df[col] = default
-            return df
-        except Exception as e:
-            logger.warning(f"Failed to read remake_notes.csv: {e}")
-    return pd.DataFrame(columns=["MainCaseNumber", "Note", "FollowUpNote", "Completed", "LastUpdated"])
+from dashboard.data import notes_db as _notes_db
 
-
-def save_remake_note(case_number: str, note_text: str) -> None:
-    """Upsert a note by MainCaseNumber. Creates file if needed."""
-    existing = load_remake_notes()
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    if not existing.empty and case_number in existing["MainCaseNumber"].values:
-        existing.loc[existing["MainCaseNumber"] == case_number, "Note"] = note_text
-        existing.loc[existing["MainCaseNumber"] == case_number, "LastUpdated"] = now_str
-    else:
-        new_row = pd.DataFrame([{
-            "MainCaseNumber": case_number,
-            "Note": note_text,
-            "FollowUpNote": "",
-            "Completed": "0",
-            "LastUpdated": now_str,
-        }])
-        existing = pd.concat([existing, new_row], ignore_index=True)
-    _NOTES_PATH.parent.mkdir(parents=True, exist_ok=True)
-    existing.to_csv(_NOTES_PATH, index=False)
-
-
-def save_follow_up_note(case_number: str, note_text: str) -> None:
-    """Upsert a follow-up note by MainCaseNumber. Creates file if needed."""
-    existing = load_remake_notes()
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    if not existing.empty and case_number in existing["MainCaseNumber"].values:
-        existing.loc[existing["MainCaseNumber"] == case_number, "FollowUpNote"] = note_text
-        existing.loc[existing["MainCaseNumber"] == case_number, "LastUpdated"] = now_str
-    else:
-        new_row = pd.DataFrame([{
-            "MainCaseNumber": case_number,
-            "Note": "",
-            "FollowUpNote": note_text,
-            "Completed": "0",
-            "LastUpdated": now_str,
-        }])
-        existing = pd.concat([existing, new_row], ignore_index=True)
-    _NOTES_PATH.parent.mkdir(parents=True, exist_ok=True)
-    existing.to_csv(_NOTES_PATH, index=False)
-
-
-def save_case_completed(case_number: str, completed: bool) -> None:
-    """Upsert completed flag by MainCaseNumber. Creates file if needed."""
-    existing = load_remake_notes()
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    val = "1" if completed else "0"
-    if not existing.empty and case_number in existing["MainCaseNumber"].values:
-        existing.loc[existing["MainCaseNumber"] == case_number, "Completed"] = val
-        existing.loc[existing["MainCaseNumber"] == case_number, "LastUpdated"] = now_str
-    else:
-        new_row = pd.DataFrame([{
-            "MainCaseNumber": case_number,
-            "Note": "",
-            "FollowUpNote": "",
-            "Completed": val,
-            "LastUpdated": now_str,
-        }])
-        existing = pd.concat([existing, new_row], ignore_index=True)
-    _NOTES_PATH.parent.mkdir(parents=True, exist_ok=True)
-    existing.to_csv(_NOTES_PATH, index=False)
-
-
-# ─── L&D storage ──────────────────────────────────────────────────────────────
-
-def load_remake_ld() -> pd.DataFrame:
-    if _LD_PATH.exists():
-        try:
-            return pd.read_csv(_LD_PATH, dtype=str)
-        except Exception as e:
-            logger.warning(f"Failed to read remake_ld.csv: {e}")
-    return pd.DataFrame(columns=["MainCaseNumber", "CS", "ThreeD", "Lab", "Shipping", "LastUpdated"])
-
-
-def save_remake_ld(case_number: str, dept: str, checked: bool) -> None:
-    if dept not in _LD_DEPTS:
-        raise ValueError(f"Unknown dept: {dept}")
-    existing = load_remake_ld()
-    now_str  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    val = "1" if checked else "0"
-    if not existing.empty and case_number in existing["MainCaseNumber"].values:
-        existing.loc[existing["MainCaseNumber"] == case_number, dept]          = val
-        existing.loc[existing["MainCaseNumber"] == case_number, "LastUpdated"] = now_str
-    else:
-        new_row = {c: "0" for c in _LD_DEPTS}
-        new_row.update({"MainCaseNumber": case_number, dept: val, "LastUpdated": now_str})
-        existing = pd.concat([existing, pd.DataFrame([new_row])], ignore_index=True)
-    _LD_PATH.parent.mkdir(parents=True, exist_ok=True)
-    existing.to_csv(_LD_PATH, index=False)
-
-
-def load_ld_emails() -> dict:
-    if _LD_EMAILS_PATH.exists():
-        try:
-            return json.loads(_LD_EMAILS_PATH.read_text())
-        except Exception:
-            pass
-    return dict(_LD_EMAILS_DEFAULT)
-
-
-def save_ld_emails(emails: dict) -> None:
-    _LD_EMAILS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _LD_EMAILS_PATH.write_text(json.dumps(emails, indent=2))
+load_remake_notes   = _notes_db.load_remake_notes
+save_remake_note    = _notes_db.save_remake_note
+save_follow_up_note = _notes_db.save_follow_up_note
+save_case_completed = _notes_db.save_case_completed
+load_remake_ld      = _notes_db.load_remake_ld
+save_remake_ld      = _notes_db.save_remake_ld
+load_ld_emails      = _notes_db.load_ld_emails
+save_ld_emails      = _notes_db.save_ld_emails
 
 
 # ─── Cache helpers ────────────────────────────────────────────────────────────
