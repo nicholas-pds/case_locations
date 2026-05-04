@@ -1404,6 +1404,7 @@ function efficiencyPage() {
     async saveEmployees() {
       this.employeesSaving = true;
       this.employeesError = '';
+      this.gonculating = true;
       try {
         const payload = this.employeesData
           .filter(r => !r._deleted)
@@ -1415,13 +1416,14 @@ function efficiencyPage() {
         });
         const data = await resp.json();
         if (data.status === 'ok') {
-          this.gonculating = true;
           this.showEmployeesModal = false;
           setTimeout(() => window.location.reload(), 1500);
         } else {
+          this.gonculating = false;
           this.employeesError = data.message || 'Save failed';
         }
       } catch (e) {
+        this.gonculating = false;
         this.employeesError = 'Save failed — check console';
       }
       this.employeesSaving = false;
@@ -1458,6 +1460,7 @@ function efficiencyPage() {
     async saveTeams() {
       this.teamsSaving = true;
       this.teamsError = '';
+      this.gonculating = true;
       try {
         const resp = await fetch('/efficiency/teams', {
           method: 'POST',
@@ -1467,12 +1470,13 @@ function efficiencyPage() {
         const d = await resp.json();
         if (d.status === 'ok') {
           this.showTeamsModal = false;
-          this.gonculating = true;
           setTimeout(() => window.location.reload(), 1500);
         } else {
+          this.gonculating = false;
           this.teamsError = d.message || 'Save failed';
         }
       } catch (e) {
+        this.gonculating = false;
         this.teamsError = 'Save failed — check console';
       }
       this.teamsSaving = false;
