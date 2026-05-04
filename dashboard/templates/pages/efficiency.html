@@ -2,7 +2,7 @@
 {% block title %}Efficiency{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/efficiency.css?v=15">
+<link rel="stylesheet" href="/static/css/efficiency.css?v=16">
 {% endblock %}
 
 {% block content %}
@@ -814,12 +814,12 @@
         <input type="text" x-model="employeesFilter" placeholder="Filter by name or team..."
                class="eff-modal-input" style="max-width:260px;">
         <span class="emp-count-badge"
-              x-text="filteredEmployees().length + ' of ' + employeesData.filter(r => !r._deleted).length + ' employees'"></span>
+              x-text="employeesData.filter(r => !r._deleted).length + ' employees'"></span>
       </div>
 
-      <!-- Fixed column header strip -->
-      <div class="emp-header-strip">
-        <table class="emp-header-table">
+      <!-- Single table: thead sticky, tbody scrolls inside same container -->
+      <div id="empScrollBody" style="overflow-y:auto; max-height:55vh; border:1px solid var(--eff-border); border-radius:6px;">
+        <table class="emp-modal-table" style="font-size:12px;">
           <colgroup>
             <col class="emp-col-id">
             <col class="emp-col-mt">
@@ -858,33 +858,15 @@
               <th></th>
             </tr>
           </thead>
-        </table>
-      </div>
-
-      <!-- Scrollable data rows -->
-      <div class="emp-scroll-body" id="empScrollBody">
-        <table class="emp-body-table" style="font-size:12px;">
-          <colgroup>
-            <col class="emp-col-id">
-            <col class="emp-col-mt">
-            <col class="emp-col-gusto">
-            <col class="emp-col-team">
-            <col class="emp-col-training">
-            <col class="emp-col-del">
-          </colgroup>
           <tbody>
-            <template x-for="(row, idx) in filteredEmployees()" :key="'emp-'+idx">
+            <template x-for="(row, idx) in filteredEmployees()"
+                      :key="row['Employee ID'] ? 'emp-' + row['Employee ID'] : 'new-' + idx">
               <tr :class="{ 'emp-row-new': row._isNew, 'emp-row-deleted': row._deleted }">
+                <td><span class="emp-id-badge" x-text="row['Employee ID'] || '—'"></span></td>
+                <td><input type="text" x-model="row['MT Name']" class="eff-modal-input" style="width:100%;"></td>
+                <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input" style="width:100%;"></td>
                 <td>
-                  <span class="emp-id-badge" x-text="row['Employee ID'] || '—'"></span>
-                </td>
-                <td><input type="text" x-model="row['MT Name']" class="eff-modal-input"
-                           style="width:100%;" :disabled="row._deleted"></td>
-                <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input"
-                           style="width:100%;" :disabled="row._deleted"></td>
-                <td>
-                  <select x-model="row.Team" class="eff-modal-select"
-                          style="width:100%;" :disabled="row._deleted">
+                  <select x-model="row.Team" class="eff-modal-select" style="width:100%;">
                     <option value="">—</option>
                     <template x-for="t in availableTeams" :key="t">
                       <option :value="t" x-text="t"></option>
@@ -897,8 +879,7 @@
                          :title="row['Training Plan'] == '1' ? 'On training plan' : 'Not on training plan'">
                     <input type="checkbox"
                            :checked="row['Training Plan'] == '1'"
-                           @change="row['Training Plan'] = $event.target.checked ? '1' : '0'"
-                           :disabled="row._deleted">
+                           @change="row['Training Plan'] = $event.target.checked ? '1' : '0'">
                     <span class="eff-toggle-track"></span>
                   </label>
                 </td>

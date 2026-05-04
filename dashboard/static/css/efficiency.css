@@ -1207,57 +1207,49 @@
   .eff-table th, .eff-table td { padding: 6px 8px; font-size: 11px; }
 }
 
-/* ── Employee modal: fixed header + scrollable body ────────────── */
-.emp-header-table,
-.emp-body-table {
+/* ── Employee modal: single-table with working sticky headers ── */
+.emp-modal-table {
   table-layout: fixed;
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
-.emp-col-id       { width: 72px; }
-.emp-col-mt       { width: 160px; }
-.emp-col-gusto    { width: 185px; }
+.emp-col-id       { width: 70px; }
+.emp-col-mt       { width: 158px; }
+.emp-col-gusto    { width: 182px; }
 .emp-col-team     { width: 155px; }
-.emp-col-training { width: 80px; }
+.emp-col-training { width: 78px; }
 .emp-col-del      { width: 36px; }
 
-.emp-header-strip {
+.emp-modal-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   background: #c41227;
-  border: 1px solid #a30f20;
-  border-bottom: 2px solid #a30f20;
-  border-radius: 6px 6px 0 0;
-}
-.emp-header-strip th {
+  color: #fff;
   padding: 9px 10px;
-  text-align: left;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #fff;
+  white-space: nowrap;
+  text-align: left;
   cursor: default;
   user-select: none;
-  white-space: nowrap;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.18);
 }
-.emp-header-strip th.sortable { cursor: pointer; }
-.emp-header-strip th.sortable:hover { color: rgba(255,255,255,0.75); }
+.emp-modal-table thead th.sortable { cursor: pointer; }
+.emp-modal-table thead th.sortable:hover { background: #a30f20; }
 .sort-arrow { margin-left: 3px; opacity: 0.5; font-size: 9px; }
 .sort-arrow.active { opacity: 1; }
 
-.emp-scroll-body {
-  overflow-y: auto;
-  max-height: 46vh;
-  border: 1px solid var(--eff-border);
-  border-top: none;
-  border-radius: 0 0 6px 6px;
-}
-.emp-body-table td {
+.emp-modal-table td {
   padding: 6px 8px;
   border-bottom: 1px solid var(--eff-border);
   vertical-align: middle;
 }
-.emp-body-table tr:last-child td { border-bottom: none; }
-.emp-body-table tr:hover td { background: var(--eff-surface2); }
+.emp-modal-table tbody tr:last-child td { border-bottom: none; }
+.emp-modal-table tbody tr:hover td { background: var(--eff-surface2); }
 .emp-row-new td { background: #f0fdf4 !important; }
 .emp-row-deleted td {
   background: #fff5f5 !important;
