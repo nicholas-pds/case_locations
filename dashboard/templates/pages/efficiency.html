@@ -2,7 +2,7 @@
 {% block title %}Efficiency{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/efficiency.css?v=14">
+<link rel="stylesheet" href="/static/css/efficiency.css?v=15">
 {% endblock %}
 
 {% block content %}
@@ -1355,18 +1355,11 @@ function efficiencyPage() {
 
     // ─── Employees Modal ────────────────────────
     filteredEmployees() {
-      let rows = this.employeesData;
-      if (this.employeesFilter.trim()) {
-        const q = this.employeesFilter.trim().toLowerCase();
-        rows = rows.filter(r => Object.values(r).some(v => String(v || '').toLowerCase().includes(q)));
-      }
-      const { col, dir } = this.employeesSort;
-      rows = [...rows].sort((a, b) => {
-        const av = String(a[col] || '').toLowerCase();
-        const bv = String(b[col] || '').toLowerCase();
-        return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-      });
-      return rows;
+      if (!this.employeesFilter.trim()) return this.employeesData;
+      const q = this.employeesFilter.trim().toLowerCase();
+      return this.employeesData.filter(r =>
+        Object.values(r).some(v => String(v || '').toLowerCase().includes(q))
+      );
     },
 
     empSortBy(col) {
@@ -1375,6 +1368,12 @@ function efficiencyPage() {
       } else {
         this.employeesSort = { col, dir: 'asc' };
       }
+      const { dir } = this.employeesSort;
+      this.employeesData.sort((a, b) => {
+        const av = String(a[col] || '').toLowerCase();
+        const bv = String(b[col] || '').toLowerCase();
+        return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
     },
 
     empPendingCount() {
