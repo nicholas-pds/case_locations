@@ -866,15 +866,18 @@
                 <td><input type="text" x-model="row['MT Name']" class="eff-modal-input" style="width:100%;"></td>
                 <td><input type="text" x-model="row['Gusto Name']" class="eff-modal-input" style="width:100%;"></td>
                 <td>
-                  <select x-model="row.Team" class="eff-modal-select" style="width:100%;">
-                    <option value="">—</option>
-                    <template x-if="availableTeams.length > 0">
+                  <template x-if="availableTeams.length > 0">
+                    <select x-model="row.Team" class="eff-modal-select" style="width:100%;">
+                      <option value="">—</option>
                       <template x-for="t in availableTeams" :key="t">
                         <option :value="t" x-text="t"></option>
                       </template>
-                    </template>
-                    <option value="z_Not On Report">z_Not On Report</option>
-                  </select>
+                      <option value="z_Not On Report">z_Not On Report</option>
+                    </select>
+                  </template>
+                  <template x-if="availableTeams.length === 0">
+                    <span style="color:var(--eff-gray); font-size:11px;">loading…</span>
+                  </template>
                 </td>
                 <td style="text-align:center;">
                   <label class="eff-toggle"
