@@ -160,7 +160,7 @@ function exportTilesPDF() {
   // Preload logo
   var logoImg = new Image();
   logoImg.onload = logoImg.onerror = doExport;
-  logoImg.src = '/static/logo.png';
+  logoImg.src = '/static/logo.svg';
 
   function doExport() {
     // Layout constants (logical pixels at 1x; canvas is drawn at SCALE×)

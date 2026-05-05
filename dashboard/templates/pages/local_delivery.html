@@ -86,7 +86,7 @@ function exportPDF() {
   header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
 
   const logoImg = document.createElement('img');
-  logoImg.src = window.location.origin + '/static/logo.png';
+  logoImg.src = window.location.origin + '/static/logo.svg';
   logoImg.style.cssText = 'height:40px;width:auto;';
 
   const titleEl = document.createElement('div');
@@ -156,7 +156,7 @@ function printPage() {
 </head>
 <body>
   <div class="print-header">
-    <img src="${window.location.origin}/static/logo.png" alt="Logo">
+    <img src="${window.location.origin}/static/logo.svg" alt="Logo">
     <div class="title">Local Delivery Cases</div>
     <div class="date">${dateStr}</div>
   </div>

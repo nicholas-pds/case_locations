@@ -11,7 +11,7 @@
   <!-- Page Header -->
   <div class="eff-header">
     <div class="eff-logo-area">
-      <img src="/static/logo.png" alt="Partners Dental Solutions" class="eff-logo">
+      <img src="/static/logo.svg" alt="Partners Dental Solutions" class="eff-logo">
       <div>
         <h1 class="eff-title">Efficiency Report</h1>
         <div class="eff-subtitle" x-text="getSubtitleDate()"></div>
@@ -1620,7 +1620,7 @@ function efficiencyPage() {
       // Load logo as base64
       let logoBase64 = '';
       try {
-        const resp = await fetch('/static/logo.png');
+        const resp = await fetch('/static/logo.svg');
         const blob = await resp.blob();
         logoBase64 = await new Promise(resolve => {
           const reader = new FileReader();
