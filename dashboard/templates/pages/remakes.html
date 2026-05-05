@@ -6,7 +6,7 @@
   [x-cloak] { display: none !important; }
 
   :root {
-    --red: #C0182B;
+    --red: #c41227;
     --red-dark: #a01222;
     --gray: #6B6B6B;
     --dark: #1A1A1A;
@@ -462,24 +462,25 @@
   .tip-att-row .att-row-name {
     max-width: none; white-space: normal; overflow: visible; text-overflow: clip;
   }
-  .att-icon-pdf { color: #C0182B; }
+  .att-icon-pdf { color: #c41227; }
   .att-icon-stl { color: #6B6B6B; }
   .att-icon-file { color: #6B6B6B; }
 
   /* ── Lightbox ── */
   .lb-backdrop {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.75);
+    background: rgba(0,0,0,0.85);
     z-index: 10000;
     display: flex; align-items: center; justify-content: center;
   }
   .lb-modal {
     background: #fff; border-radius: 10px;
-    width: min(90vw, 900px); max-height: 90vh;
+    width: min(90vw, 1200px); max-height: 92vh;
     display: flex; flex-direction: column;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.4);
-    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    overflow: hidden; position: relative;
   }
+  .lb-modal.lb-pdf { width: min(85vw, 1100px); }
   .lb-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 14px; border-bottom: 1px solid var(--border);
@@ -488,12 +489,25 @@
   .lb-title { font-size: 0.85rem; font-weight: 600; color: var(--dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lb-close { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--gray); padding: 2px 6px; }
   .lb-close:hover { color: var(--red); }
-  .lb-body { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 12px; background: #f0f0f0; }
-  .lb-body img { max-width: 100%; max-height: 70vh; border-radius: 4px; display: block; }
-  .lb-body iframe { width: 100%; height: 70vh; border: none; }
+  .lb-body { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 12px; background: #f0f0f0; min-height: 0; }
+  .lb-body img { max-width: 90vw; max-height: 85vh; border-radius: 4px; display: block; }
+  .lb-body iframe { width: 100%; height: 88vh; border: none; }
   .lb-unsupported { text-align: center; padding: 32px; }
   .lb-unsupported a { color: var(--red); text-decoration: underline; }
-  .lb-footer { padding: 8px 14px; font-size: 0.78rem; color: var(--gray); border-top: 1px solid var(--border); text-align: center; }
+  .lb-footer { padding: 8px 14px; font-size: 0.78rem; color: var(--gray); border-top: 1px solid var(--border); text-align: center; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .lb-footer-link { color: var(--red); font-weight: 600; text-decoration: none; }
+  .lb-footer-link:hover { text-decoration: underline; }
+  .lb-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(0,0,0,0.55); color: #fff;
+    border: none; border-radius: 50%;
+    width: 44px; height: 44px; font-size: 1.4rem; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s; z-index: 2;
+  }
+  .lb-nav:hover { background: var(--red); }
+  .lb-nav.prev { left: 14px; }
+  .lb-nav.next { right: 14px; }
 
   /* ── Note save feedback ── */
   .note-save-badge   { font-size: 0.72rem; color: #2E7D32; font-weight: 700; margin-top: 3px; }
@@ -756,12 +770,13 @@
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background: #F5F5F5;
+    background: #f7f6f4;
     display: flex;
     flex-direction: column;
+    font-family: 'DM Sans', 'Inter', system-ui, -apple-system, sans-serif;
   }
   .pres-header {
-    height: 56px;
+    height: 64px;
     display: flex;
     align-items: center;
     padding: 0 24px;
@@ -770,7 +785,7 @@
     border-bottom: 2px solid #1A1A1A;
     flex-shrink: 0;
   }
-  .pres-counter { font-size: 0.82rem; color: #AAAAAA; white-space: nowrap; min-width: 90px; }
+  .pres-counter { font-size: 0.85rem; color: #AAAAAA; white-space: nowrap; min-width: 96px; letter-spacing: 0.02em; }
   .pres-jump-input {
     width: 44px;
     background: #333;
@@ -793,8 +808,9 @@
   .pres-nav button:hover:not(:disabled) { background: var(--red); border-color: var(--red); color: #fff; }
   .pres-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
   .pres-reason {
-    flex: 1; font-size: 1rem; font-weight: 700; color: #FFFFFF;
+    flex: 1; font-size: 1.18rem; font-weight: 600; color: #FFFFFF;
     text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    letter-spacing: 0.01em;
   }
   .pres-close {
     background: #333; color: #FFFFFF; border: 1px solid #555;
@@ -811,27 +827,33 @@
     padding: 20px 18px; display: flex; flex-direction: column; gap: 14px;
   }
   .pres-rx-card {
-    background: #FFFFFF; border: 2px solid #1A1A1A; border-radius: 6px; padding: 14px 16px;
+    background: #FFFFFF; border: 1px solid #e0ddd8; border-radius: 10px; padding: 20px 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
   .pres-rx-label {
-    font-size: 0.68rem; font-weight: 700; color: var(--red);
-    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
+    font-size: 0.7rem; font-weight: 700; color: var(--red);
+    text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 10px;
   }
-  .pres-rx-casenum { font-size: 1.4rem; font-weight: 700; color: #1A1A1A; margin-bottom: 6px; line-height: 1.1; }
-  .pres-rx-practice { font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 6px; }
-  .pres-rx-meta { font-size: 0.82rem; color: #999; line-height: 1.9; }
+  .pres-rx-casenum {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 2.1rem; font-weight: 400; color: #1A1A1A;
+    margin-bottom: 6px; line-height: 1.05; letter-spacing: -0.01em;
+  }
+  .pres-rx-practice { font-size: 0.95rem; font-weight: 600; color: #333; margin-bottom: 6px; }
+  .pres-rx-meta { font-size: 0.85rem; color: #999; line-height: 1.85; }
   .pres-rx-meta strong { color: #6B6B6B; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
   .pres-rx-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .pres-chip {
-    background: #EFEFEF; border: 1.5px solid #CCCCCC; border-radius: 12px;
-    padding: 3px 10px; font-size: 0.75rem; color: #444; font-weight: 600;
+    background: #f1efeb; border: 1px solid #d8d4cc; border-radius: 999px;
+    padding: 4px 11px; font-size: 0.78rem; color: #333; font-weight: 600;
+    letter-spacing: 0.01em;
   }
-  .pres-chip.remake-stat { background: #FFF0F0; border-color: #FFCCD0; color: #C0182B; }
+  .pres-chip.remake-stat { background: #FFF0F0; border-color: #FFCCD0; color: #c41227; }
   .pres-chip.status-In-Production { background: #FFF8E6; border-color: #FFE4A0; color: #8B5E00; }
   .pres-chip.status-Invoiced      { background: #EDFFF3; border-color: #AAEEC0; color: #1A7A35; }
-  .pres-chip.status-On-Hold       { background: #FFF0F0; border-color: #FFCCD0; color: #C0182B; }
+  .pres-chip.status-On-Hold       { background: #FFF0F0; border-color: #FFCCD0; color: #c41227; }
   .pres-chip.remake-type { background: #F0F0FF; border-color: #C8C8F0; color: #5050A0; }
-  .pres-chip.full-charge-pres { background: #FFF0F0; border-color: #FFCCD0; color: #C0182B; }
+  .pres-chip.full-charge-pres { background: #FFF0F0; border-color: #FFCCD0; color: #c41227; }
 
   .pres-col-mid {
     border-right: 2px solid #1A1A1A; display: flex; flex-direction: column;
@@ -846,32 +868,46 @@
   }
   .pres-ld-bottom .pres-rx-label { margin-bottom: 6px; }
   .pres-att-section-label {
-    font-size: 0.68rem; font-weight: 700; color: var(--red);
-    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 14px;
+    font-size: 0.72rem; font-weight: 700; color: var(--red);
+    text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 14px;
   }
-  .pres-att-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .pres-att-grid { display: flex; flex-wrap: wrap; gap: 16px; }
   .pres-att-thumb {
     display: flex; flex-direction: column; align-items: center;
-    gap: 6px; cursor: pointer; width: 110px;
+    gap: 8px; cursor: pointer; width: 130px;
   }
-  .pres-att-thumb:hover .pres-thumb-img { border-color: var(--red); }
+  .pres-att-thumb:hover .pres-thumb-img {
+    border-color: var(--red); transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+  }
   .pres-thumb-img {
-    width: 110px; height: 110px; border: 2px solid #1A1A1A; border-radius: 6px;
+    width: 130px; height: 130px; border: 1px solid var(--border); border-radius: 10px;
     overflow: hidden; display: flex; align-items: center; justify-content: center;
-    background: #FFFFFF; transition: border-color 0.15s;
+    background: #FFFFFF; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    position: relative;
   }
   .pres-thumb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .pres-thumb-badge { font-size: 0.9rem; font-weight: 800; letter-spacing: 0.05em; }
-  .pres-thumb-badge.pdf { color: #e06060; }
-  .pres-thumb-badge.stl { color: #999; }
-  .pres-thumb-badge.link { font-size: 1.3rem; color: #999; }
+  .pres-thumb-badge { font-size: 0.95rem; font-weight: 800; letter-spacing: 0.06em; }
+  .pres-thumb-badge.pdf { color: #c41227; }
+  .pres-thumb-badge.stl { color: #4a5a6e; }
+  .pres-thumb-badge.link { font-size: 1.4rem; color: #999; }
+  /* STL tiles: blue-gray tint with 3D cube glyph so the team knows it's download-only */
+  .pres-thumb-img[data-ext="STL"] {
+    background: linear-gradient(135deg, #eef1f5 0%, #dbe2eb 100%);
+    border-color: #b9c4d2;
+  }
+  .pres-thumb-img[data-ext="STL"]::before {
+    content: "\29C9"; /* two squares (cube-ish) */
+    position: absolute; top: 6px; left: 8px;
+    font-size: 1rem; color: #4a5a6e; opacity: 0.65; line-height: 1;
+  }
   .pres-thumb-img.thumb-err::after {
     content: attr(data-ext);
     color: #6B6B6B; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em;
   }
   .pres-thumb-name {
-    font-size: 0.72rem; color: #6B6B6B; text-align: center;
-    word-break: break-word; line-height: 1.3; max-width: 110px;
+    font-size: 0.78rem; color: #4a4a4a; text-align: center;
+    word-break: break-word; line-height: 1.3; max-width: 130px;
   }
   .pres-att-divider { border-top: 2px solid #1A1A1A; margin: 18px 0 14px; }
 
@@ -899,35 +935,38 @@
     flex-direction: column; overflow: hidden; min-height: 0;
   }
   .pres-panel-hdr {
-    font-size: 0.68rem; font-weight: 700; color: #FFFFFF;
-    text-transform: uppercase; letter-spacing: 0.09em;
-    padding: 10px 14px 6px; flex-shrink: 0;
+    font-size: 0.72rem; font-weight: 700; color: #FFFFFF;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 12px 16px 8px; flex-shrink: 0;
     background: #1A1A1A; border-bottom: none;
   }
   .pres-panel-body { flex: 1; overflow-y: auto; padding: 10px 14px; min-height: 0; }
-  .pres-panel-notes    { flex: 0 0 22%; }
-  .pres-panel-callnotes{ flex: 0 0 48%; }
+  .pres-panel-notes    { flex: 0 0 32%; }
+  .pres-panel-callnotes{ flex: 0 0 38%; }
   .pres-panel-tasks    { flex: 1; border-bottom: none; }
 
   .pres-note-textarea {
-    width: 100%; height: calc(100% - 24px); min-height: 50px;
-    background: #F5F5F5; color: #333; border: 1px solid #CCCCCC; border-radius: 4px;
-    padding: 8px; font-size: 0.82rem; resize: none; font-family: inherit;
-    box-sizing: border-box; transition: border-color 0.15s;
+    width: 100%; height: calc(100% - 24px); min-height: 200px;
+    background: #fffdf9; color: #2a2a2a; border: 1px solid #d8d2c4; border-radius: 6px;
+    padding: 12px; font-size: 15px; line-height: 1.45; resize: none; font-family: inherit;
+    box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .pres-note-textarea:focus { border-color: var(--red); outline: none; }
+  .pres-note-textarea:focus {
+    border-color: var(--red); outline: none;
+    box-shadow: 0 0 0 2px rgba(196,18,39,0.15);
+  }
   .pres-note-save-badge   { font-size: 0.72rem; color: #1A7A35; font-weight: 700; margin-top: 4px; }
   .pres-note-saving-badge { font-size: 0.72rem; color: #999; font-style: italic; margin-top: 4px; }
   .pres-note-save-error   { font-size: 0.72rem; color: #C62828; font-weight: 700; margin-top: 4px; cursor: pointer; }
 
-  .pres-call-note { padding: 8px 0; border-bottom: 1px solid #E8E4E0; font-size: 0.82rem; }
+  .pres-call-note { padding: 9px 0; border-bottom: 1px solid #ECE8E2; font-size: 0.85rem; }
   .pres-call-note:last-child { border-bottom: none; }
-  .pres-call-note-meta { color: #999; font-size: 0.75rem; margin-bottom: 4px; }
-  .pres-call-note-text { color: #444; line-height: 1.5; }
+  .pres-call-note-meta { color: var(--gray); font-size: 0.76rem; margin-bottom: 4px; }
+  .pres-call-note-text { color: #333; line-height: 1.5; }
 
-  .pres-task-item { padding: 6px 0; border-bottom: 1px solid #E8E4E0; font-size: 0.82rem; color: #444; }
+  .pres-task-item { padding: 7px 0; border-bottom: 1px solid #ECE8E2; font-size: 0.85rem; color: #333; }
   .pres-task-item:last-child { border-bottom: none; }
-  .pres-task-name { color: #6B6B6B; font-weight: 600; }
+  .pres-task-name { color: #1A1A1A; font-weight: 700; }
   .pres-empty { color: #BBBBBB; font-size: 0.82rem; font-style: italic; }
 </style>
 {% endblock %}
@@ -1278,7 +1317,7 @@
                     <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
                     <td>
                       <span x-text="row.trend === 'up' ? '▲' : row.trend === 'down' ? '▼' : '—'"
-                            :style="row.trend==='up' ? 'color:#C0182B;font-weight:700' : row.trend==='down' ? 'color:#2E7D32;font-weight:700' : 'color:#ccc'">
+                            :style="row.trend==='up' ? 'color:#c41227;font-weight:700' : row.trend==='down' ? 'color:#2E7D32;font-weight:700' : 'color:#ccc'">
                       </span>
                     </td>
                   </tr>
@@ -1309,7 +1348,7 @@
                     <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
                     <td>
                       <span x-text="row.trend === 'up' ? '▲' : row.trend === 'down' ? '▼' : '—'"
-                            :style="row.trend==='up' ? 'color:#C0182B;font-weight:700' : row.trend==='down' ? 'color:#2E7D32;font-weight:700' : 'color:#ccc'">
+                            :style="row.trend==='up' ? 'color:#c41227;font-weight:700' : row.trend==='down' ? 'color:#2E7D32;font-weight:700' : 'color:#ccc'">
                       </span>
                     </td>
                   </tr>
@@ -1340,7 +1379,7 @@
                     <td style="text-align:right;" class="breakdown-pct" x-text="row.pct + '%'"></td>
                     <td>
                       <span x-text="row.trend === 'up' ? '▲' : row.trend === 'down' ? '▼' : '—'"
-                            :style="row.trend==='up' ? 'color:#C0182B;font-weight:700' : row.trend==='down' ? 'color:#2E7D32;font-weight:700' : 'color:#ccc'">
+                            :style="row.trend==='up' ? 'color:#c41227;font-weight:700' : row.trend==='down' ? 'color:#2E7D32;font-weight:700' : 'color:#ccc'">
                       </span>
                     </td>
                   </tr>
@@ -1809,7 +1848,7 @@
       <div class="kpi-card">
         <div class="kpi-label">Trend vs Prior Period</div>
         <div class="kpi-value"
-             :style="ddKPIs.trend==='up' ? 'color:#C0182B' : ddKPIs.trend==='down' ? 'color:#2E7D32' : ''"
+             :style="ddKPIs.trend==='up' ? 'color:#c41227' : ddKPIs.trend==='down' ? 'color:#2E7D32' : ''"
              x-text="ddKPIs.trend==='up' ? '▲ ' + ddKPIs.diff + ' more' : ddKPIs.trend==='down' ? '▼ ' + Math.abs(ddKPIs.diff) + ' fewer' : '— flat'">
         </div>
         <div class="kpi-sub">Prior period: <span x-text="ddKPIs.prior"></span> remakes</div>
@@ -2201,7 +2240,7 @@
           <div x-show="presCase && presOGDocs.length > 0" class="pres-att-grid">
             <template x-for="doc in presOGDocs" :key="doc.FilePath">
               <div class="pres-att-thumb"
-                   @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
+                   @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc, presOGDocs)"
                    :title="docDisplayName(doc)">
                 <div class="pres-thumb-img" :data-ext="(doc.fileType || 'file').toUpperCase()">
                   <template x-if="doc.isExternal">
@@ -2215,7 +2254,7 @@
                     <span :class="'pres-thumb-badge ' + (doc.fileType || 'file')" x-text="(doc.fileType || 'FILE').toUpperCase()"></span>
                   </template>
                 </div>
-                <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
+                <span class="pres-thumb-name" x-text="presDocLabel(doc)"></span>
               </div>
             </template>
           </div>
@@ -2228,7 +2267,7 @@
           <div x-show="presCase && presMainDocs.length > 0" class="pres-att-grid">
             <template x-for="doc in presMainDocs" :key="doc.FilePath">
               <div class="pres-att-thumb"
-                   @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc)"
+                   @click="doc.isExternal ? window.open(doc.FilePath, '_blank') : showLightbox(doc, presMainDocs)"
                    :title="docDisplayName(doc)">
                 <div class="pres-thumb-img" :data-ext="(doc.fileType || 'file').toUpperCase()">
                   <template x-if="doc.isExternal">
@@ -2242,7 +2281,7 @@
                     <span :class="'pres-thumb-badge ' + (doc.fileType || 'file')" x-text="(doc.fileType || 'FILE').toUpperCase()"></span>
                   </template>
                 </div>
-                <span class="pres-thumb-name" x-text="docDisplayName(doc)"></span>
+                <span class="pres-thumb-name" x-text="presDocLabel(doc)"></span>
               </div>
             </template>
           </div>
@@ -2319,7 +2358,7 @@
         <!-- Task List (flex:1) -->
         <div class="pres-panel pres-panel-tasks">
           <div class="pres-panel-hdr">
-            Task List
+            Task List &mdash; Original Rx
             <span style="font-weight:400;color:var(--red);text-transform:none;letter-spacing:0;"
                   x-text="presCase ? '(' + getTasksForCase(presCase.MainCaseID, presCase.OG_CaseID).length + ')' : ''"></span>
           </div>
@@ -2346,12 +2385,22 @@
 
   <!-- Lightbox modal -->
   <template x-if="_lightbox.show">
-    <div class="lb-backdrop" @click.self="hideLightbox()" @keydown.window.escape="hideLightbox()">
-      <div class="lb-modal">
+    <div class="lb-backdrop"
+         @click.self="hideLightbox()"
+         @keydown.window.escape="hideLightbox()"
+         @keydown.window.left="lightboxPrev()"
+         @keydown.window.right="lightboxNext()">
+      <div class="lb-modal" :class="{'lb-pdf': _lightbox.fileType === 'pdf'}">
         <div class="lb-header">
           <span class="lb-title" x-text="_lightbox.filename"></span>
           <button class="lb-close" @click="hideLightbox()">&#x2715;</button>
         </div>
+        <button class="lb-nav prev"
+                x-show="_lightbox.gallery && _lightbox.gallery.length > 1"
+                @click.stop="lightboxPrev()" title="Previous (←)">&#x2039;</button>
+        <button class="lb-nav next"
+                x-show="_lightbox.gallery && _lightbox.gallery.length > 1"
+                @click.stop="lightboxNext()" title="Next (→)">&#x203A;</button>
         <div class="lb-body">
           <template x-if="_lightbox.isImage">
             <img :src="'/remakes/attachment?path=' + encodeURIComponent(_lightbox.src)" alt="">
@@ -2366,7 +2415,17 @@
             </div>
           </template>
         </div>
-        <div class="lb-footer" x-text="_lightbox.createDate ? fmtNoteDate(_lightbox.createDate) : ''"></div>
+        <div class="lb-footer">
+          <span x-text="_lightbox.createDate ? fmtNoteDate(_lightbox.createDate) : ''"></span>
+          <template x-if="_lightbox.fileType === 'pdf' && !_lightbox.isExternal">
+            <a class="lb-footer-link"
+               :href="'/remakes/attachment?path=' + encodeURIComponent(_lightbox.src)"
+               target="_blank">Open PDF in new tab &#x2197;</a>
+          </template>
+          <template x-if="_lightbox.gallery && _lightbox.gallery.length > 1">
+            <span x-text="(_lightbox.index + 1) + ' / ' + _lightbox.gallery.length"></span>
+          </template>
+        </div>
       </div>
     </div>
   </template>
@@ -2481,7 +2540,7 @@ function remakesPage() {
     _noteMapData: {},
     _documentsMapData: {},
     _preferencesData: [],
-    _lightbox: { show: false, src: '', filename: '', createDate: '', fileType: '', isImage: false, isExternal: false },
+    _lightbox: { show: false, src: '', filename: '', createDate: '', fileType: '', isImage: false, isExternal: false, gallery: [], index: 0 },
     _charts: {},
     _chartRaf: null,
     _ddChartRaf: null,
@@ -2957,11 +3016,8 @@ function remakesPage() {
     // ── Per-case detail helpers ──────────────────────────────────
     getTasksForCase(mainId, ogId) {
       const seen = new Set();
-      return [
-        ...(this._taskMapData[String(ogId)]   || []),
-        ...(this._taskMapData[String(mainId)] || []),
-      ].filter(t => {
-        const k = (t.Task || '') + (t.CompleteDate || '') + (t.CompletedBy || '');
+      return (this._taskMapData[String(ogId)] || []).filter(t => {
+        const k = (t.Task || '') + '|' + (t.CompleteDate || '') + '|' + (t.CompletedBy || '');
         return seen.has(k) ? false : seen.add(k);
       });
     },
@@ -2972,7 +3028,7 @@ function remakesPage() {
         ...(this._noteMapData[String(mainId)] || []),
         ...(this._noteMapData[String(ogId)]   || []),
       ].filter(n => {
-        const k = n.Note + n.UserID;
+        const k = (n.Note || '') + '|' + (n.UserID || '') + '|' + (n.CallDate || '');
         return seen.has(k) ? false : seen.add(k);
       });
     },
@@ -2986,7 +3042,7 @@ function remakesPage() {
         ...(this._noteMapData[mainIdStr] || []),
         ...(this._noteMapData[ogIdStr]   || []),
       ]) {
-        const k = n.Note + n.UserID;
+        const k = (n.Note || '') + '|' + (n.UserID || '') + '|' + (n.CallDate || '');
         if (seen.has(k)) continue;
         seen.add(k);
         const isNew = String(n.AnchorCaseID) === mainIdStr;
@@ -3064,9 +3120,46 @@ function remakesPage() {
       return docs;
     },
 
-    showLightbox(doc) {
+    showLightbox(doc, gallery) {
       if (doc.isExternal) { window.open(doc.FilePath, '_blank'); return; }
-      this._lightbox = { show: true, src: doc.FilePath, filename: doc.SourceFileName, createDate: doc.CreateDate, fileType: doc.fileType, isImage: doc.isImage, isExternal: false };
+      const previewable = (gallery || []).filter(d => !d.isExternal && (d.isImage || d.fileType === 'pdf'));
+      const idx = Math.max(0, previewable.findIndex(d => d.FilePath === doc.FilePath));
+      this._lightbox = {
+        show: true,
+        src: doc.FilePath,
+        filename: doc.SourceFileName,
+        createDate: doc.CreateDate,
+        fileType: doc.fileType,
+        isImage: doc.isImage,
+        isExternal: false,
+        gallery: previewable,
+        index: previewable.length > 0 ? idx : 0,
+      };
+    },
+
+    _applyLightboxIndex() {
+      const g = this._lightbox.gallery || [];
+      if (g.length === 0) return;
+      const d = g[this._lightbox.index];
+      this._lightbox.src = d.FilePath;
+      this._lightbox.filename = d.SourceFileName;
+      this._lightbox.createDate = d.CreateDate;
+      this._lightbox.fileType = d.fileType;
+      this._lightbox.isImage = d.isImage;
+    },
+
+    lightboxNext() {
+      const g = this._lightbox.gallery || [];
+      if (g.length < 2) return;
+      this._lightbox.index = (this._lightbox.index + 1) % g.length;
+      this._applyLightboxIndex();
+    },
+
+    lightboxPrev() {
+      const g = this._lightbox.gallery || [];
+      if (g.length < 2) return;
+      this._lightbox.index = (this._lightbox.index - 1 + g.length) % g.length;
+      this._applyLightboxIndex();
     },
 
     hideLightbox() { this._lightbox.show = false; },
@@ -3097,6 +3190,23 @@ function remakesPage() {
     },
     docDisplayName(doc) {
       return (doc.Description && doc.Description.trim()) ? doc.Description.trim() : (doc.SourceFileName || '');
+    },
+    cleanFileName(name) {
+      if (!name) return '';
+      let s = String(name).trim();
+      s = s.replace(/^\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}?[ _-]+/, '');
+      s = s.replace(/^[0-9a-fA-F]{16,}[ _-]+/, '');
+      const dot = s.lastIndexOf('.');
+      if (dot > 0 && s.length - dot <= 6) {
+        const stem = s.slice(0, dot);
+        const ext  = s.slice(dot);
+        if (stem.length > 22) return stem.slice(0, 22) + '…' + ext;
+        return s;
+      }
+      return s.length > 25 ? s.slice(0, 25) + '…' : s;
+    },
+    presDocLabel(doc) {
+      return this.cleanFileName(this.docDisplayName(doc));
     },
     fmtFileName(name) {
       if (!name) return '';
@@ -3178,7 +3288,7 @@ function remakesPage() {
         type: 'bar',
         data: {
           labels,
-          datasets: [{ data: counts, backgroundColor: '#C0182B', borderRadius: 3 }],
+          datasets: [{ data: counts, backgroundColor: '#c41227', borderRadius: 3 }],
         },
         options: {
           animation: false,
@@ -3285,11 +3395,11 @@ function remakesPage() {
       };
 
       make('chartRemakesCount',
-        data.map(d => d.count), '#C0182B',
+        data.map(d => d.count), '#c41227',
         v => v > 0 ? String(v) : '');
 
       make('chartRemakesAllCount',
-        data.map(d => d.countAll), '#C0182B',
+        data.map(d => d.countAll), '#c41227',
         v => v > 0 ? String(v) : '');
 
       make('chartRevenue',
